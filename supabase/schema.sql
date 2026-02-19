@@ -1,0 +1,79 @@
+-- ============================================================
+-- Handshake — Supabase Schema
+-- Run this in the Supabase SQL Editor
+-- ============================================================
+
+-- Proposals table
+create table proposals (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  slug text unique not null,
+  title text not null,
+  partner_name text not null,
+  status text default 'draft' check (status in ('draft', 'published')),
+  slides jsonb not null default '[]'::jsonb,
+  theme jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Indexes
+create index idx_proposals_user_id on proposals(user_id);
+create index idx_proposals_slug on proposals(slug);
+
+-- Row Level Security
+alter table proposals enable row level security;
+
+-- Users can CRUD their own proposals
+create policy "Users can manage their own proposals"
+  on proposals for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Anyone can read published proposals (public presentation URLs)
+create policy "Published proposals are publicly readable"
+  on proposals for select
+  using (status = 'published');
+
+-- Auto-update updated_at
+create or replace function update_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger proposals_updated_at
+  before update on proposals
+  for each row execute function update_updated_at();
+
+-- ============================================================
+-- Storage
+-- ============================================================
+
+-- Bucket for proposal assets (logos, images, GIFs)
+insert into storage.buckets (id, name, public)
+values ('proposal-assets', 'proposal-assets', true);
+
+-- Authenticated users can upload to their own folder
+create policy "Users can upload to their own folder"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'proposal-assets'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Anyone can read assets (used in public proposals)
+create policy "Public read access for proposal assets"
+  on storage.objects for select
+  using (bucket_id = 'proposal-assets');
+
+-- Users can update/delete their own assets
+create policy "Users can manage their own assets"
+  on storage.objects for all
+  using (
+    bucket_id = 'proposal-assets'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

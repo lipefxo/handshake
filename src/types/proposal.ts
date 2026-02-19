@@ -1,0 +1,145 @@
+export type SlideType =
+  | 'title'
+  | 'intro'
+  | 'stats'
+  | 'features'
+  | 'testimonial'
+  | 'comparison'
+  | 'timeline'
+  | 'media'
+  | 'benefits'
+  | 'closing';
+
+export interface SlideConfig {
+  id: string;
+  type: SlideType;
+  enabled: boolean;
+  content: SlideContent;
+  transition?: 'fade' | 'slide-up' | 'slide-left' | 'scale' | 'blur';
+  backgroundOverride?: string;
+}
+
+export interface TitleSlideContent {
+  partnerName: string;
+  partnerLogo?: string;
+  secureBagsLogo?: string;
+  headline: string;
+  subheadline?: string;
+  date?: string;
+}
+
+export interface IntroSlideContent {
+  heading: string;
+  body: string;
+  image?: string;
+  imagePosition?: 'left' | 'right';
+}
+
+export interface StatsSlideContent {
+  heading?: string;
+  stats: Array<{
+    value: number;
+    suffix?: string;
+    prefix?: string;
+    label: string;
+    description?: string;
+  }>;
+}
+
+export interface FeaturesSlideContent {
+  heading: string;
+  subheading?: string;
+  features: Array<{
+    icon?: string;
+    title: string;
+    description: string;
+  }>;
+}
+
+export interface TestimonialSlideContent {
+  quote: string;
+  author: string;
+  role?: string;
+  company?: string;
+  avatar?: string;
+}
+
+export interface ComparisonSlideContent {
+  heading: string;
+  before: { label: string; items: string[] };
+  after: { label: string; items: string[] };
+}
+
+export interface TimelineSlideContent {
+  heading: string;
+  milestones: Array<{
+    date: string;
+    title: string;
+    description?: string;
+  }>;
+}
+
+export interface MediaSlideContent {
+  mediaType: 'image' | 'gif' | 'video';
+  url: string;
+  caption?: string;
+  fit?: 'cover' | 'contain';
+}
+
+export interface BenefitsSlideContent {
+  heading: string;
+  benefits: Array<{
+    icon?: string;
+    title: string;
+    description: string;
+  }>;
+}
+
+export interface ClosingSlideContent {
+  heading: string;
+  subheading?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export type SlideContent =
+  | TitleSlideContent
+  | IntroSlideContent
+  | StatsSlideContent
+  | FeaturesSlideContent
+  | TestimonialSlideContent
+  | ComparisonSlideContent
+  | TimelineSlideContent
+  | MediaSlideContent
+  | BenefitsSlideContent
+  | ClosingSlideContent;
+
+export interface ProposalTheme {
+  primaryColor?: string;
+  accentColor?: string;
+  fontDisplay?: string;
+  fontBody?: string;
+}
+
+export interface Proposal {
+  id: string;
+  user_id: string;
+  slug: string;
+  title: string;
+  partnerName: string;
+  createdAt: string;
+  updatedAt: string;
+  status: 'draft' | 'published';
+  slides: SlideConfig[];
+  theme?: ProposalTheme;
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  displayName?: string;
+  avatarUrl?: string;
+}

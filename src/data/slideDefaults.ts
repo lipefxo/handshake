@@ -1,0 +1,118 @@
+import { v4 as uuidv4 } from 'uuid';
+import type { SlideConfig, SlideType } from '../types/proposal';
+
+export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: string; description: string }> = {
+  title: { label: 'Title', icon: '✦', description: 'Hero opening with partner logo & tagline' },
+  intro: { label: 'Introduction', icon: '◎', description: 'Who we are or partnership overview' },
+  stats: { label: 'Stats & Metrics', icon: '▲', description: 'Animated counters & key metrics' },
+  features: { label: 'Features', icon: '⬡', description: 'Product or service highlights' },
+  testimonial: { label: 'Testimonial', icon: '❝', description: 'Quote with attribution' },
+  comparison: { label: 'Comparison', icon: '⇄', description: 'Before & after or side-by-side' },
+  timeline: { label: 'Timeline', icon: '◉', description: 'Partnership roadmap & milestones' },
+  media: { label: 'Media', icon: '▣', description: 'Full-bleed image, GIF, or video' },
+  benefits: { label: 'Benefits', icon: '★', description: 'What the partner gets' },
+  closing: { label: 'Closing & CTA', icon: '→', description: 'Call to action & contact info' },
+};
+
+export function createDefaultSlide(type: SlideType): SlideConfig {
+  const defaults: Record<SlideType, SlideConfig['content']> = {
+    title: {
+      partnerName: 'Partner Company',
+      headline: 'A Strategic Partnership',
+      subheadline: 'Together, we grow.',
+      date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    },
+    intro: {
+      heading: 'Who We Are',
+      body: 'SecureBags is a leading provider of premium protective packaging solutions. We partner with world-class brands to deliver exceptional quality and unmatched reliability.',
+      imagePosition: 'right',
+    },
+    stats: {
+      heading: 'Our Track Record',
+      stats: [
+        { value: 500, suffix: '+', label: 'Partner Brands', description: 'Across 40 countries' },
+        { value: 98, suffix: '%', label: 'Client Retention', description: 'Year over year' },
+        { value: 12, prefix: '$', suffix: 'M', label: 'Revenue Generated', description: 'For our partners in 2024' },
+        { value: 4.9, label: 'Average Rating', description: 'On quality & service' },
+      ],
+    },
+    features: {
+      heading: 'What We Offer',
+      subheading: 'Premium solutions designed for your brand',
+      features: [
+        { icon: '🛡️', title: 'Premium Protection', description: 'Military-grade materials that safeguard your products in transit.' },
+        { icon: '🎨', title: 'Custom Branding', description: 'Full-bleed printing, custom shapes, and bespoke finishes.' },
+        { icon: '⚡', title: 'Fast Turnaround', description: '5-day standard production with expedited options available.' },
+        { icon: '🌱', title: 'Sustainable Materials', description: '100% recyclable and biodegradable options for eco-conscious brands.' },
+      ],
+    },
+    testimonial: {
+      quote: 'Partnering with SecureBags transformed our unboxing experience. Our customers notice — and they love it.',
+      author: 'Sarah Chen',
+      role: 'Head of Brand',
+      company: 'Acme Corp',
+    },
+    comparison: {
+      heading: 'The SecureBags Difference',
+      before: {
+        label: 'Before',
+        items: ['Generic packaging', 'Long lead times', 'Limited customization', 'High damage rates'],
+      },
+      after: {
+        label: 'With SecureBags',
+        items: ['On-brand unboxing', '5-day production', 'Full customization', '<0.1% damage rate'],
+      },
+    },
+    timeline: {
+      heading: 'Our Partnership Roadmap',
+      milestones: [
+        { date: 'Month 1', title: 'Onboarding & Design', description: 'Brand audit, custom design concepts, approval.' },
+        { date: 'Month 2', title: 'Production & Testing', description: 'First batch production, quality testing, refinement.' },
+        { date: 'Month 3', title: 'Launch', description: 'Full rollout with dedicated account management.' },
+        { date: 'Ongoing', title: 'Scale & Optimize', description: 'Quarterly reviews, new products, and co-marketing.' },
+      ],
+    },
+    media: {
+      mediaType: 'image',
+      url: '',
+      caption: '',
+      fit: 'cover',
+    },
+    benefits: {
+      heading: 'What You Get',
+      benefits: [
+        { icon: '💼', title: 'Dedicated Account Manager', description: 'A single point of contact who knows your brand inside out.' },
+        { icon: '📦', title: 'Priority Production', description: 'Jump the queue with guaranteed lead times.' },
+        { icon: '💰', title: 'Volume Pricing', description: 'Tiered discounts that grow with your order volume.' },
+        { icon: '📊', title: 'Performance Reports', description: 'Monthly analytics on packaging performance and ROI.' },
+      ],
+    },
+    closing: {
+      heading: "Let's Build Something Great",
+      subheading: "We're ready when you are. Reach out to start the conversation.",
+      ctaText: 'Schedule a Call',
+      ctaUrl: 'https://calendly.com/securebags',
+      contactName: 'Alex Rivera',
+      contactEmail: 'alex@securebags.com',
+      contactPhone: '+1 (555) 000-0000',
+    },
+  };
+
+  return {
+    id: uuidv4(),
+    type,
+    enabled: true,
+    content: defaults[type],
+    transition: 'slide-up',
+  };
+}
+
+export function createDefaultProposalSlides(): SlideConfig[] {
+  return [
+    createDefaultSlide('title'),
+    createDefaultSlide('stats'),
+    createDefaultSlide('features'),
+    createDefaultSlide('benefits'),
+    createDefaultSlide('closing'),
+  ];
+}
