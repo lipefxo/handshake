@@ -227,8 +227,11 @@ export function SlideSortableList({
       <div className="flex-1 min-h-0 overflow-y-auto admin-scroll px-3 pt-3 space-y-1.5">
         <div className="grid grid-cols-2 gap-1.5 pb-1.5">
           <button
+            type="button"
             onClick={() => setShowPicker(!showPicker)}
             className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 bg-white hover:bg-gray-50 transition-colors col-span-2"
+            aria-expanded={showPicker}
+            aria-controls="slide-type-picker"
           >
             <AppIcon icon="ui.add" className="w-3.5 h-3.5" />
             Add slide
@@ -236,7 +239,7 @@ export function SlideSortableList({
         </div>
 
         {showPicker && (
-          <div className="border border-gray-200 rounded-xl shadow-lg shadow-black/10 bg-white overflow-hidden z-20">
+          <div id="slide-type-picker" className="border border-gray-200 rounded-xl shadow-lg shadow-black/10 bg-white overflow-hidden z-20">
             <div className="p-2 border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-500 px-2 py-1">Choose slide type</p>
             </div>
@@ -246,6 +249,7 @@ export function SlideSortableList({
                 return (
                   <button
                     key={type}
+                    type="button"
                     onClick={() => {
                       onAdd(type);
                       setShowPicker(false);
@@ -285,6 +289,8 @@ export function SlideSortableList({
                       onClick={() => setCollapsedGroups((prev) => ({ ...prev, [group.id]: !isCollapsed }))}
                       className="h-5 w-5 rounded-md border border-gray-200 text-gray-500 transition-colors"
                       title={isCollapsed ? 'Expand group' : 'Collapse group'}
+                      aria-label={isCollapsed ? 'Expand group' : 'Collapse group'}
+                      aria-expanded={!isCollapsed}
                     >
                       <AppIcon icon="ui.chevron-down" className={`h-3.5 w-3.5 mx-auto transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                     </button>

@@ -70,12 +70,14 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
           />
           <div className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <button
+              type="button"
               onClick={() => fileRef.current?.click()}
               className="text-xs text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
             >
               Replace
             </button>
             <button
+              type="button"
               onClick={() => onChange('')}
               className="text-xs text-white bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-lg transition-colors"
             >
@@ -86,6 +88,12 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
       ) : (
         <div
           onClick={() => fileRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileRef.current?.click();
+            }
+          }}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
@@ -94,6 +102,9 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
               ? 'border-indigo-400 bg-indigo-50'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
           }`}
+          role="button"
+          tabIndex={0}
+          aria-label={`Upload ${label}`}
         >
           {uploading ? (
             <div className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />

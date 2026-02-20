@@ -42,7 +42,7 @@ export function SlideSortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
+      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-1 ${
         !slide.enabled ? 'opacity-50' : ''
       } ${
         isMergeTarget
@@ -52,6 +52,15 @@ export function SlideSortableItem({
             : 'border-gray-100 bg-white hover:border-gray-200'
       }`}
       onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      aria-label={`Select slide ${slide.customLabel || meta.label}`}
     >
       {isMergeTarget && (
         <div
@@ -62,10 +71,12 @@ export function SlideSortableItem({
 
       {/* Drag handle */}
       <button
+        type="button"
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
         className="flex-shrink-0 p-1 text-gray-300 cursor-grab active:cursor-grabbing"
+        aria-label="Drag to reorder slide"
       >
         <AppIcon icon="ui.drag" className="w-3.5 h-3.5" />
       </button>
@@ -88,10 +99,13 @@ export function SlideSortableItem({
 
       {/* Toggle */}
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
         className="flex-shrink-0 w-8 h-4 rounded-full transition-colors relative"
         style={{ background: slide.enabled ? '#6366f1' : '#d1d5db' }}
         title={slide.enabled ? 'Disable slide' : 'Enable slide'}
+        aria-label={slide.enabled ? 'Disable slide' : 'Enable slide'}
+        aria-pressed={slide.enabled}
       >
         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform`}
           style={{ left: slide.enabled ? 'calc(100% - 14px)' : '2px' }} />
@@ -99,8 +113,10 @@ export function SlideSortableItem({
 
       {/* Delete */}
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="flex-shrink-0 p-1 text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all"
+        className="flex-shrink-0 p-1 text-gray-300 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 transition-all"
+        aria-label="Delete slide"
       >
         <AppIcon icon="ui.close" className="w-3.5 h-3.5" />
       </button>

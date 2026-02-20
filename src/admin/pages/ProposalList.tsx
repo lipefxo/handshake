@@ -181,7 +181,7 @@ export function ProposalList() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="cursor-pointer"
+              className="cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
               role="link"
               tabIndex={0}
               onClick={() => navigate(`/admin/proposals/${proposal.id}`)}
@@ -192,7 +192,7 @@ export function ProposalList() {
                 }
               }}
             >
-              <Card className="transition-all hover:border-gray-200 hover:shadow-sm">
+              <Card className="transition-all duration-150 hover:border-gray-200 hover:shadow-sm">
                 <CardContent className="flex items-center gap-4 p-5">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${proposal.status === 'published' ? 'bg-green-400' : 'bg-gray-300'}`} />
 

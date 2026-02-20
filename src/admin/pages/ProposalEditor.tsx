@@ -242,7 +242,7 @@ export function ProposalEditor() {
           </p>
           <Link
             to="/admin"
-            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
           >
             <AppIcon icon="ui.sidebar-toggle" className="w-3.5 h-3.5" />
             Back to proposals
@@ -257,7 +257,7 @@ export function ProposalEditor() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
-        <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5">
+        <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2">
           <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
           Proposals
         </Link>

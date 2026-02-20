@@ -51,7 +51,7 @@ export function AdminLayout() {
               end={item.end}
               title={isSidebarExpanded ? undefined : item.label}
               className={({ isActive }) =>
-                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors mb-0.5 ${
+                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors duration-150 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-1 ${
                   isActive
                     ? 'bg-gray-100 text-gray-900 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'

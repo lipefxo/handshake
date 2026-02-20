@@ -1,6 +1,10 @@
 import { motion } from 'motion/react';
 import { useState, useRef, useCallback } from 'react';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const LIMITS = {
   companyName: 50,
@@ -71,7 +75,15 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className="flex-1 cursor-pointer rounded-xl border-2 border-dashed px-4 py-4 transition-colors text-center"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className="flex-1 cursor-pointer rounded-xl border-2 border-dashed px-4 py-4 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
         style={{
           borderColor: dragging ? '#6366f1' : '#e5e7eb',
           background: dragging ? 'rgba(99,102,241,0.04)' : '#fafafa',
@@ -91,14 +103,16 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       </div>
 
       {logo && (
-        <button
+        <Button
           type="button"
           onClick={() => onLogoChange(null)}
-          className="flex-shrink-0 text-xs text-gray-400 hover:text-red-500 transition-colors mt-1"
+          variant="ghost"
+          size="sm"
+          className="mt-1 h-auto flex-shrink-0 px-2 py-1 text-xs text-gray-500 hover:text-red-500"
           title="Remove logo"
         >
           Remove
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -129,10 +143,12 @@ export function ProposalSettings() {
         className="space-y-6"
       >
         {/* Brand */}
-        <section className="bg-white border border-gray-100 rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">Brand</h2>
-          <p className="text-xs text-gray-400 mb-5">Configure your company's identity for proposals.</p>
-          <div className="space-y-5">
+        <Card className="rounded-2xl border-gray-100">
+          <CardHeader>
+            <CardTitle className="text-sm text-gray-900">Brand</CardTitle>
+            <CardDescription className="text-xs">Configure your company's identity for proposals.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
             {/* Logo */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-2">Company logo</label>
@@ -148,14 +164,13 @@ export function ProposalSettings() {
                 </label>
                 <CharCounter value={companyName} max={LIMITS.companyName} />
               </div>
-              <input
-                className="admin-input"
+              <Input
+                className={cn(companyNameError && 'border-red-400 focus-visible:ring-red-200')}
                 value={companyName}
                 maxLength={LIMITS.companyName}
                 required
                 onChange={(e) => setCompanyName(e.target.value)}
                 onBlur={() => setCompanyNameTouched(true)}
-                style={companyNameError ? { borderColor: '#ef4444', boxShadow: '0 0 0 3px rgba(239,68,68,0.1)' } : {}}
               />
               {companyNameError && (
                 <p className="text-xs text-red-500 mt-1">{companyNameError}</p>
@@ -168,8 +183,7 @@ export function ProposalSettings() {
                 <label className="text-xs font-medium text-gray-600">Default contact email</label>
                 <CharCounter value={email} max={LIMITS.email} />
               </div>
-              <input
-                className="admin-input"
+              <Input
                 type="email"
                 placeholder="contact@securebags.com"
                 value={email}
@@ -177,29 +191,37 @@ export function ProposalSettings() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {/* Domain */}
-        <section className="bg-white border border-gray-100 rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">Public URL</h2>
-          <p className="text-xs text-gray-400 mb-5">Proposals are publicly accessible at this domain.</p>
+        <Card className="rounded-2xl border-gray-100">
+          <CardHeader>
+            <CardTitle className="text-sm text-gray-900">Public URL</CardTitle>
+            <CardDescription className="text-xs">Proposals are publicly accessible at this domain.</CardDescription>
+          </CardHeader>
+          <CardContent>
           <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
             <AppIcon icon="ui.external-link" className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-600 font-mono">partners.securebags.com/p/</span>
             <span className="text-sm text-gray-400 font-mono">{'{slug}'}</span>
           </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {/* Supabase info */}
-        <section className="bg-white border border-gray-100 rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">Database</h2>
-          <p className="text-xs text-gray-400 mb-4">Connected to Supabase.</p>
+        <Card className="rounded-2xl border-gray-100">
+          <CardHeader>
+            <CardTitle className="text-sm text-gray-900">Database</CardTitle>
+            <CardDescription className="text-xs">Connected to Supabase.</CardDescription>
+          </CardHeader>
+          <CardContent>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400" />
             <span className="text-xs text-gray-500">Connected</span>
           </div>
-        </section>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   );
