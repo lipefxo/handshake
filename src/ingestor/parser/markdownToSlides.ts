@@ -5,6 +5,7 @@ import { inferSlideType } from './slideTypeInferrer';
 import { extractContent } from './contentExtractor';
 import { validateSlides } from './validationLayer';
 import type { ValidationResult } from './validationLayer';
+import { sanitizeText } from '../../shared/utils/validation';
 
 export interface ParseResult {
   frontmatter: {
@@ -31,10 +32,10 @@ export function markdownToSlides(markdown: string): ParseResult {
   // Step 2: Extract frontmatter
   const fmRaw = parseFrontmatter(sections);
   const frontmatter = {
-    title: fmRaw['title'],
-    partner: fmRaw['partner'],
-    date: fmRaw['date'],
-    theme: fmRaw['theme'],
+    title: sanitizeText(fmRaw['title'] ?? ''),
+    partner: sanitizeText(fmRaw['partner'] ?? ''),
+    date: sanitizeText(fmRaw['date'] ?? ''),
+    theme: sanitizeText(fmRaw['theme'] ?? ''),
   };
 
   // Step 3: Filter to content sections
@@ -61,9 +62,6 @@ export function markdownToSlides(markdown: string): ParseResult {
   const slides: SlideConfig[] = typedSections.map((section) => {
     const content = extractContent(section);
 
-    // Auto-fix image URLs without protocol
-    fixImageUrls(content);
-
     return {
       id: generateUUID(),
       type: section.slideType,
@@ -77,15 +75,4 @@ export function markdownToSlides(markdown: string): ParseResult {
   const validation = validateSlides(slides);
 
   return { frontmatter, slides, validation, errors };
-}
-
-function fixImageUrls(content: unknown): void {
-  if (!content || typeof content !== 'object') return;
-  const obj = content as Record<string, unknown>;
-  for (const key of Object.keys(obj)) {
-    const val = obj[key];
-    if (typeof val === 'string' && (key === 'url' || key === 'image' || key === 'partnerLogo') && val && !val.startsWith('http')) {
-      obj[key] = 'https://' + val;
-    }
-  }
 }

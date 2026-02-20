@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
+import { KeyboardCommandOverlay } from './components/KeyboardCommandOverlay';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
@@ -21,10 +22,14 @@ export function AdminLayout() {
         }`}
       >
         {/* Logo */}
-        <div className={`py-4 border-b border-light ${isSidebarExpanded ? 'px-5' : 'px-3'}`}>
+        <div className={`py-4 border-b border-light ${isSidebarExpanded ? 'px-5' : 'px-2'}`}>
           <div className="flex items-center justify-between">
-            <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
-              <AppIcon icon="ui.home" className="w-4 h-4 text-white" />
+            <div
+              className={`rounded-lg bg-gray-900 flex items-center justify-center shrink-0 ${
+                isSidebarExpanded ? 'w-7 h-7' : 'w-6 h-6'
+              }`}
+            >
+              <AppIcon icon="ui.home" className={`${isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-white`} />
             </div>
             {isSidebarExpanded && <span className="font-semibold text-gray-900 text-sm">Handshake</span>}
             <Button
@@ -32,11 +37,14 @@ export function AdminLayout() {
               onClick={() => setIsSidebarExpanded((prev) => !prev)}
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-gray-500 hover:text-gray-900"
+              className={`text-gray-500 hover:text-gray-900 shrink-0 ${isSidebarExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
               aria-label={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               title={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >
-              <AppIcon icon="ui.sidebar-toggle" className={`w-4 h-4 transition-transform ${isSidebarExpanded ? '' : 'rotate-180'}`} />
+              <AppIcon
+                icon="ui.sidebar-toggle"
+                className={`${isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} transition-transform ${isSidebarExpanded ? '' : 'rotate-180'}`}
+              />
             </Button>
           </div>
         </div>
@@ -98,6 +106,7 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <KeyboardCommandOverlay />
     </div>
   );
 }

@@ -3,12 +3,18 @@ import type { ClosingSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { AppIcon } from '../../../shared/icons/AppIcon';
+import { sanitizeText, validateUrl } from '../../../shared/utils/validation';
 
 interface ClosingSlideProps {
   content: ClosingSlideContent;
 }
 
 export function ClosingSlide({ content }: ClosingSlideProps) {
+  const safeCtaText = sanitizeText(content.ctaText ?? '');
+  const safeCtaUrl = content.ctaUrl ? validateUrl(content.ctaUrl) : { value: '', isValid: false };
+  const safeContactEmail = sanitizeText(content.contactEmail ?? '');
+  const safeContactPhone = sanitizeText(content.contactPhone ?? '').replace(/[^\d+\-().\s]/g, '');
+
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden"
@@ -53,11 +59,11 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
           </motion.p>
         )}
 
-        {content.ctaText && (
+        {safeCtaText && (
           <motion.div variants={fadeUpChild}>
-            {content.ctaUrl ? (
+            {safeCtaUrl.isValid ? (
               <a
-                href={content.ctaUrl}
+                href={safeCtaUrl.value}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold transition-all"
@@ -67,7 +73,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                {content.ctaText}
+                {safeCtaText}
                 <AppIcon icon="ui.chevron-right" className="w-4 h-4" />
               </a>
             ) : (
@@ -79,7 +85,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                {content.ctaText}
+                {safeCtaText}
               </span>
             )}
           </motion.div>
@@ -101,24 +107,24 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
               </p>
             )}
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              {content.contactEmail && (
+              {safeContactEmail && (
                 <a
-                  href={`mailto:${content.contactEmail}`}
+                  href={`mailto:${encodeURIComponent(safeContactEmail)}`}
                   className="text-sm transition-colors hover:opacity-100"
                   style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
                 >
-                  {content.contactEmail}
+                  {safeContactEmail}
                 </a>
               )}
-              {content.contactPhone && (
+              {safeContactPhone && (
                 <>
                   <span style={{ color: 'var(--color-border)' }}>·</span>
                   <a
-                    href={`tel:${content.contactPhone}`}
+                    href={`tel:${safeContactPhone}`}
                     className="text-sm"
                     style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
                   >
-                    {content.contactPhone}
+                    {safeContactPhone}
                   </a>
                 </>
               )}

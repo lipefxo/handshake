@@ -4,9 +4,10 @@ import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import type { AppIconId } from '../../shared/icons/iconRegistry';
+import { FIELD_LIMITS } from '../../shared/utils/validation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input as BaseInput } from '@/components/ui/input';
+import { Textarea as BaseTextarea } from '@/components/ui/textarea';
 
 interface SlideConfiguratorProps {
   slide: SlideConfig;
@@ -32,6 +33,30 @@ const BENEFIT_ICON_OPTIONS: IconOption[] = [
 ];
 
 const selectClassName = 'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50';
+
+function Input({
+  maxLength,
+  type,
+  ...props
+}: React.ComponentProps<typeof BaseInput>) {
+  const defaultMaxLength = type === 'email' || type === 'tel'
+    ? FIELD_LIMITS.contactField
+    : FIELD_LIMITS.slideHeading;
+  return (
+    <BaseInput
+      type={type}
+      maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
+      {...props}
+    />
+  );
+}
+
+function Textarea({
+  maxLength = FIELD_LIMITS.slideBody,
+  ...props
+}: React.ComponentProps<typeof BaseTextarea>) {
+  return <BaseTextarea maxLength={maxLength} {...props} />;
+}
 
 export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
   const updateContent = (updates: Record<string, unknown>) => {
@@ -507,7 +532,7 @@ function ClosingFields({ content, onChange }: { content: ClosingSlideContent; on
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <FieldGroup label="Subheading"><Textarea value={content.subheading || ''} onChange={(e) => onChange({ subheading: e.target.value })} rows={2} /></FieldGroup>
       <FieldGroup label="CTA Button Text"><Input value={content.ctaText || ''} onChange={(e) => onChange({ ctaText: e.target.value })} placeholder="Schedule a Call" /></FieldGroup>
-      <FieldGroup label="CTA URL"><Input value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
+      <FieldGroup label="CTA URL"><Input maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
       <div className="pt-2 border-t border-gray-100">
         <p className="text-xs font-medium text-gray-500 mb-3">Contact Info</p>
         <div className="space-y-3">

@@ -39,12 +39,6 @@
   .font-body {
     font-family: var(--font-body);
   }
-  .bg-primary {
-    background-color: var(--color-bg-primary);
-  }
-  .bg-secondary {
-    background-color: var(--color-bg-secondary);
-  }
   .bg-surface {
     background-color: var(--color-bg-surface);
   }
@@ -53,12 +47,6 @@
   }
   .bg-admin-surface {
     background-color: #ffffff;
-  }
-  .text-primary {
-    color: var(--color-text-primary);
-  }
-  .text-secondary {
-    color: var(--color-text-secondary);
   }
   .text-tertiary {
     color: var(--color-text-tertiary);

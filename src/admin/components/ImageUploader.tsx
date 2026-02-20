@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useAuthStore } from '../../store/authStore';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { sanitizeSvg, validateImageUpload } from '../../shared/utils/validation';
 
 interface ImageUploaderProps {
   value?: string;
@@ -14,21 +15,34 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
   const { user } = useAuthStore();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File) => {
     if (!file || !user) return;
+    const validation = validateImageUpload(file);
+    if (!validation.valid) {
+      setUploadError(validation.error ?? 'Invalid file.');
+      return;
+    }
+
+    setUploadError(null);
     setUploading(true);
 
     const ext = file.name.split('.').pop();
     const path = `${user.id}/${Date.now()}.${ext}`;
+    const fileToUpload =
+      file.type === 'image/svg+xml'
+        ? new File([await sanitizeSvg(file)], file.name, { type: 'image/svg+xml' })
+        : file;
 
     const { data, error } = await supabase.storage
       .from('proposal-assets')
-      .upload(path, file, { upsert: true });
+      .upload(path, fileToUpload, { upsert: true });
 
     if (error) {
       console.error('Upload error:', error);
+      setUploadError('Failed to upload image. Please try again.');
       setUploading(false);
       return;
     }
@@ -124,6 +138,9 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
         onChange={handleChange}
         className="hidden"
       />
+      {uploadError && (
+        <p className="mt-1.5 text-xs text-red-600">{uploadError}</p>
+      )}
     </div>
   );
 }

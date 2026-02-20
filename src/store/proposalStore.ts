@@ -6,6 +6,7 @@ import { useAuthStore } from './authStore';
 import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
 import type { ThemeId } from '../themes/themeTypes';
 import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
+import { generateSafeSlug, sanitizeText, validateUrl } from '../shared/utils/validation';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -51,6 +52,56 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
   };
 }
 
+const GENERIC_FETCH_ERROR = 'Failed to load proposals. Please try again.';
+const GENERIC_SAVE_ERROR = 'Failed to save proposal. Please try again.';
+const GENERIC_DELETE_ERROR = 'Failed to delete proposal. Please try again.';
+
+function getSafeErrorMessage(error: unknown, fallback: string): string {
+  const code = (error as { code?: string } | null)?.code;
+  if (code === '23505') {
+    return 'A proposal with this URL already exists. Try a different name.';
+  }
+
+  return fallback;
+}
+
+function sanitizeUnknown(value: unknown, key = ''): unknown {
+  if (typeof value === 'string') {
+    const lowerKey = key.toLowerCase();
+    if (lowerKey.includes('url') || lowerKey.includes('image') || lowerKey.includes('logo') || lowerKey === 'src') {
+      const validated = validateUrl(value);
+      return validated.isValid ? validated.value : '';
+    }
+    return sanitizeText(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeUnknown(item, key));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([entryKey, entryValue]) => [
+        entryKey,
+        sanitizeUnknown(entryValue, entryKey),
+      ]),
+    );
+  }
+
+  return value;
+}
+
+function sanitizeSlides(slides: SlideConfig[]): SlideConfig[] {
+  return slides.map((slide) => ({
+    ...slide,
+    content: sanitizeUnknown(slide.content) as SlideConfig['content'],
+  }));
+}
+
+function getCurrentUserId(): string | null {
+  return useAuthStore.getState().user?.id ?? null;
+}
+
 export const useProposalStore = create<ProposalStore>((set, get) => ({
   proposals: [],
   loading: false,
@@ -63,22 +114,50 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      set({ error: error.message, loading: false });
+      console.error('fetchProposals failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_FETCH_ERROR), loading: false });
       return;
     }
     set({ proposals: (data || []).map(dbRowToProposal), loading: false });
   },
 
   createProposal: async (proposal) => {
-    const normalizedSlides = normalizeSlidesIconIds(proposal.slides);
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId || currentUserId !== proposal.user_id) {
+      set({ error: 'Unauthorized: cannot create proposal for another user.' });
+      return null;
+    }
+
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count, error: rateLimitError } = await supabase
+      .from('proposals')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUserId)
+      .gte('created_at', oneHourAgo);
+
+    if (rateLimitError) {
+      console.error('createProposal rate-limit check failed', rateLimitError);
+      set({ error: GENERIC_SAVE_ERROR });
+      return null;
+    }
+
+    if ((count ?? 0) >= 20) {
+      set({ error: 'Rate limit: too many proposals created. Try again later.' });
+      return null;
+    }
+
+    const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(proposal.slides));
+    const safeTitle = sanitizeText(proposal.title);
+    const safePartnerName = sanitizeText(proposal.partnerName);
+    const safeSlug = generateSafeSlug(proposal.slug);
 
     const { data, error } = await supabase
       .from('proposals')
       .insert({
         user_id: proposal.user_id,
-        slug: proposal.slug,
-        title: proposal.title,
-        partner_name: proposal.partnerName,
+        slug: safeSlug,
+        title: safeTitle,
+        partner_name: safePartnerName,
         status: proposal.status,
         slides: normalizedSlides,
         theme_id: proposal.themeId,
@@ -86,7 +165,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .select()
       .single();
     if (error) {
-      set({ error: error.message });
+      console.error('createProposal failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return null;
     }
     const newProposal = dbRowToProposal(data);
@@ -95,12 +175,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   updateProposal: async (id, updates) => {
+    const currentUserId = getCurrentUserId();
+    const existingProposal = get().proposals.find((proposal) => proposal.id === id);
+    if (!existingProposal || !currentUserId || existingProposal.user_id !== currentUserId) {
+      set({ error: 'Unauthorized: cannot update proposal you do not own.' });
+      throw new Error('Unauthorized: cannot update proposal you do not own.');
+    }
+
     const dbUpdates: Record<string, unknown> = {};
-    if (updates.title !== undefined) dbUpdates.title = updates.title;
-    if (updates.partnerName !== undefined) dbUpdates.partner_name = updates.partnerName;
-    if (updates.slug !== undefined) dbUpdates.slug = updates.slug;
+    if (updates.title !== undefined) dbUpdates.title = sanitizeText(updates.title);
+    if (updates.partnerName !== undefined) dbUpdates.partner_name = sanitizeText(updates.partnerName);
+    if (updates.slug !== undefined) dbUpdates.slug = generateSafeSlug(updates.slug);
     if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.slides !== undefined) dbUpdates.slides = normalizeSlidesIconIds(updates.slides);
+    if (updates.slides !== undefined) dbUpdates.slides = normalizeSlidesIconIds(sanitizeSlides(updates.slides));
     if (updates.themeId !== undefined) dbUpdates.theme_id = updates.themeId;
 
     const { error } = await supabase
@@ -108,7 +195,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .update(dbUpdates)
       .eq('id', id);
     if (error) {
-      set({ error: error.message });
+      console.error('updateProposal failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return;
     }
     set((state) => ({
@@ -117,7 +205,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
           ? {
               ...p,
               ...updates,
-              slides: updates.slides ? normalizeSlidesIconIds(updates.slides) : p.slides,
+              title: updates.title !== undefined ? sanitizeText(updates.title) : p.title,
+              partnerName: updates.partnerName !== undefined ? sanitizeText(updates.partnerName) : p.partnerName,
+              slug: updates.slug !== undefined ? generateSafeSlug(updates.slug) : p.slug,
+              slides: updates.slides ? normalizeSlidesIconIds(sanitizeSlides(updates.slides)) : p.slides,
             }
           : p
       ),
@@ -125,9 +216,17 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   deleteProposal: async (id) => {
+    const currentUserId = getCurrentUserId();
+    const existingProposal = get().proposals.find((proposal) => proposal.id === id);
+    if (!existingProposal || !currentUserId || existingProposal.user_id !== currentUserId) {
+      set({ error: 'Unauthorized: cannot delete proposal you do not own.' });
+      return false;
+    }
+
     const { error } = await supabase.from('proposals').delete().eq('id', id);
     if (error) {
-      set({ error: error.message });
+      console.error('deleteProposal failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_DELETE_ERROR) });
       return false;
     }
     set((state) => ({
@@ -137,10 +236,12 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   getProposalBySlug: async (slug) => {
+    const safeSlug = generateSafeSlug(slug);
     const { data, error } = await supabase
       .from('proposals')
       .select('*')
-      .eq('slug', slug)
+      .eq('slug', safeSlug)
+      .eq('status', 'published')
       .single();
     if (error || !data) return null;
     return dbRowToProposal(data);
@@ -150,15 +251,15 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const user = useAuthStore.getState().user;
     if (!user) return null;
 
-    const partnerName = frontmatter.partner || 'Untitled Partner';
-    const title = frontmatter.title || `${partnerName} Proposal`;
+    const partnerName = sanitizeText(frontmatter.partner || 'Untitled Partner');
+    const title = sanitizeText(frontmatter.title || `${partnerName} Proposal`);
     const themeId = isValidThemeId(frontmatter.theme) ? frontmatter.theme : defaultThemeId;
 
-    const normalizedSlides = normalizeSlidesIconIds(slides);
+    const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(slides));
 
     const proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
       user_id: user.id,
-      slug: generateSlug(partnerName),
+      slug: generateSafeSlug(generateSlug(partnerName)),
       title,
       partnerName,
       status: 'draft',
@@ -181,7 +282,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .single();
 
     if (error) {
-      set({ error: error.message });
+      console.error('createFromMarkdown failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return null;
     }
 
@@ -191,8 +293,14 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   importMarkdownToProposal: async (proposalId, newSlides, mode) => {
-    const normalizedNewSlides = normalizeSlidesIconIds(newSlides);
+    const currentUserId = getCurrentUserId();
     const existing = get().proposals.find((p) => p.id === proposalId);
+    if (!existing || !currentUserId || existing.user_id !== currentUserId) {
+      set({ error: 'Unauthorized: cannot update proposal you do not own.' });
+      return;
+    }
+
+    const normalizedNewSlides = normalizeSlidesIconIds(sanitizeSlides(newSlides));
     const updatedSlides =
       mode === 'replace'
         ? normalizedNewSlides
@@ -204,7 +312,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .eq('id', proposalId);
 
     if (error) {
-      set({ error: error.message });
+      console.error('importMarkdownToProposal failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return;
     }
 
