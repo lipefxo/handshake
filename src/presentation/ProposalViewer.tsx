@@ -8,6 +8,7 @@ import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
 import { useDialKit } from 'dialkit';
+import { getTransitionVariants } from '../shared/utils/animations';
 
 export function ProposalViewer() {
   const { slug } = useParams<{ slug: string }>();
@@ -15,6 +16,7 @@ export function ProposalViewer() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
 
   const settings = useDialKit('Presentation', {
     appearance: {
@@ -40,8 +42,36 @@ export function ProposalViewer() {
     });
   }, [slug, getProposalBySlug]);
 
+  useEffect(() => {
+    const isPreviewMode = window.location.hash.includes('preview');
+    if (!isPreviewMode) return;
+
+    const handleEditorPreviewUpdate = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'handshake-editor-preview-update') return;
+      if (event.data?.proposal) {
+        setProposal(event.data.proposal as Proposal);
+        setLoading(false);
+        setError('');
+      }
+      setPreviewSelectedSlideId(event.data?.selectedSlideId ?? null);
+    };
+
+    window.addEventListener('message', handleEditorPreviewUpdate);
+    window.parent?.postMessage({ type: 'handshake-editor-preview-ready' }, window.location.origin);
+    return () => window.removeEventListener('message', handleEditorPreviewUpdate);
+  }, []);
+
   const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
   const { current, goTo, containerRef } = useSlideNavigation(enabledSlides.length);
+
+  useEffect(() => {
+    if (!previewSelectedSlideId || enabledSlides.length === 0) return;
+    const selectedIndex = enabledSlides.findIndex((slide) => slide.id === previewSelectedSlideId);
+    if (selectedIndex >= 0) {
+      requestAnimationFrame(() => goTo(selectedIndex));
+    }
+  }, [previewSelectedSlideId, enabledSlides, goTo]);
 
   if (loading) {
     return (
@@ -90,9 +120,13 @@ export function ProposalViewer() {
       <div ref={containerRef} className="slide-container">
         {enabledSlides.map((slide, index) => (
           <motion.section
-            key={slide.id}
+            key={`${slide.id}-${slide.transition ?? 'slide-up'}`}
             className="slide-section"
             style={{ background: slide.backgroundOverride || undefined }}
+            variants={getTransitionVariants(slide.transition)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.6 }}
           >
             <SlideRenderer slide={slide} index={index} />
           </motion.section>

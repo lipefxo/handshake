@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
@@ -13,7 +13,13 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export function ProposalEditor() {
   const { id } = useParams<{ id: string }>();
-  const { proposals, updateProposal } = useProposalStore();
+  const {
+    proposals,
+    loading: proposalsLoading,
+    error: proposalsError,
+    fetchProposals,
+    updateProposal,
+  } = useProposalStore();
 
   const editorValues = useDialKit('Editor', {
     autosave: {
@@ -30,8 +36,7 @@ export function ProposalEditor() {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [isPreviewExpanded, setIsPreviewExpanded] = useState(editorValues.preview.showPanel);
-  const [previewRefreshNonce, setPreviewRefreshNonce] = useState(0);
+  const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Load proposal from store
   useEffect(() => {
@@ -44,6 +49,11 @@ export function ProposalEditor() {
       }
     }
   }, [id, proposals]);
+
+  useEffect(() => {
+    if (proposals.length > 0) return;
+    void fetchProposals();
+  }, [fetchProposals, proposals.length]);
 
   const selectedSlide = proposal?.slides.find((s) => s.id === selectedSlideId) ?? null;
 
@@ -85,9 +95,6 @@ export function ProposalEditor() {
     if (!proposal) return;
     const slides = proposal.slides.map((s) => s.id === id ? { ...s, ...updates } : s);
     updateLocal({ slides });
-    if (Object.prototype.hasOwnProperty.call(updates, 'transition')) {
-      setPreviewRefreshNonce((prev) => prev + 1);
-    }
   };
 
   const handleToggleSlide = (id: string) => {
@@ -125,10 +132,63 @@ export function ProposalEditor() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  if (!proposal) {
+  const postPreviewUpdate = useCallback(() => {
+    if (!proposal) return;
+    const iframeWindow = previewIframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+    iframeWindow.postMessage(
+      {
+        type: 'handshake-editor-preview-update',
+        proposal,
+        selectedSlideId,
+      },
+      window.location.origin
+    );
+  }, [proposal, selectedSlideId]);
+
+  useEffect(() => {
+    postPreviewUpdate();
+  }, [postPreviewUpdate]);
+
+  useEffect(() => {
+    const handlePreviewReady = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'handshake-editor-preview-ready') return;
+      postPreviewUpdate();
+    };
+
+    window.addEventListener('message', handlePreviewReady);
+    return () => window.removeEventListener('message', handlePreviewReady);
+  }, [postPreviewUpdate]);
+
+  if (!proposal && proposalsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!proposal) {
+    return (
+      <div className="h-full flex items-center justify-center px-6">
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-700">
+            {proposalsError ? 'Could not load this proposal.' : 'Proposal not found.'}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {proposalsError ? proposalsError : 'It may have been deleted or you may not have access.'}
+          </p>
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to proposals
+          </Link>
+        </div>
       </div>
     );
   }
@@ -154,7 +214,8 @@ export function ProposalEditor() {
           <input
             className="text-sm text-gray-400 bg-transparent border-0 outline-none focus:bg-gray-50 px-2 py-1 rounded-lg transition-colors"
             value={proposal.partnerName}
-            onChange={(e) => updateLocal({ partnerName: e.target.value, slug: generateSlug(e.target.value) })}
+            onChange={(e) => updateLocal({ partnerName: e.target.value })}
+            onBlur={(e) => updateLocal({ slug: generateSlug(e.target.value) })}
             placeholder="Partner name..."
           />
         </div>
@@ -213,8 +274,9 @@ export function ProposalEditor() {
       <div className="flex-1 flex overflow-hidden">
         {/* Slide list — left panel */}
         <div className="w-[19.5rem] flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
-          <div className="px-3 pt-3 pb-1">
+          <div className="px-3 pt-3 pb-1 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1">Slides</p>
+            <span className="text-[11px] text-gray-400 px-1">{proposal.slides.filter((s) => s.enabled).length} active</span>
           </div>
           <SlideSortableList
             slides={proposal.slides}
@@ -227,10 +289,50 @@ export function ProposalEditor() {
           />
         </div>
 
-        {/* Configurator — middle panel */}
-        <div className="flex-1 overflow-y-auto admin-scroll">
+        <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] overflow-hidden">
+          {/* Preview panel — centered and responsive */}
+          {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
+            <div className="h-full w-full max-w-[72rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
+              {/* Preview header */}
+              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-white">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
+              </div>
+              {/* Mini preview */}
+              {selectedSlide && selectedSlide.enabled ? (
+                <div className="flex-1 overflow-auto admin-scroll p-2 flex flex-col gap-2">
+                  <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                    <iframe
+                      ref={previewIframeRef}
+                      src={`/p/${proposal.slug}#preview`}
+                      onLoad={postPreviewUpdate}
+                      className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+                      style={{ transform: 'scale(0.675)', transformOrigin: 'top left', width: '148.15%', height: '148.15%' }}
+                      title="Slide preview"
+                    />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <a
+                      href={`/p/${proposal.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-200"
+                    >
+                      Open full preview ↗
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-xs text-gray-400">No preview available</p>
+                </div>
+              )}
+            </div>
+          </div>}
+
+          {/* Configurator — right panel */}
+          <div className="flex-1 min-w-0 overflow-y-auto admin-scroll border-l border-gray-100">
           {selectedSlide ? (
-            <div className="max-w-lg mx-auto px-6 py-6">
+            <div className="max-w-lg mx-auto px-3 py-3">
               <SlideConfigurator
                 slide={selectedSlide}
                 onChange={(updates) => updateSlide(selectedSlide.id, updates)}
@@ -245,74 +347,8 @@ export function ProposalEditor() {
             </div>
           )}
         </div>
-
-        {/* Preview panel — right (togglable via dialkit) */}
-        {editorValues.preview.showPanel && isPreviewExpanded && <div className="w-80 flex-shrink-0 border-l border-gray-100 bg-admin relative overflow-hidden">
-          <div className="absolute inset-0 flex flex-col">
-            {/* Preview header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between bg-white">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
-                <button
-                  type="button"
-                  onClick={() => setIsPreviewExpanded(false)}
-                  className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                  aria-label="Collapse preview"
-                  title="Collapse preview"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            {/* Mini preview */}
-            {selectedSlide && selectedSlide.enabled ? (
-              <div className="flex-1 overflow-auto admin-scroll p-4 flex flex-col gap-3">
-                <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
-                  <iframe
-                    key={`${selectedSlide.id}-${selectedSlide.transition ?? 'none'}-${previewRefreshNonce}`}
-                    src={`/p/${proposal.slug}#preview`}
-                    className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                    style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
-                    title="Slide preview"
-                  />
-                </div>
-                <div className="flex items-center justify-center">
-                  <a
-                    href={`/p/${proposal.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-200"
-                  >
-                    Open full preview ↗
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-xs text-gray-400">No preview available</p>
-              </div>
-            )}
-          </div>
-        </div>}
-        {editorValues.preview.showPanel && !isPreviewExpanded && (
-          <div className="flex-shrink-0 border-l border-gray-100 bg-admin flex items-start justify-center py-3 px-2">
-            <button
-              type="button"
-              onClick={() => setIsPreviewExpanded(true)}
-              className="p-1.5 rounded-md text-gray-500 hover:text-gray-800 hover:bg-white transition-colors"
-              aria-label="Expand preview"
-              title="Expand preview"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        )}
       </div>
+    </div>
     </div>
   );
 }
