@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { Proposal } from '../types/proposal';
@@ -99,7 +99,7 @@ function ProposalViewerContent() {
   }, []);
 
   const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
-  const { current, goTo, containerRef } = useSlideNavigation(enabledSlides.length);
+  const { current, goTo, next, containerRef } = useSlideNavigation(enabledSlides.length);
 
   useEffect(() => {
     if (!previewSelectedSlideId || enabledSlides.length === 0) return;
@@ -108,6 +108,18 @@ function ProposalViewerContent() {
       requestAnimationFrame(() => goTo(selectedIndex));
     }
   }, [previewSelectedSlideId, enabledSlides, goTo]);
+
+  const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    const interactiveElement = target.closest(
+      'a, button, input, textarea, select, label, [role="button"], [data-no-slide-advance]'
+    );
+
+    if (interactiveElement) return;
+    next();
+  };
 
   return (
     <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} className="contents">
@@ -147,6 +159,7 @@ function ProposalViewerContent() {
             ref={containerRef}
             className="slide-container"
             style={{ backgroundColor: 'var(--color-bg-primary)' }}
+            onClick={handleContainerClick}
           >
             {enabledSlides.map((slide, index) => (
               <motion.section

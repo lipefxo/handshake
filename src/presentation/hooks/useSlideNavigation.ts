@@ -3,25 +3,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export function useSlideNavigation(total: number) {
   const [current, setCurrent] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isScrolling = useRef(false);
+  const wheelDeltaAccumulator = useRef(0);
+  const wheelLockUntil = useRef(0);
+  const pendingTargetIndex = useRef<number | null>(null);
+  const pendingTargetDeadline = useRef(0);
+
+  const clampIndex = useCallback((index: number) => Math.max(0, Math.min(index, total - 1)), [total]);
 
   const goTo = useCallback((index: number) => {
     const container = containerRef.current;
     if (!container) return;
     const slides = container.querySelectorAll<HTMLElement>('.slide-section');
-    const slide = slides[index];
+    const targetIndex = clampIndex(index);
+    const slide = slides[targetIndex];
     if (slide) {
+      pendingTargetIndex.current = targetIndex;
+      pendingTargetDeadline.current = Date.now() + 650;
       slide.scrollIntoView({ behavior: 'smooth' });
-      setCurrent(index);
+      setCurrent(targetIndex);
     }
-  }, []);
+  }, [clampIndex]);
 
   const next = useCallback(() => {
-    goTo(Math.min(current + 1, total - 1));
-  }, [current, total, goTo]);
+    goTo(current + 1);
+  }, [current, goTo]);
 
   const prev = useCallback(() => {
-    goTo(Math.max(current - 1, 0));
+    goTo(current - 1);
   }, [current, goTo]);
 
   useEffect(() => {
@@ -49,18 +57,65 @@ export function useSlideNavigation(total: number) {
     if (!container) return;
 
     const handleScroll = () => {
-      if (isScrolling.current) return;
       const scrollTop = container.scrollTop;
       const height = container.clientHeight;
-      const index = Math.round(scrollTop / height);
+
+      if (height <= 0) return;
+      const rawIndex = scrollTop / height;
+      const targetIndex = pendingTargetIndex.current;
+
+      if (targetIndex !== null) {
+        const hasReachedTarget = Math.abs(rawIndex - targetIndex) < 0.16;
+        const hasTimedOut = Date.now() > pendingTargetDeadline.current;
+
+        if (hasReachedTarget || hasTimedOut) {
+          pendingTargetIndex.current = null;
+          pendingTargetDeadline.current = 0;
+          setCurrent(clampIndex(Math.round(rawIndex)));
+        }
+        return;
+      }
+
+      const index = clampIndex(Math.round(rawIndex));
       if (index !== current) {
-        setCurrent(Math.max(0, Math.min(index, total - 1)));
+        setCurrent(index);
       }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [current, total]);
+  }, [current, clampIndex]);
+
+  // Wheel support routed through goTo for smooth, consistent transitions.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const WHEEL_TRIGGER_THRESHOLD = 48;
+    const WHEEL_COOLDOWN_MS = 420;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (total <= 1) return;
+
+      if (Math.abs(event.deltaY) < 2) return;
+      event.preventDefault();
+
+      const now = Date.now();
+      if (now < wheelLockUntil.current) return;
+
+      wheelDeltaAccumulator.current += event.deltaY;
+      if (Math.abs(wheelDeltaAccumulator.current) < WHEEL_TRIGGER_THRESHOLD) return;
+
+      if (wheelDeltaAccumulator.current > 0) next();
+      else prev();
+
+      wheelDeltaAccumulator.current = 0;
+      wheelLockUntil.current = now + WHEEL_COOLDOWN_MS;
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [next, prev, total]);
 
   // Touch/swipe support
   useEffect(() => {
@@ -89,5 +144,5 @@ export function useSlideNavigation(total: number) {
     };
   }, [next, prev]);
 
-  return { current, goTo, containerRef };
+  return { current, goTo, next, prev, containerRef };
 }

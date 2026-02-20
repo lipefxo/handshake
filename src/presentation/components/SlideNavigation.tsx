@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useTheme } from '../../themes/useTheme';
 
@@ -10,39 +11,53 @@ interface SlideNavigationProps {
 export function SlideNavigation({ current, total, onNavigate }: SlideNavigationProps) {
   const { theme } = useTheme();
   const navDotStyle = theme.style.navDotStyle;
+  const [hoveredDot, setHoveredDot] = useState<number | null>(null);
+  const [focusedDot, setFocusedDot] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setFocusedDot(null);
+
+    const activeElement = document.activeElement;
+    if (
+      activeElement instanceof HTMLElement &&
+      containerRef.current?.contains(activeElement)
+    ) {
+      activeElement.blur();
+    }
+  }, [current]);
 
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
+    <div ref={containerRef} className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
       {Array.from({ length: total }).map((_, i) => (
         <button
           key={i}
           onClick={() => onNavigate(i)}
-          className="group relative flex items-center justify-center w-5 h-5"
+          onMouseEnter={() => setHoveredDot(i)}
+          onMouseLeave={() => setHoveredDot(null)}
+          onFocus={() => setFocusedDot(i)}
+          onBlur={() => setFocusedDot(null)}
+          className="group relative flex items-center justify-center w-6 h-6 cursor-pointer rounded-full focus-visible:outline-none"
           aria-label={`Go to slide ${i + 1}`}
+          aria-current={i === current ? 'true' : undefined}
         >
           <motion.div
             className={navDotStyle === 'dash' ? 'rounded-sm' : 'rounded-full'}
             animate={{
-              width: navDotStyle === 'dash' ? (i === current ? 16 : 8) : (i === current ? 7 : 5),
-              height: navDotStyle === 'dash' ? 4 : (i === current ? 7 : 5),
+              width: navDotStyle === 'dash' ? (i === current ? 18 : 9) : (i === current ? 8 : 6),
+              height: navDotStyle === 'dash' ? 4 : (i === current ? 8 : 6),
               backgroundColor:
-                navDotStyle === 'outline'
-                  ? i === current
+                i === current
+                  ? theme.colors.accent
+                  : hoveredDot === i || focusedDot === i
                     ? theme.colors.accentMuted
-                    : 'transparent'
-                  : i === current
-                    ? theme.colors.accent
                     : theme.colors.textTertiary,
-              borderColor:
-                navDotStyle === 'outline'
-                  ? i === current
-                    ? theme.colors.accent
-                    : theme.colors.border
-                  : 'transparent',
-              borderWidth: navDotStyle === 'outline' ? 1.5 : 0,
+              borderColor: hoveredDot === i || focusedDot === i || i === current ? theme.colors.accent : theme.colors.border,
+              borderWidth: hoveredDot === i || focusedDot === i || i === current ? 1.5 : 1,
+              opacity: i === current || hoveredDot === i || focusedDot === i ? 1 : 0.62,
+              scale: i === current ? 1.06 : hoveredDot === i || focusedDot === i ? 1.12 : 0.94,
             }}
-            transition={{ duration: 0.2 }}
-            whileHover={{ backgroundColor: theme.colors.accentMuted }}
+            transition={{ duration: 0.18 }}
           />
         </button>
       ))}
