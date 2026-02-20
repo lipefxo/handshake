@@ -3,6 +3,9 @@ import type { Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateSlug } from '../shared/utils/helpers';
 import { useAuthStore } from './authStore';
+import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
+import type { ThemeId } from '../themes/themeTypes';
+import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -15,7 +18,7 @@ interface ProposalStore {
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
   createFromMarkdown: (
     markdown: string,
-    frontmatter: { title?: string; partner?: string; date?: string },
+    frontmatter: { title?: string; partner?: string; date?: string; theme?: string },
     slides: SlideConfig[],
   ) => Promise<Proposal | null>;
   importMarkdownToProposal: (
@@ -25,7 +28,15 @@ interface ProposalStore {
   ) => Promise<void>;
 }
 
+function resolveThemeId(row: Record<string, unknown>): ThemeId {
+  const rawThemeId = row.theme_id;
+  if (isValidThemeId(rawThemeId)) return rawThemeId;
+  return defaultThemeId;
+}
+
 function dbRowToProposal(row: Record<string, unknown>): Proposal {
+  const slides = normalizeSlidesIconIds(((row.slides as Proposal['slides']) || []));
+
   return {
     id: row.id as string,
     user_id: row.user_id as string,
@@ -35,8 +46,8 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     status: row.status as 'draft' | 'published',
-    slides: (row.slides as Proposal['slides']) || [],
-    theme: (row.theme as Proposal['theme']) || undefined,
+    slides,
+    themeId: resolveThemeId(row),
   };
 }
 
@@ -59,6 +70,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   createProposal: async (proposal) => {
+    const normalizedSlides = normalizeSlidesIconIds(proposal.slides);
+
     const { data, error } = await supabase
       .from('proposals')
       .insert({
@@ -67,8 +80,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         title: proposal.title,
         partner_name: proposal.partnerName,
         status: proposal.status,
-        slides: proposal.slides,
-        theme: proposal.theme || null,
+        slides: normalizedSlides,
+        theme_id: proposal.themeId,
       })
       .select()
       .single();
@@ -87,8 +100,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (updates.partnerName !== undefined) dbUpdates.partner_name = updates.partnerName;
     if (updates.slug !== undefined) dbUpdates.slug = updates.slug;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.slides !== undefined) dbUpdates.slides = updates.slides;
-    if (updates.theme !== undefined) dbUpdates.theme = updates.theme;
+    if (updates.slides !== undefined) dbUpdates.slides = normalizeSlidesIconIds(updates.slides);
+    if (updates.themeId !== undefined) dbUpdates.theme_id = updates.themeId;
 
     const { error } = await supabase
       .from('proposals')
@@ -100,7 +113,13 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     }
     set((state) => ({
       proposals: state.proposals.map((p) =>
-        p.id === id ? { ...p, ...updates } : p
+        p.id === id
+          ? {
+              ...p,
+              ...updates,
+              slides: updates.slides ? normalizeSlidesIconIds(updates.slides) : p.slides,
+            }
+          : p
       ),
     }));
   },
@@ -133,6 +152,9 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
     const partnerName = frontmatter.partner || 'Untitled Partner';
     const title = frontmatter.title || `${partnerName} Proposal`;
+    const themeId = isValidThemeId(frontmatter.theme) ? frontmatter.theme : defaultThemeId;
+
+    const normalizedSlides = normalizeSlidesIconIds(slides);
 
     const proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
       user_id: user.id,
@@ -140,7 +162,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       title,
       partnerName,
       status: 'draft',
-      slides,
+      slides: normalizedSlides,
+      themeId,
     };
 
     const { data, error } = await supabase
@@ -152,7 +175,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         partner_name: proposal.partnerName,
         status: proposal.status,
         slides: proposal.slides,
-        theme: null,
+        theme_id: proposal.themeId,
       })
       .select()
       .single();
@@ -168,11 +191,12 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   importMarkdownToProposal: async (proposalId, newSlides, mode) => {
+    const normalizedNewSlides = normalizeSlidesIconIds(newSlides);
     const existing = get().proposals.find((p) => p.id === proposalId);
     const updatedSlides =
       mode === 'replace'
-        ? newSlides
-        : [...(existing?.slides ?? []), ...newSlides];
+        ? normalizedNewSlides
+        : [...(existing?.slides ?? []), ...normalizedNewSlides];
 
     const { error } = await supabase
       .from('proposals')

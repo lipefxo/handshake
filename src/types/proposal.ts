@@ -1,3 +1,6 @@
+import type { ThemeId } from '../themes/themeTypes';
+import type { AppIconId } from '../shared/icons/iconRegistry';
+
 export type SlideType =
   | 'title'
   | 'intro'
@@ -53,7 +56,7 @@ export interface FeaturesSlideContent {
   heading: string;
   subheading?: string;
   features: Array<{
-    icon?: string;
+    icon?: AppIconId;
     title: string;
     description: string;
   }>;
@@ -92,7 +95,7 @@ export interface MediaSlideContent {
 export interface BenefitsSlideContent {
   heading: string;
   benefits: Array<{
-    icon?: string;
+    icon?: AppIconId;
     title: string;
     description: string;
   }>;
@@ -120,13 +123,6 @@ export type SlideContent =
   | BenefitsSlideContent
   | ClosingSlideContent;
 
-export interface ProposalTheme {
-  primaryColor?: string;
-  accentColor?: string;
-  fontDisplay?: string;
-  fontBody?: string;
-}
-
 export interface Proposal {
   id: string;
   user_id: string;
@@ -137,7 +133,7 @@ export interface Proposal {
   updatedAt: string;
   status: 'draft' | 'published';
   slides: SlideConfig[];
-  theme?: ProposalTheme;
+  themeId: ThemeId;
 }
 
 export interface AppUser {

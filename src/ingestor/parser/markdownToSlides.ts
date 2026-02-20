@@ -11,6 +11,7 @@ export interface ParseResult {
     title?: string;
     partner?: string;
     date?: string;
+    theme?: string;
   };
   slides: SlideConfig[];
   validation: ValidationResult[];
@@ -33,6 +34,7 @@ export function markdownToSlides(markdown: string): ParseResult {
     title: fmRaw['title'],
     partner: fmRaw['partner'],
     date: fmRaw['date'],
+    theme: fmRaw['theme'],
   };
 
   // Step 3: Filter to content sections

@@ -1,0 +1,136 @@
+import type { ThemeDefinition, ThemeId } from './themeTypes';
+
+export const themes: Record<ThemeId, ThemeDefinition> = {
+  'dark-minimal': {
+    id: 'dark-minimal',
+    name: 'Dark Minimal',
+    description: 'Premium dark theme with clean neutrals',
+    colors: {
+      bgPrimary: '#0A0A0A',
+      bgSecondary: '#141414',
+      bgSurface: '#1E1E1E',
+      bgAdmin: '#0F0F0F',
+      bgAdminSurface: '#1A1A1A',
+      textPrimary: '#F5F5F5',
+      textSecondary: '#A0A0A0',
+      textTertiary: '#666666',
+      accent: '#E0E0E0',
+      accentHover: '#FFFFFF',
+      accentMuted: 'rgba(255, 255, 255, 0.08)',
+      border: '#2A2A2A',
+      borderLight: '#1F1F1F',
+      success: '#4ADE80',
+      error: '#F87171',
+      warning: '#FBBF24',
+      gradientStart: 'rgba(255, 255, 255, 0.03)',
+      gradientEnd: 'rgba(255, 255, 255, 0.01)',
+      overlayBg: 'rgba(0, 0, 0, 0.8)',
+    },
+    fonts: {
+      display: "'Instrument Serif', Georgia, serif",
+      displayWeight: 400,
+      body: "'DM Sans', system-ui, sans-serif",
+      bodyWeight: 400,
+      mono: "'JetBrains Mono', monospace",
+      googleFontsImport:
+        'https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+    },
+    style: {
+      borderRadius: '8px',
+      slideTransitionDefault: 'fade',
+      decorativeOpacity: 0.4,
+      textShadow: '0 2px 20px rgba(0, 0, 0, 0.5)',
+      navDotStyle: 'outline',
+    },
+  },
+  'light-corporate': {
+    id: 'light-corporate',
+    name: 'Light Corporate',
+    description: 'Clean and professional with a warm neutral palette',
+    colors: {
+      bgPrimary: '#FAFAF8',
+      bgSecondary: '#FFFFFF',
+      bgSurface: '#F0EFEB',
+      bgAdmin: '#FFFFFF',
+      bgAdminSurface: '#F7F7F5',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#5C5C5C',
+      textTertiary: '#8C8C8C',
+      accent: '#3D5A80',
+      accentHover: '#2C4466',
+      accentMuted: 'rgba(61, 90, 128, 0.08)',
+      border: '#E5E4E0',
+      borderLight: '#EDEDEB',
+      success: '#16A34A',
+      error: '#DC2626',
+      warning: '#D97706',
+      gradientStart: 'rgba(61, 90, 128, 0.04)',
+      gradientEnd: 'rgba(61, 90, 128, 0.01)',
+      overlayBg: 'rgba(255, 255, 255, 0.85)',
+    },
+    fonts: {
+      display: "'Fraunces', Georgia, serif",
+      displayWeight: 600,
+      body: "'Source Sans 3', system-ui, sans-serif",
+      bodyWeight: 400,
+      mono: "'JetBrains Mono', monospace",
+      googleFontsImport:
+        'https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+    },
+    style: {
+      borderRadius: '6px',
+      slideTransitionDefault: 'slide-up',
+      decorativeOpacity: 0.25,
+      navDotStyle: 'filled',
+    },
+  },
+  'bold-brand': {
+    id: 'bold-brand',
+    name: 'Bold Brand',
+    description: 'High-contrast with vibrant accent colors',
+    colors: {
+      bgPrimary: '#0B1628',
+      bgSecondary: '#111E33',
+      bgSurface: '#182840',
+      bgAdmin: '#0D1825',
+      bgAdminSurface: '#142030',
+      textPrimary: '#F0F4F8',
+      textSecondary: '#94A3B8',
+      textTertiary: '#64748B',
+      accent: '#06D6A0',
+      accentHover: '#05BF8E',
+      accentMuted: 'rgba(6, 214, 160, 0.10)',
+      border: '#1E3048',
+      borderLight: '#172538',
+      success: '#06D6A0',
+      error: '#FF6B6B',
+      warning: '#FFD93D',
+      gradientStart: 'rgba(6, 214, 160, 0.08)',
+      gradientEnd: 'rgba(6, 163, 214, 0.04)',
+      overlayBg: 'rgba(11, 22, 40, 0.85)',
+    },
+    fonts: {
+      display: "'Space Grotesk', system-ui, sans-serif",
+      displayWeight: 700,
+      body: "'Inter', system-ui, sans-serif",
+      bodyWeight: 400,
+      mono: "'JetBrains Mono', monospace",
+      googleFontsImport:
+        'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+    },
+    style: {
+      borderRadius: '12px',
+      slideTransitionDefault: 'scale',
+      decorativeOpacity: 0.6,
+      textShadow: '0 2px 24px rgba(6, 214, 160, 0.15)',
+      navDotStyle: 'dash',
+    },
+  },
+};
+
+export const defaultThemeId: ThemeId = 'dark-minimal';
+export const themeIds: ThemeId[] = ['dark-minimal', 'light-corporate', 'bold-brand'];
+
+export function isValidThemeId(value: unknown): value is ThemeId {
+  return typeof value === 'string' && value in themes;
+}

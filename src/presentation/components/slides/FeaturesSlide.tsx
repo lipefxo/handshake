@@ -2,18 +2,22 @@ import { motion } from 'motion/react';
 import type { FeaturesSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { useTheme } from '../../../themes/useTheme';
+import { AppIcon } from '../../../shared/icons/AppIcon';
 
 interface FeaturesSlideProps {
   content: FeaturesSlideContent;
 }
 
 export function FeaturesSlide({ content }: FeaturesSlideProps) {
+  const { theme } = useTheme();
+
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
-      <GradientOrb size={600} color="rgba(255,255,255,0.03)" className="bottom-0 right-0 translate-x-1/4 translate-y-1/4" />
+      <GradientOrb size={600} className="bottom-0 right-0 translate-x-1/4 translate-y-1/4" />
       <div className="grain-overlay" />
 
       <motion.div
@@ -57,11 +61,13 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
               variants={fadeUpChild}
               className="p-8 group"
               style={{ background: 'var(--color-bg-primary)' }}
-              whileHover={{ backgroundColor: 'var(--color-bg-secondary)' }}
+              whileHover={{ backgroundColor: theme.colors.bgSecondary }}
               transition={{ duration: 0.2 }}
             >
               {feature.icon && (
-                <div className="text-2xl mb-4">{feature.icon}</div>
+                <div className="mb-4">
+                  <AppIcon icon={feature.icon} size={22} />
+                </div>
               )}
               <h3
                 className="text-base font-semibold mb-2"

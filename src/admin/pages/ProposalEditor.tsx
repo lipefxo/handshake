@@ -10,6 +10,11 @@ import { generateSlug, copyToClipboard } from '../../shared/utils/helpers';
 import { useDialKit } from 'dialkit';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
+import { ThemePicker } from '../../themes/ThemePicker';
+import { defaultThemeId, themes } from '../../themes/themeDefinitions';
+import { AppIcon } from '../../shared/icons/AppIcon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -42,10 +47,10 @@ export function ProposalEditor() {
   const [copiedLink, setCopiedLink] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Load proposal from store
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
     if (p) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProposal({ ...p });
       setHasUnsavedChanges(false);
       if (!selectedSlideId && p.slides.length > 0) {
@@ -64,7 +69,6 @@ export function ProposalEditor() {
   const hasPrevSlide = selectedSlideIndex > 0;
   const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
 
-  // Debounced auto-save
   const save = useCallback(
     async (updatedProposal: Proposal) => {
       setSaveState('saving');
@@ -75,7 +79,7 @@ export function ProposalEditor() {
           slug: updatedProposal.slug,
           status: updatedProposal.status,
           slides: updatedProposal.slides,
-          theme: updatedProposal.theme,
+          themeId: updatedProposal.themeId,
         });
         setSaveState('saved');
         setHasUnsavedChanges(false);
@@ -120,7 +124,8 @@ export function ProposalEditor() {
 
   const handleAddSlide = (type: SlideType) => {
     if (!proposal) return;
-    const newSlide = createDefaultSlide(type);
+    const themeTransition = themes[proposal.themeId ?? defaultThemeId].style.slideTransitionDefault;
+    const newSlide = { ...createDefaultSlide(type), transition: themeTransition };
     const slides = [...proposal.slides, newSlide];
     updateLocal({ slides });
     setSelectedSlideId(newSlide.id);
@@ -170,11 +175,10 @@ export function ProposalEditor() {
   };
 
   const handleMarkdownImport = useCallback(
-    async (newSlides: SlideConfig[], _frontmatter: { title?: string; partner?: string; date?: string }) => {
+    async (newSlides: SlideConfig[]) => {
       if (!proposal) return;
       const mode = ingestor.mode === 'import' ? 'append' : 'replace';
       await importMarkdownToProposal(proposal.id, newSlides, mode);
-      // Refresh local state
       const updated = useProposalStore.getState().proposals.find((p) => p.id === proposal.id);
       if (updated) setProposal({ ...updated });
       ingestor.close();
@@ -240,9 +244,7 @@ export function ProposalEditor() {
             to="/admin"
             className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <AppIcon icon="ui.sidebar-toggle" className="w-3.5 h-3.5" />
             Back to proposals
           </Link>
         </div>
@@ -256,21 +258,19 @@ export function ProposalEditor() {
       {/* Top bar */}
       <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
         <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
           Proposals
         </Link>
 
         <div className="flex-1 flex items-center gap-3">
-          <input
-            className="text-sm font-semibold text-gray-900 bg-transparent border-0 outline-none focus:bg-gray-50 px-2 py-1 rounded-lg transition-colors min-w-0 flex-1 max-w-xs"
+          <Input
+            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 flex-1 max-w-xs"
             value={proposal.title}
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
           />
-          <input
-            className="text-sm text-gray-400 bg-transparent border-0 outline-none focus:bg-gray-50 px-2 py-1 rounded-lg transition-colors"
+          <Input
+            className="h-8 w-auto border-0 bg-transparent px-2 py-1 text-sm text-gray-400 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0"
             value={proposal.partnerName}
             onChange={(e) => updateLocal({ partnerName: e.target.value })}
             onBlur={(e) => updateLocal({ slug: generateSlug(e.target.value) })}
@@ -291,9 +291,7 @@ export function ProposalEditor() {
             {saveState === 'saved' && (
               <motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="text-xs text-green-500 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <AppIcon icon="ui.check" className="w-3 h-3" />
                 Saved
               </motion.span>
             )}
@@ -302,40 +300,42 @@ export function ProposalEditor() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
+          <Button
             onClick={() => ingestor.open('import')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
             title="Import slides from Markdown"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
             Import MD
-          </button>
+          </Button>
 
           {proposal.status === 'published' && (
-            <button
+            <Button
               onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              variant="secondary"
+              size="sm"
+              className="gap-1.5 text-xs"
             >
               {copiedLink ? (
-                <><svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Copied!</>
+                <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
               ) : (
-                <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Copy link</>
+                <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy link</>
               )}
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             onClick={handlePublish}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`h-8 px-4 text-xs font-semibold transition-all ${
               proposal.status === 'published'
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-gray-900 text-white hover:bg-gray-800'
             }`}
           >
-            {proposal.status === 'published' ? '✓ Published' : 'Publish'}
-          </button>
+            {proposal.status === 'published' ? 'Published' : 'Publish'}
+          </Button>
         </div>
       </div>
 
@@ -362,14 +362,12 @@ export function ProposalEditor() {
         </div>
 
         <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] overflow-hidden">
-          {/* Preview panel — centered and responsive */}
+          {/* Preview panel */}
           {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
             <div className="h-full w-full max-w-[72rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
-              {/* Preview header */}
               <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-white flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
               </div>
-              {/* Mini preview */}
               {selectedSlide && selectedSlide.enabled ? (
                 <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
                   <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
@@ -383,36 +381,37 @@ export function ProposalEditor() {
                     />
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={handleGoToPrevSlide}
                       disabled={!hasPrevSlide}
-                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-[11px] text-gray-600"
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                      </svg>
+                      <AppIcon icon="ui.sidebar-toggle" className="h-3 w-3" />
                       Previous
-                    </button>
-                    <a
-                      href={`/p/${proposal.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 rounded-md bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-medium transition-colors border border-gray-200"
-                    >
-                      Open full preview ↗
-                    </a>
-                    <button
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
+                      <a
+                        href={`/p/${proposal.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open full preview
+                      </a>
+                    </Button>
+                    <Button
                       type="button"
                       onClick={handleGoToNextSlide}
                       disabled={!hasNextSlide}
-                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-[11px] text-gray-600"
                     >
                       Next
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
+                      <AppIcon icon="ui.chevron-right" className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -425,21 +424,27 @@ export function ProposalEditor() {
 
           {/* Configurator — right panel */}
           <div className="flex-1 min-w-0 overflow-y-auto admin-scroll border-l border-gray-100">
-          {selectedSlide ? (
             <div className="max-w-lg mx-auto px-3 py-3">
+              <div className="mb-3">
+                <ThemePicker
+                  activeThemeId={proposal.themeId}
+                  onChange={(themeId) => updateLocal({ themeId })}
+                />
+              </div>
+            {selectedSlide ? (
               <SlideConfigurator
                 slide={selectedSlide}
                 onChange={(updates) => updateSlide(selectedSlide.id, updates)}
               />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="text-3xl mb-3 text-gray-300">◎</div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center">
+                <div className="mb-3 flex justify-center text-gray-300">
+                  <AppIcon icon="ui.home" size={28} />
+                </div>
                 <p className="text-sm text-gray-400">Select a slide to configure it</p>
               </div>
+            )}
             </div>
-          )}
         </div>
       </div>
     </div>

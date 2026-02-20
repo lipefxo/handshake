@@ -16,7 +16,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
       className="relative w-full h-full flex items-center overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
-      <GradientOrb size={500} color="rgba(255,255,255,0.04)" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      <GradientOrb size={500} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       <div className="grain-overlay" />
 
       <div className={`relative z-10 w-full max-w-6xl mx-auto px-8 flex items-center gap-16 ${hasImage && !imageRight ? 'flex-row-reverse' : ''}`}>

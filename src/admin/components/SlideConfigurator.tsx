@@ -2,6 +2,8 @@ import React from 'react';
 import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
+import { AppIcon } from '../../shared/icons/AppIcon';
+import type { AppIconId } from '../../shared/icons/iconRegistry';
 
 interface SlideConfiguratorProps {
   slide: SlideConfig;
@@ -9,6 +11,22 @@ interface SlideConfiguratorProps {
 }
 
 const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'scale', 'blur'] as const;
+type IconOption = { value: AppIconId; label: string };
+
+const FEATURE_ICON_OPTIONS: IconOption[] = [
+  { value: 'slide.features.default', label: 'Default' },
+  { value: 'slide.features.protection', label: 'Protection' },
+  { value: 'slide.features.branding', label: 'Branding' },
+  { value: 'slide.features.speed', label: 'Speed' },
+  { value: 'slide.features.sustainability', label: 'Sustainability' },
+];
+const BENEFIT_ICON_OPTIONS: IconOption[] = [
+  { value: 'slide.benefits.default', label: 'Default' },
+  { value: 'slide.benefits.account-manager', label: 'Account Manager' },
+  { value: 'slide.benefits.priority-production', label: 'Priority Production' },
+  { value: 'slide.benefits.volume-pricing', label: 'Volume Pricing' },
+  { value: 'slide.benefits.performance-reports', label: 'Performance Reports' },
+];
 
 export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
   const updateContent = (updates: Record<string, unknown>) => {
@@ -69,6 +87,35 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
     <div>
       <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function IconSelect({
+  options,
+  value,
+  onChange,
+}: {
+  options: IconOption[];
+  value: AppIconId;
+  onChange: (next: AppIconId) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <select
+        className="admin-input flex-1"
+        value={value}
+        onChange={(event) => onChange(event.target.value as AppIconId)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <div className="h-8 w-8 rounded-md border border-gray-200 bg-white text-gray-600 flex items-center justify-center">
+        <AppIcon icon={value} size={16} />
+      </div>
     </div>
   );
 }
@@ -174,12 +221,12 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
 }
 
 function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; onChange: (u: Record<string, unknown>) => void }) {
-  const updateFeature = (index: number, field: string, value: string) => {
+  const updateFeature = (index: number, field: 'icon' | 'title' | 'description', value: string | AppIconId) => {
     const updated = content.features.map((f, i) => i === index ? { ...f, [field]: value } : f);
     onChange({ features: updated });
   };
   const addFeature = () => {
-    onChange({ features: [...content.features, { icon: '⭐', title: 'New Feature', description: '' }] });
+    onChange({ features: [...content.features, { icon: 'slide.features.default', title: 'New Feature', description: '' }] });
   };
   const removeFeature = (index: number) => {
     onChange({ features: content.features.filter((_, i) => i !== index) });
@@ -202,11 +249,15 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
                 <button onClick={() => removeFeature(i)} className="text-xs text-red-400 hover:text-red-500">Remove</button>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Icon</label>
-                  <input className="admin-input" value={feature.icon || ''} onChange={(e) => updateFeature(i, 'icon', e.target.value)} placeholder="🚀" />
+                <div className="space-y-1 col-span-2">
+                  <label className="text-xs text-gray-400 block">Icon</label>
+                  <IconSelect
+                    options={FEATURE_ICON_OPTIONS}
+                    value={feature.icon || 'slide.features.default'}
+                    onChange={(next) => updateFeature(i, 'icon', next)}
+                  />
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <label className="text-xs text-gray-400 mb-1 block">Title</label>
                   <input className="admin-input" value={feature.title} onChange={(e) => updateFeature(i, 'title', e.target.value)} />
                 </div>
@@ -350,12 +401,12 @@ function MediaFields({ content, onChange }: { content: MediaSlideContent; onChan
 }
 
 function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; onChange: (u: Record<string, unknown>) => void }) {
-  const updateBenefit = (index: number, field: string, value: string) => {
+  const updateBenefit = (index: number, field: 'icon' | 'title' | 'description', value: string | AppIconId) => {
     const updated = content.benefits.map((b, i) => i === index ? { ...b, [field]: value } : b);
     onChange({ benefits: updated });
   };
   const addBenefit = () => {
-    onChange({ benefits: [...content.benefits, { icon: '✨', title: 'New Benefit', description: '' }] });
+    onChange({ benefits: [...content.benefits, { icon: 'slide.benefits.default', title: 'New Benefit', description: '' }] });
   };
   const removeBenefit = (index: number) => {
     onChange({ benefits: content.benefits.filter((_, i) => i !== index) });
@@ -377,8 +428,15 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
                 <button onClick={() => removeBenefit(i)} className="text-xs text-red-400">Remove</button>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <div><label className="text-xs text-gray-400 mb-1 block">Icon</label><input className="admin-input" value={benefit.icon || ''} onChange={(e) => updateBenefit(i, 'icon', e.target.value)} placeholder="💎" /></div>
-                <div className="col-span-3"><label className="text-xs text-gray-400 mb-1 block">Title</label><input className="admin-input" value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
+                <div className="space-y-1 col-span-2">
+                  <label className="text-xs text-gray-400 block">Icon</label>
+                  <IconSelect
+                    options={BENEFIT_ICON_OPTIONS}
+                    value={benefit.icon || 'slide.benefits.default'}
+                    onChange={(next) => updateBenefit(i, 'icon', next)}
+                  />
+                </div>
+                <div className="col-span-2"><label className="text-xs text-gray-400 mb-1 block">Title</label><input className="admin-input" value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
               </div>
               <div><label className="text-xs text-gray-400 mb-1 block">Description</label><textarea className="admin-textarea" style={{ minHeight: '56px' }} value={benefit.description} onChange={(e) => updateBenefit(i, 'description', e.target.value)} rows={2} /></div>
             </div>

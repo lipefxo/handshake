@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { useState, useRef, useCallback } from 'react';
+import { AppIcon } from '../../shared/icons/AppIcon';
 
 const LIMITS = {
   companyName: 50,
@@ -60,9 +61,7 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
         {logo ? (
           <img src={logo} alt="Company logo" className="w-full h-full object-contain" />
         ) : (
-          <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h.008v.008H3V9.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-          </svg>
+          <AppIcon icon="ui.image" className="w-6 h-6 text-gray-300" />
         )}
       </div>
 
@@ -186,9 +185,7 @@ export function ProposalSettings() {
           <h2 className="text-sm font-semibold text-gray-900 mb-1">Public URL</h2>
           <p className="text-xs text-gray-400 mb-5">Proposals are publicly accessible at this domain.</p>
           <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
+            <AppIcon icon="ui.external-link" className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-600 font-mono">partners.securebags.com/p/</span>
             <span className="text-sm text-gray-400 font-mono">{'{slug}'}</span>
           </div>

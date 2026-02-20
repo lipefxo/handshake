@@ -9,6 +9,8 @@ import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
 import { useDialKit } from 'dialkit';
 import { getTransitionVariants } from '../shared/utils/animations';
+import { ThemeProvider } from '../themes/ThemeProvider';
+import { defaultThemeId } from '../themes/themeDefinitions';
 
 export function ProposalViewer() {
   const { slug } = useParams<{ slug: string }>();
@@ -73,65 +75,57 @@ export function ProposalViewer() {
     }
   }, [previewSelectedSlideId, enabledSlides, goTo]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
-        <div className="w-8 h-8 border border-white/20 border-t-white/80 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !proposal) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center"
-        style={{ background: 'var(--color-bg-primary)' }}>
-        <p className="text-6xl mb-6 opacity-20">◎</p>
-        <h1
-          className="text-2xl mb-3"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
-        >
-          Proposal not found
-        </h1>
-        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
-          {error || 'This link may have expired or been removed.'}
-        </p>
-      </div>
-    );
-  }
-
-  if (enabledSlides.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen"
-        style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}>
-        <p style={{ fontFamily: 'var(--font-body)' }}>No slides to display.</p>
-      </div>
-    );
-  }
-
   return (
-    <>
-      {settings.appearance.showProgress && (
-        <ProgressBar current={current} total={enabledSlides.length} />
-      )}
-      {settings.appearance.showNavDots && (
-        <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
-      )}
-
-      <div ref={containerRef} className="slide-container">
-        {enabledSlides.map((slide, index) => (
-          <motion.section
-            key={`${slide.id}-${slide.transition ?? 'slide-up'}`}
-            className="slide-section"
-            style={{ background: slide.backgroundOverride || undefined }}
-            variants={getTransitionVariants(slide.transition)}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.6 }}
+    <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} className="contents">
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
+          <div className="w-8 h-8 border rounded-full animate-spin" style={{ borderColor: 'var(--color-border)', borderTopColor: 'var(--color-accent)' }} />
+        </div>
+      ) : error || !proposal ? (
+        <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center"
+          style={{ background: 'var(--color-bg-primary)' }}>
+          <p className="text-6xl mb-6 opacity-20">◎</p>
+          <h1
+            className="text-2xl mb-3"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
-            <SlideRenderer slide={slide} index={index} />
-          </motion.section>
-        ))}
-      </div>
-    </>
+            Proposal not found
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
+            {error || 'This link may have expired or been removed.'}
+          </p>
+        </div>
+      ) : enabledSlides.length === 0 ? (
+        <div className="flex items-center justify-center min-h-screen"
+          style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}>
+          <p style={{ fontFamily: 'var(--font-body)' }}>No slides to display.</p>
+        </div>
+      ) : (
+        <>
+          {settings.appearance.showProgress && (
+            <ProgressBar current={current} total={enabledSlides.length} />
+          )}
+          {settings.appearance.showNavDots && (
+            <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
+          )}
+
+          <div ref={containerRef} className="slide-container">
+            {enabledSlides.map((slide, index) => (
+              <motion.section
+                key={`${slide.id}-${slide.transition ?? 'slide-up'}`}
+                className="slide-section"
+                style={{ background: slide.backgroundOverride || undefined }}
+                variants={getTransitionVariants(slide.transition)}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false, amount: 0.6 }}
+              >
+                <SlideRenderer slide={slide} index={index} />
+              </motion.section>
+            ))}
+          </div>
+        </>
+      )}
+    </ThemeProvider>
   );
 }

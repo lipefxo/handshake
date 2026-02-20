@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { useTheme } from '../../themes/useTheme';
 
 interface SlideNavigationProps {
   current: number;
@@ -7,6 +8,9 @@ interface SlideNavigationProps {
 }
 
 export function SlideNavigation({ current, total, onNavigate }: SlideNavigationProps) {
+  const { theme } = useTheme();
+  const navDotStyle = theme.style.navDotStyle;
+
   return (
     <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
       {Array.from({ length: total }).map((_, i) => (
@@ -17,14 +21,28 @@ export function SlideNavigation({ current, total, onNavigate }: SlideNavigationP
           aria-label={`Go to slide ${i + 1}`}
         >
           <motion.div
-            className="rounded-full"
+            className={navDotStyle === 'dash' ? 'rounded-sm' : 'rounded-full'}
             animate={{
-              width: i === current ? 6 : 4,
-              height: i === current ? 6 : 4,
-              backgroundColor: i === current ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)',
+              width: navDotStyle === 'dash' ? (i === current ? 16 : 8) : (i === current ? 7 : 5),
+              height: navDotStyle === 'dash' ? 4 : (i === current ? 7 : 5),
+              backgroundColor:
+                navDotStyle === 'outline'
+                  ? i === current
+                    ? theme.colors.accentMuted
+                    : 'transparent'
+                  : i === current
+                    ? theme.colors.accent
+                    : theme.colors.textTertiary,
+              borderColor:
+                navDotStyle === 'outline'
+                  ? i === current
+                    ? theme.colors.accent
+                    : theme.colors.border
+                  : 'transparent',
+              borderWidth: navDotStyle === 'outline' ? 1.5 : 0,
             }}
             transition={{ duration: 0.2 }}
-            whileHover={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
+            whileHover={{ backgroundColor: theme.colors.accentMuted }}
           />
         </button>
       ))}

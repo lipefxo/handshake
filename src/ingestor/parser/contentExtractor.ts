@@ -12,6 +12,8 @@ import type {
   ClosingSlideContent,
 } from '../../types/proposal';
 import type { TypedSection } from './slideTypeInferrer';
+import { normalizeIconId } from '../../shared/icons/iconMigration';
+import type { AppIconId } from '../../shared/icons/iconRegistry';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -134,13 +136,24 @@ function extractStats(section: TypedSection): StatsSlideContent {
   return { heading, stats };
 }
 
-function parseIconItem(parts: string[]): { icon?: string; title: string; description: string } {
+function parseIconItem(parts: string[], fallbackIcon: AppIconId): { icon?: AppIconId; title: string; description: string } {
   const raw = parts[0] ?? '';
-  // Leading emoji detection
+  const explicitIconMatch = raw.match(/^\[icon:\s*([a-z0-9.-]+)\]\s*/i);
+  const explicitIconId = explicitIconMatch?.[1];
+
+  // Legacy leading emoji detection
   const emojiMatch = raw.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u);
-  const icon = emojiMatch?.[1];
-  const title = (icon ? raw.slice(emojiMatch![0].length) : raw).trim();
-  return { icon, title, description: parts[1] ?? '' };
+  const emojiIcon = emojiMatch?.[1];
+
+  const title = explicitIconMatch
+    ? raw.slice(explicitIconMatch[0].length).trim()
+    : (emojiIcon ? raw.slice(emojiMatch![0].length) : raw).trim();
+
+  return {
+    icon: normalizeIconId(explicitIconId ?? emojiIcon, fallbackIcon),
+    title,
+    description: parts[1] ?? '',
+  };
 }
 
 function extractFeatures(section: TypedSection): FeaturesSlideContent {
@@ -152,7 +165,7 @@ function extractFeatures(section: TypedSection): FeaturesSlideContent {
   return {
     heading,
     subheading: paragraphs[0],
-    features: items.map(parseIconItem),
+    features: items.map((item) => parseIconItem(item, 'slide.features.default')),
   };
 }
 
@@ -163,7 +176,7 @@ function extractBenefits(section: TypedSection): BenefitsSlideContent {
 
   return {
     heading,
-    benefits: items.map(parseIconItem),
+    benefits: items.map((item) => parseIconItem(item, 'slide.benefits.default')),
   };
 }
 

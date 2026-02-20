@@ -13,12 +13,12 @@ export function TitleSlide({ content }: TitleSlideProps) {
       style={{ background: 'var(--color-bg-primary)' }}>
 
       {/* Decorative elements */}
-      <GradientOrb size={600} color="rgba(255,255,255,0.04)" className="-top-40 -left-40" />
-      <GradientOrb size={400} color="rgba(255,255,255,0.03)" className="-bottom-20 -right-20" />
+      <GradientOrb size={600} className="-top-40 -left-40" />
+      <GradientOrb size={400} className="-bottom-20 -right-20" />
       <div className="grain-overlay" />
 
       {/* Thin horizontal line decoration */}
-      <div className="absolute top-1/2 left-0 right-0 h-px bg-white/5 pointer-events-none" />
+      <div className="absolute top-1/2 left-0 right-0 h-px pointer-events-none" style={{ background: 'var(--color-border-light)' }} />
 
       <motion.div
         className="relative z-10 text-center max-w-3xl mx-auto"
@@ -33,14 +33,14 @@ export function TitleSlide({ content }: TitleSlideProps) {
             <img src={content.secureBagsLogo} alt="SecureBags" className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-white/60" />
-              <span className="text-white/60 text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)' }}>
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
+              <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>
                 SecureBags
               </span>
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-white/20">
+          <div className="flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
             <div className="w-8 h-px bg-current" />
             <span className="text-xs">×</span>
             <div className="w-8 h-px bg-current" />
@@ -50,10 +50,10 @@ export function TitleSlide({ content }: TitleSlideProps) {
             <img src={content.partnerLogo} alt={content.partnerName} className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
-              <span className="text-white/60 text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)' }}>
+              <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>
                 {content.partnerName || 'Partner'}
               </span>
-              <div className="w-2 h-2 rounded-full bg-white/60" />
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
             </div>
           )}
         </motion.div>
@@ -106,8 +106,8 @@ export function TitleSlide({ content }: TitleSlideProps) {
         viewport={{ once: true }}
         transition={{ delay: 1.2, duration: 0.8 }}
       >
-        <div className="w-px h-8 bg-gradient-to-b from-white/20 to-transparent" />
-        <span className="text-xs text-white/20 tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)' }}>
+        <div className="w-px h-8" style={{ background: 'linear-gradient(to bottom, var(--color-text-tertiary), transparent)' }} />
+        <span className="text-xs tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-tertiary)' }}>
           Scroll
         </span>
       </motion.div>

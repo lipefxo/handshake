@@ -5,6 +5,7 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { IngestorPreview } from './IngestorPreview';
 import { IngestorFormatGuide } from './IngestorFormatGuide';
 import type { SlideConfig } from '../types/proposal';
+import { AppIcon } from '../shared/icons/AppIcon';
 
 interface MarkdownIngestorModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface MarkdownIngestorModalProps {
   editorContent: string;
   onContentChange: (content: string) => void;
   onCursorChange: (pos: number) => void;
-  onGenerate: (slides: SlideConfig[], frontmatter: { title?: string; partner?: string; date?: string }) => void;
+  onGenerate: (slides: SlideConfig[], frontmatter: { title?: string; partner?: string; date?: string; theme?: string }) => void;
   onClose: () => void;
 }
 
@@ -100,9 +101,7 @@ export function MarkdownIngestorModal({
                 className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                 aria-label="Close"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <AppIcon icon="ui.close" className="w-4 h-4" />
               </button>
 
               <div className="flex-1">
@@ -144,9 +143,7 @@ export function MarkdownIngestorModal({
                 {isGenerating ? (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <AppIcon icon="slide.features.speed" className="w-3.5 h-3.5" />
                 )}
                 {isGenerating
                   ? 'Generating…'

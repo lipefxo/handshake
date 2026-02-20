@@ -2,18 +2,22 @@ import { motion } from 'motion/react';
 import type { BenefitsSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { useTheme } from '../../../themes/useTheme';
+import { AppIcon } from '../../../shared/icons/AppIcon';
 
 interface BenefitsSlideProps {
   content: BenefitsSlideContent;
 }
 
 export function BenefitsSlide({ content }: BenefitsSlideProps) {
+  const { theme } = useTheme();
+
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
-      <GradientOrb size={600} color="rgba(255,255,255,0.04)" className="top-0 left-0 -translate-x-1/3 -translate-y-1/3" />
+      <GradientOrb size={600} className="top-0 left-0 -translate-x-1/3 -translate-y-1/3" />
       <div className="grain-overlay" />
 
       <motion.div
@@ -38,11 +42,13 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
               variants={fadeUpChild}
               className="p-8 flex gap-5"
               style={{ background: 'var(--color-bg-secondary)' }}
-              whileHover={{ backgroundColor: 'var(--color-bg-surface)' }}
+              whileHover={{ backgroundColor: theme.colors.bgSurface }}
               transition={{ duration: 0.2 }}
             >
               {benefit.icon && (
-                <div className="text-2xl flex-shrink-0 mt-0.5">{benefit.icon}</div>
+                <div className="flex-shrink-0 mt-0.5">
+                  <AppIcon icon={benefit.icon} size={22} />
+                </div>
               )}
               <div>
                 <h3

@@ -13,7 +13,7 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
       className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
-      <GradientOrb size={500} color="rgba(255,255,255,0.04)" className="bottom-0 right-0 translate-x-1/3 translate-y-1/3" />
+      <GradientOrb size={500} className="bottom-0 right-0 translate-x-1/3 translate-y-1/3" />
       <div className="grain-overlay" />
 
       <motion.div

@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { ClosingSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { AppIcon } from '../../../shared/icons/AppIcon';
 
 interface ClosingSlideProps {
   content: ClosingSlideContent;
@@ -13,7 +14,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
       className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
-      <GradientOrb size={700} color="rgba(255,255,255,0.04)" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      <GradientOrb size={700} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       <div className="grain-overlay" />
 
       {/* Top decoration */}
@@ -67,9 +68,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
                 }}
               >
                 {content.ctaText}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+                <AppIcon icon="ui.chevron-right" className="w-4 h-4" />
               </a>
             ) : (
               <span

@@ -34,7 +34,7 @@ function parseDirectives(raw: string): Record<string, string> {
 function inferTypeFromContent(
   raw: string,
   sectionIndex: number,
-  totalSections: number,
+  _totalSections: number,
   isLast: boolean,
 ): SlideType {
   const lines = raw.split('\n').map((l) => l.trim());

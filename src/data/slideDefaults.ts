@@ -1,17 +1,26 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { SlideConfig, SlideType } from '../types/proposal';
+import type { ClosingSlideContent, SlideConfig, SlideType, TitleSlideContent } from '../types/proposal';
+import type { AppIconId } from '../shared/icons/iconRegistry';
 
-export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: string; description: string }> = {
-  title: { label: 'Title', icon: '✦', description: 'Hero opening with partner logo & tagline' },
-  intro: { label: 'Introduction', icon: '◎', description: 'Who we are or partnership overview' },
-  stats: { label: 'Stats & Metrics', icon: '▲', description: 'Animated counters & key metrics' },
-  features: { label: 'Features', icon: '⬡', description: 'Product or service highlights' },
-  testimonial: { label: 'Testimonial', icon: '❝', description: 'Quote with attribution' },
-  comparison: { label: 'Comparison', icon: '⇄', description: 'Before & after or side-by-side' },
-  timeline: { label: 'Timeline', icon: '◉', description: 'Partnership roadmap & milestones' },
-  media: { label: 'Media', icon: '▣', description: 'Full-bleed image, GIF, or video' },
-  benefits: { label: 'Benefits', icon: '★', description: 'What the partner gets' },
-  closing: { label: 'Closing & CTA', icon: '→', description: 'Call to action & contact info' },
+export interface ProposalSeedData {
+  title?: string;
+  partnerName?: string;
+  contactName?: string;
+  contactEmail?: string;
+  proposalDate?: string;
+}
+
+export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: AppIconId; description: string }> = {
+  title: { label: 'Title', icon: 'slide.type.title', description: 'Hero opening with partner logo & tagline' },
+  intro: { label: 'Introduction', icon: 'slide.type.intro', description: 'Who we are or partnership overview' },
+  stats: { label: 'Stats & Metrics', icon: 'slide.type.stats', description: 'Animated counters & key metrics' },
+  features: { label: 'Features', icon: 'slide.type.features', description: 'Product or service highlights' },
+  testimonial: { label: 'Testimonial', icon: 'slide.type.testimonial', description: 'Quote with attribution' },
+  comparison: { label: 'Comparison', icon: 'slide.type.comparison', description: 'Before & after or side-by-side' },
+  timeline: { label: 'Timeline', icon: 'slide.type.timeline', description: 'Partnership roadmap & milestones' },
+  media: { label: 'Media', icon: 'slide.type.media', description: 'Full-bleed image, GIF, or video' },
+  benefits: { label: 'Benefits', icon: 'slide.type.benefits', description: 'What the partner gets' },
+  closing: { label: 'Closing & CTA', icon: 'slide.type.closing', description: 'Call to action & contact info' },
 };
 
 export function createDefaultSlide(type: SlideType): SlideConfig {
@@ -40,10 +49,10 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       heading: 'What We Offer',
       subheading: 'Premium solutions designed for your brand',
       features: [
-        { icon: '🛡️', title: 'Premium Protection', description: 'Military-grade materials that safeguard your products in transit.' },
-        { icon: '🎨', title: 'Custom Branding', description: 'Full-bleed printing, custom shapes, and bespoke finishes.' },
-        { icon: '⚡', title: 'Fast Turnaround', description: '5-day standard production with expedited options available.' },
-        { icon: '🌱', title: 'Sustainable Materials', description: '100% recyclable and biodegradable options for eco-conscious brands.' },
+        { icon: 'slide.features.protection', title: 'Premium Protection', description: 'Military-grade materials that safeguard your products in transit.' },
+        { icon: 'slide.features.branding', title: 'Custom Branding', description: 'Full-bleed printing, custom shapes, and bespoke finishes.' },
+        { icon: 'slide.features.speed', title: 'Fast Turnaround', description: '5-day standard production with expedited options available.' },
+        { icon: 'slide.features.sustainability', title: 'Sustainable Materials', description: '100% recyclable and biodegradable options for eco-conscious brands.' },
       ],
     },
     testimonial: {
@@ -81,10 +90,10 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
     benefits: {
       heading: 'What You Get',
       benefits: [
-        { icon: '💼', title: 'Dedicated Account Manager', description: 'A single point of contact who knows your brand inside out.' },
-        { icon: '📦', title: 'Priority Production', description: 'Jump the queue with guaranteed lead times.' },
-        { icon: '💰', title: 'Volume Pricing', description: 'Tiered discounts that grow with your order volume.' },
-        { icon: '📊', title: 'Performance Reports', description: 'Monthly analytics on packaging performance and ROI.' },
+        { icon: 'slide.benefits.account-manager', title: 'Dedicated Account Manager', description: 'A single point of contact who knows your brand inside out.' },
+        { icon: 'slide.benefits.priority-production', title: 'Priority Production', description: 'Jump the queue with guaranteed lead times.' },
+        { icon: 'slide.benefits.volume-pricing', title: 'Volume Pricing', description: 'Tiered discounts that grow with your order volume.' },
+        { icon: 'slide.benefits.performance-reports', title: 'Performance Reports', description: 'Monthly analytics on packaging performance and ROI.' },
       ],
     },
     closing: {
@@ -107,12 +116,41 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
   };
 }
 
-export function createDefaultProposalSlides(): SlideConfig[] {
-  return [
+export function createDefaultProposalSlides(seed: ProposalSeedData = {}): SlideConfig[] {
+  const slides = [
     createDefaultSlide('title'),
     createDefaultSlide('stats'),
     createDefaultSlide('features'),
     createDefaultSlide('benefits'),
     createDefaultSlide('closing'),
   ];
+
+  return slides.map((slide) => {
+    if (slide.type === 'title') {
+      const content = slide.content as TitleSlideContent;
+      return {
+        ...slide,
+        content: {
+          ...content,
+          partnerName: seed.partnerName?.trim() || content.partnerName,
+          date: seed.proposalDate || content.date,
+          headline: seed.title?.trim() || content.headline,
+        },
+      };
+    }
+
+    if (slide.type === 'closing') {
+      const content = slide.content as ClosingSlideContent;
+      return {
+        ...slide,
+        content: {
+          ...content,
+          contactName: seed.contactName?.trim() || content.contactName,
+          contactEmail: seed.contactEmail?.trim() || content.contactEmail,
+        },
+      };
+    }
+
+    return slide;
+  });
 }

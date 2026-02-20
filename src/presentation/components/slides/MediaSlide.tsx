@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import type { MediaSlideContent } from '../../../types/proposal';
+import { useTheme } from '../../../themes/useTheme';
 
 interface MediaSlideProps {
   content: MediaSlideContent;
@@ -7,9 +8,10 @@ interface MediaSlideProps {
 
 export function MediaSlide({ content }: MediaSlideProps) {
   const hasMedia = !!content.url;
+  const { theme } = useTheme();
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ background: '#000' }}>
+    <div className="relative w-full h-full overflow-hidden" style={{ background: 'var(--color-bg-primary)' }}>
       {hasMedia ? (
         <>
           {content.mediaType === 'video' ? (
@@ -35,7 +37,7 @@ export function MediaSlide({ content }: MediaSlideProps) {
             />
           )}
           {/* Overlay */}
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0" style={{ background: theme.colors.overlayBg, opacity: 0.2 }} />
         </>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center"
@@ -52,13 +54,13 @@ export function MediaSlide({ content }: MediaSlideProps) {
       {content.caption && (
         <motion.div
           className="absolute bottom-0 left-0 right-0 px-8 py-6"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}
+          style={{ background: `linear-gradient(to top, ${theme.colors.overlayBg}, transparent)` }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          <p className="text-white/80 text-sm text-center" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-sm text-center" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-primary)' }}>
             {content.caption}
           </p>
         </motion.div>

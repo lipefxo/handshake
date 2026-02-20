@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AppIcon } from '../shared/icons/AppIcon';
 
 const GUIDE_SECTIONS = [
   {
@@ -36,8 +37,8 @@ Body text goes here.
     example: `# Key Features
 <!-- type: features -->
 
-- 🎯 Feature | Description
-- 🔒 Security | Description`,
+- [icon: slide.features.default] Feature | Description
+- [icon: slide.features.protection] Security | Description`,
   },
   {
     type: 'benefits',
@@ -45,8 +46,8 @@ Body text goes here.
     example: `# Partner Benefits
 <!-- type: benefits -->
 
-- 💰 Revenue Share | 15% commission
-- 🎯 Co-Marketing | Joint campaigns`,
+- [icon: slide.benefits.volume-pricing] Revenue Share | 15% commission
+- [icon: slide.benefits.account-manager] Co-Marketing | Joint campaigns`,
   },
   {
     type: 'testimonial',
@@ -107,14 +108,7 @@ export function IngestorFormatGuide() {
         onClick={() => setIsOpen((v) => !v)}
         className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors group"
       >
-        <svg
-          className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
+        <AppIcon icon="ui.chevron-right" className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
         Format guide
         <span className="text-gray-300 ml-auto font-normal">10 slide types</span>
       </button>
@@ -137,7 +131,7 @@ export function IngestorFormatGuide() {
             </div>
           ))}
           <div className="col-span-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 text-[11px] text-blue-600">
-            <span className="font-semibold">Tip:</span> Separate slides with <code className="bg-blue-100 px-1 rounded font-mono">---</code> horizontal rules. Add a frontmatter block at the top with <code className="bg-blue-100 px-1 rounded font-mono">title:</code>, <code className="bg-blue-100 px-1 rounded font-mono">partner:</code>, and <code className="bg-blue-100 px-1 rounded font-mono">date:</code> fields.
+            <span className="font-semibold">Tip:</span> Separate slides with <code className="bg-blue-100 px-1 rounded font-mono">---</code> horizontal rules. Add a frontmatter block at the top with <code className="bg-blue-100 px-1 rounded font-mono">title:</code>, <code className="bg-blue-100 px-1 rounded font-mono">partner:</code>, <code className="bg-blue-100 px-1 rounded font-mono">date:</code>, and optional <code className="bg-blue-100 px-1 rounded font-mono">theme:</code> fields.
           </div>
         </div>
       )}

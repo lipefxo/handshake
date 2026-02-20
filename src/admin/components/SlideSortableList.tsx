@@ -20,6 +20,7 @@ import type { SlideConfig, SlideType } from '../../types/proposal';
 import { SlideSortableItem } from './SlideSortableItem';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { SlideTypeThumbnail } from './SlideTypeThumbnail';
+import { AppIcon } from '../../shared/icons/AppIcon';
 
 const MERGE_HOLD_MS = 1200;
 const MERGE_TICK_MS = 50;
@@ -52,11 +53,8 @@ export function SlideSortableList({
   const [showPicker, setShowPicker] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  // Drag state
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
 
-  // Merge-on-hold state
   const [mergeTarget, setMergeTarget] = useState<string | null>(null);
   const [mergeProgress, setMergeProgress] = useState(0);
   const mergeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -142,7 +140,6 @@ export function SlideSortableList({
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
-    setOverId(over?.id ?? null);
 
     if (!over || active.id === over.id) {
       clearMergeTimer();
@@ -176,7 +173,6 @@ export function SlideSortableList({
 
     clearMergeTimer();
     setActiveId(null);
-    setOverId(null);
 
     if (!over) return;
 
@@ -185,7 +181,6 @@ export function SlideSortableList({
 
     if (!draggedSlide || !targetSlide) return;
 
-    // Merge into new group: both ungrouped and held long enough
     if (wasFullyCharged && currentMergeTarget === over.id && !draggedSlide.groupId && !targetSlide.groupId) {
       const groupId = `group-${crypto.randomUUID()}`;
       const groupCount = new Set(slides.filter((s) => s.groupId).map((s) => s.groupId)).size;
@@ -201,25 +196,21 @@ export function SlideSortableList({
       return;
     }
 
-    // Moving slide into an existing group (drop on a grouped slide)
     if (targetSlide.groupId && !draggedSlide.groupId) {
       onAssignGroup(draggedSlide.id, targetSlide.groupId);
       return;
     }
 
-    // Dragging a slide out of a group (drop on an ungrouped slide)
     if (!targetSlide.groupId && draggedSlide.groupId) {
       onAssignGroup(draggedSlide.id, null);
       return;
     }
 
-    // Moving between different groups
     if (draggedSlide.groupId && targetSlide.groupId && draggedSlide.groupId !== targetSlide.groupId) {
       onAssignGroup(draggedSlide.id, targetSlide.groupId);
       return;
     }
 
-    // Same-section reorder
     if (active.id !== over.id) {
       const oldIndex = slides.findIndex((s) => s.id === active.id);
       const newIndex = slides.findIndex((s) => s.id === over.id);
@@ -237,18 +228,16 @@ export function SlideSortableList({
         <div className="grid grid-cols-2 gap-1.5 pb-1.5">
           <button
             onClick={() => setShowPicker(!showPicker)}
-            className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors bg-white col-span-2"
+            className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 bg-white hover:bg-gray-50 transition-colors col-span-2"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <AppIcon icon="ui.add" className="w-3.5 h-3.5" />
             Add slide
           </button>
         </div>
 
         {showPicker && (
-          <div className="bg-white border border-gray-100 rounded-xl shadow-lg shadow-black/10 overflow-hidden z-20">
-            <div className="p-2 border-b border-gray-50">
+          <div className="border border-gray-200 rounded-xl shadow-lg shadow-black/10 bg-white overflow-hidden z-20">
+            <div className="p-2 border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-500 px-2 py-1">Choose slide type</p>
             </div>
             <div className="p-2 max-h-64 overflow-y-auto">
@@ -265,7 +254,10 @@ export function SlideSortableList({
                   >
                     <SlideTypeThumbnail type={type} className="h-8 w-10 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-700">{meta.label}</p>
+                      <p className="text-xs font-medium text-gray-900 flex items-center gap-1.5">
+                        <AppIcon icon={meta.icon} className="w-3.5 h-3.5" />
+                        {meta.label}
+                      </p>
                       <p className="text-xs text-gray-400">{meta.description}</p>
                     </div>
                   </button>
@@ -286,30 +278,22 @@ export function SlideSortableList({
             {groupedSlides.groups.map((group) => {
               const isCollapsed = collapsedGroups[group.id] ?? false;
               return (
-                <div key={group.id} className="rounded-xl border border-gray-200 bg-white/80">
+                <div key={group.id} className="rounded-xl border border-gray-200 bg-white">
                   <div className="flex items-center gap-2 px-2.5 py-2 border-b border-gray-100">
                     <button
                       type="button"
                       onClick={() => setCollapsedGroups((prev) => ({ ...prev, [group.id]: !isCollapsed }))}
-                      className="h-5 w-5 rounded-md border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+                      className="h-5 w-5 rounded-md border border-gray-200 text-gray-500 transition-colors"
                       title={isCollapsed ? 'Expand group' : 'Collapse group'}
                     >
-                      <svg
-                        className={`h-3.5 w-3.5 mx-auto transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <AppIcon icon="ui.chevron-down" className={`h-3.5 w-3.5 mx-auto transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                     </button>
                     <input
                       value={group.title}
                       onChange={(event) => onRenameGroup(group.id, event.target.value)}
                       onKeyDown={(event) => event.stopPropagation()}
                       maxLength={40}
-                      className="min-w-0 flex-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-semibold text-gray-700 outline-none focus:border-gray-200 focus:bg-white"
+                      className="min-w-0 flex-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-semibold text-gray-900 outline-none focus:bg-gray-50"
                     />
                     <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
                       {group.slides.length} {group.slides.length === 1 ? 'slide' : 'slides'}

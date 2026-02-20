@@ -13,7 +13,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
       className="relative w-full h-full flex items-center justify-center px-8 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
-      <GradientOrb size={700} color="rgba(255,255,255,0.03)" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      <GradientOrb size={700} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       <div className="grain-overlay" />
 
       <motion.div

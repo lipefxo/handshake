@@ -14,7 +14,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
       className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
-      <GradientOrb size={500} color="rgba(255,255,255,0.04)" className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
+      <GradientOrb size={500} className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
       <div className="grain-overlay" />
 
       <motion.div

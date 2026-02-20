@@ -21,9 +21,9 @@ Your subheadline here.
   features: `# Key Features
 <!-- type: features -->
 
-- 🎯 Feature One | Description of this feature
-- 🔒 Feature Two | Description of this feature
-- 📊 Feature Three | Description of this feature
+- [icon: slide.features.default] Feature One | Description of this feature
+- [icon: slide.features.protection] Feature Two | Description of this feature
+- [icon: slide.features.speed] Feature Three | Description of this feature
 
 ---`,
 
@@ -63,9 +63,9 @@ Your subheadline here.
   benefits: `# Partner Benefits
 <!-- type: benefits -->
 
-- 💰 Benefit One | What the partner gets
-- 🎯 Benefit Two | What the partner gets
-- 🛠️ Benefit Three | What the partner gets
+- [icon: slide.benefits.volume-pricing] Benefit One | What the partner gets
+- [icon: slide.benefits.account-manager] Benefit Two | What the partner gets
+- [icon: slide.benefits.default] Benefit Three | What the partner gets
 
 ---`,
 

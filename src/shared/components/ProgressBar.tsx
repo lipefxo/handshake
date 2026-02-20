@@ -9,9 +9,10 @@ export function ProgressBar({ current, total }: ProgressBarProps) {
   const progress = total > 0 ? (current / (total - 1)) * 100 : 0;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-white/10">
+    <div className="fixed top-0 left-0 right-0 z-50 h-0.5" style={{ background: 'var(--color-border)' }}>
       <motion.div
-        className="h-full bg-white/60"
+        className="h-full"
+        style={{ background: 'var(--color-accent)' }}
         animate={{ width: `${progress}%` }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
       />

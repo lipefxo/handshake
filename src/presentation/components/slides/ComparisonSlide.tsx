@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { ComparisonSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { AppIcon } from '../../../shared/icons/AppIcon';
 
 interface ComparisonSlideProps {
   content: ComparisonSlideContent;
@@ -13,7 +14,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
       className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
-      <GradientOrb size={600} color="rgba(255,255,255,0.03)" className="top-0 left-0 -translate-x-1/4 -translate-y-1/4" />
+      <GradientOrb size={600} className="top-0 left-0 -translate-x-1/4 -translate-y-1/4" />
       <div className="grain-overlay" />
 
       <motion.div
@@ -45,10 +46,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
                 <li key={i} className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: 'var(--color-bg-surface)' }}>
-                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                      style={{ color: 'var(--color-text-tertiary)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <AppIcon icon="ui.close" className="w-2.5 h-2.5" strokeWidth={3} style={{ color: 'var(--color-text-tertiary)' }} />
                   </div>
                   <span className="text-sm" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
                     {item}
@@ -70,11 +68,8 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
               {content.after.items.map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'rgba(74, 222, 128, 0.15)' }}>
-                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                      style={{ color: 'var(--color-success)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+                    style={{ background: 'var(--color-accent-muted)' }}>
+                    <AppIcon icon="ui.check" className="w-2.5 h-2.5" strokeWidth={3} style={{ color: 'var(--color-success)' }} />
                   </div>
                   <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
                     {item}
