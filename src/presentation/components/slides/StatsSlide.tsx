@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { StatsSlideContent } from '../../../types/proposal';
 import { AnimatedCounter } from '../../../shared/components/AnimatedCounter';
 import { GradientOrb } from '../../../shared/components/GradientOrb';

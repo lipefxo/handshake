@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { Proposal } from '../types/proposal';
 import { useProposalStore } from '../store/proposalStore';
 import { SlideRenderer } from './components/SlideRenderer';

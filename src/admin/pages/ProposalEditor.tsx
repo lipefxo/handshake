@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import type { Proposal, SlideConfig, SlideType } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
