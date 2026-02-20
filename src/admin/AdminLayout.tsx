@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 
@@ -7,32 +8,56 @@ const navItems = [
 ];
 
 export function AdminLayout() {
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+
   return (
     <div className="flex h-screen bg-admin overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-56 flex-shrink-0 border-r border-light bg-white flex flex-col">
+      <aside
+        className={`flex-shrink-0 border-r border-light bg-white flex flex-col transition-all duration-200 ${
+          isSidebarExpanded ? 'w-56' : 'w-16'
+        }`}
+      >
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-light">
-          <div className="flex items-center gap-2">
+        <div className={`py-4 border-b border-light ${isSidebarExpanded ? 'px-5' : 'px-3'}`}>
+          <div className="flex items-center justify-between">
             <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
               </svg>
             </div>
-            <span className="font-semibold text-gray-900 text-sm">Handshake</span>
+            {isSidebarExpanded && <span className="font-semibold text-gray-900 text-sm">Handshake</span>}
+            <button
+              type="button"
+              onClick={() => setIsSidebarExpanded((prev) => !prev)}
+              className="p-1 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              aria-label={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+              title={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${isSidebarExpanded ? '' : 'rotate-180'}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-2 mb-2">Workspace</p>
+        <nav className={`flex-1 py-4 ${isSidebarExpanded ? 'px-3' : 'px-2'}`}>
+          {isSidebarExpanded && <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-2 mb-2">Workspace</p>}
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              title={isSidebarExpanded ? undefined : item.label}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors mb-0.5 ${
+                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors mb-0.5 ${
                   isActive
                     ? 'bg-gray-100 text-gray-900 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -40,23 +65,26 @@ export function AdminLayout() {
               }
             >
               <span className="text-xs">{item.icon}</span>
-              {item.label}
+              {isSidebarExpanded && item.label}
             </NavLink>
           ))}
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-3 border-t border-light">
+        <div className={`py-3 border-t border-light ${isSidebarExpanded ? 'px-3' : 'px-2'}`}>
           <a
             href="https://partners.securebags.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-2.5 py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-50"
+            className={`flex items-center rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors ${
+              isSidebarExpanded ? 'gap-2 px-2.5 py-2 text-xs' : 'justify-center px-2 py-2.5 text-sm'
+            }`}
+            title={isSidebarExpanded ? undefined : 'Public site'}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            Public site
+            {isSidebarExpanded && 'Public site'}
           </a>
         </div>
       </aside>

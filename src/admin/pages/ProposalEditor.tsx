@@ -28,13 +28,17 @@ export function ProposalEditor() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(editorValues.preview.showPanel);
+  const [previewRefreshNonce, setPreviewRefreshNonce] = useState(0);
 
   // Load proposal from store
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
     if (p) {
       setProposal({ ...p });
+      setHasUnsavedChanges(false);
       if (!selectedSlideId && p.slides.length > 0) {
         setSelectedSlideId(p.slides[0].id);
       }
@@ -57,6 +61,7 @@ export function ProposalEditor() {
           theme: updatedProposal.theme,
         });
         setSaveState('saved');
+        setHasUnsavedChanges(false);
         setTimeout(() => setSaveState('idle'), 2000);
       } catch {
         setSaveState('error');
@@ -66,19 +71,23 @@ export function ProposalEditor() {
   );
 
   useEffect(() => {
-    if (!proposal || !editorValues.autosave.enabled) return;
+    if (!proposal || !editorValues.autosave.enabled || !hasUnsavedChanges) return;
     const timer = setTimeout(() => save(proposal), editorValues.autosave.debounceMs);
     return () => clearTimeout(timer);
-  }, [proposal, save, editorValues.autosave.enabled, editorValues.autosave.debounceMs]);
+  }, [proposal, save, editorValues.autosave.enabled, editorValues.autosave.debounceMs, hasUnsavedChanges]);
 
   const updateLocal = (updates: Partial<Proposal>) => {
     setProposal((prev) => prev ? { ...prev, ...updates } : prev);
+    setHasUnsavedChanges(true);
   };
 
   const updateSlide = (id: string, updates: Partial<SlideConfig>) => {
     if (!proposal) return;
     const slides = proposal.slides.map((s) => s.id === id ? { ...s, ...updates } : s);
     updateLocal({ slides });
+    if (Object.prototype.hasOwnProperty.call(updates, 'transition')) {
+      setPreviewRefreshNonce((prev) => prev + 1);
+    }
   };
 
   const handleToggleSlide = (id: string) => {
@@ -174,19 +183,6 @@ export function ProposalEditor() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <a
-            href={`/p/${proposal.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Preview
-          </a>
-
           {proposal.status === 'published' && (
             <button
               onClick={handleCopyLink}
@@ -216,7 +212,7 @@ export function ProposalEditor() {
       {/* Main editor area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Slide list — left panel */}
-        <div className="w-52 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
+        <div className="w-[19.5rem] flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
           <div className="px-3 pt-3 pb-1">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1">Slides</p>
           </div>
@@ -251,29 +247,44 @@ export function ProposalEditor() {
         </div>
 
         {/* Preview panel — right (togglable via dialkit) */}
-        {editorValues.preview.showPanel && <div className="w-80 flex-shrink-0 border-l border-gray-100 bg-gray-900 relative overflow-hidden">
+        {editorValues.preview.showPanel && isPreviewExpanded && <div className="w-80 flex-shrink-0 border-l border-gray-100 bg-admin relative overflow-hidden">
           <div className="absolute inset-0 flex flex-col">
             {/* Preview header */}
-            <div className="px-4 py-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
-              <span className="text-xs font-medium text-white/40 uppercase tracking-wider">Preview</span>
-              <span className="text-xs text-white/20">{proposal.slides.filter(s => s.enabled).length} slides</span>
+            <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between bg-white">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewExpanded(false)}
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  aria-label="Collapse preview"
+                  title="Collapse preview"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              </div>
             </div>
             {/* Mini preview */}
             {selectedSlide && selectedSlide.enabled ? (
-              <div className="flex-1 overflow-hidden relative">
-                <iframe
-                  key={selectedSlide.id}
-                  src={`/p/${proposal.slug}#preview`}
-                  className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                  style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
-                  title="Slide preview"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex-1 overflow-auto admin-scroll p-4 flex flex-col gap-3">
+                <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                  <iframe
+                    key={`${selectedSlide.id}-${selectedSlide.transition ?? 'none'}-${previewRefreshNonce}`}
+                    src={`/p/${proposal.slug}#preview`}
+                    className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+                    style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
+                    title="Slide preview"
+                  />
+                </div>
+                <div className="flex items-center justify-center">
                   <a
                     href={`/p/${proposal.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors border border-white/20"
+                    className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-200"
                   >
                     Open full preview ↗
                   </a>
@@ -281,11 +292,26 @@ export function ProposalEditor() {
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
-                <p className="text-xs text-white/20">No preview available</p>
+                <p className="text-xs text-gray-400">No preview available</p>
               </div>
             )}
           </div>
         </div>}
+        {editorValues.preview.showPanel && !isPreviewExpanded && (
+          <div className="flex-shrink-0 border-l border-gray-100 bg-admin flex items-start justify-center py-3 px-2">
+            <button
+              type="button"
+              onClick={() => setIsPreviewExpanded(true)}
+              className="p-1.5 rounded-md text-gray-500 hover:text-gray-800 hover:bg-white transition-colors"
+              aria-label="Expand preview"
+              title="Expand preview"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
