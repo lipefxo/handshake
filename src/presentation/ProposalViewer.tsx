@@ -11,8 +11,9 @@ import { useDialKit } from 'dialkit';
 import { getTransitionVariants } from '../shared/utils/animations';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
+import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 
-export function ProposalViewer() {
+function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
   const { getProposalBySlug } = useProposalStore();
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -40,7 +41,7 @@ export function ProposalViewer() {
     getProposalBySlug(slug).then((p) => {
       setProposal(p);
       setLoading(false);
-      if (!p) setError('This proposal does not exist or has not been published.');
+      if (!p) setError('This proposal was not found.');
     });
   }, [slug, getProposalBySlug]);
 
@@ -127,5 +128,13 @@ export function ProposalViewer() {
         </>
       )}
     </ThemeProvider>
+  );
+}
+
+export function ProposalViewer() {
+  return (
+    <ErrorBoundary>
+      <ProposalViewerContent />
+    </ErrorBoundary>
   );
 }

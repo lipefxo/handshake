@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { supabase } from '../supabaseClient';
 import { AppIcon } from '../shared/icons/AppIcon';
@@ -12,6 +12,15 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+
+  useEffect(() => {
+    const message = sessionStorage.getItem('authMessage');
+    if (message) {
+      setInfoMessage(message);
+      sessionStorage.removeItem('authMessage');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +95,11 @@ export function LoginPage() {
                   {error && (
                     <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                       {error}
+                    </p>
+                  )}
+                  {infoMessage && (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                      {infoMessage}
                     </p>
                   )}
 

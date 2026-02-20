@@ -54,10 +54,7 @@ export function validateUrl(input: string): { value: string; isValid: boolean } 
 
   try {
     const url = new URL(trimmed);
-    if (url.protocol !== 'https:') {
-      return { value: trimmed, isValid: false };
-    }
-    if (url.protocol === 'javascript:' || url.protocol === 'data:') {
+    if (url.protocol === 'javascript:' || url.protocol === 'data:' || url.protocol !== 'https:') {
       return { value: trimmed, isValid: false };
     }
     return { value: url.toString(), isValid: true };
