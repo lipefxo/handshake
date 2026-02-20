@@ -1112,6 +1112,234 @@ function TeamMockup() {
   );
 }
 
+// ─── Live update mockup ───────────────────────────────────────────────────────
+function LiveUpdateMockup() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: false, margin: '-80px' });
+  const [phase, setPhase] = useState<'idle' | 'editing' | 'updated'>('idle');
+  const [displayVal, setDisplayVal] = useState('200+');
+
+  useEffect(() => {
+    if (!inView) { setPhase('idle'); setDisplayVal('200+'); return; }
+    const t1 = setTimeout(() => setPhase('editing'), 800);
+    const t2 = setTimeout(() => { setDisplayVal('300+'); setPhase('updated'); }, 2000);
+    const t3 = setTimeout(() => { setPhase('idle'); setDisplayVal('200+'); }, 5000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [inView]);
+
+  const isEditing = phase === 'editing';
+  const isUpdated = phase === 'updated';
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 0,
+        borderRadius: 12,
+        overflow: 'hidden',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+        border: `1px solid ${C.borderDark}`,
+      }}
+    >
+      {/* Left: Editor panel */}
+      <div style={{ background: '#1a1a1a', padding: '20px 18px' }}>
+        {/* Editor chrome */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+          {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
+            <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+          ))}
+          <span style={{ fontFamily: sans, fontSize: 10, color: '#555', marginLeft: 6 }}>
+            Slide Editor
+          </span>
+        </div>
+
+        {/* Slide type label */}
+        <div style={{ fontFamily: sans, fontSize: 10, color: '#444', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          Stats slide
+        </div>
+
+        {/* Stat field being edited */}
+        <div
+          style={{
+            background: '#111',
+            borderRadius: 7,
+            padding: '10px 12px',
+            border: `1px solid ${isEditing ? C.accent : '#2a2a2a'}`,
+            transition: 'border-color 0.3s',
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ fontFamily: sans, fontSize: 9, color: '#555', marginBottom: 4, letterSpacing: '0.04em' }}>
+            STAT VALUE
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                fontFamily: serif,
+                fontSize: 20,
+                fontWeight: 700,
+                color: isEditing ? C.accent : C.textOnDark,
+                transition: 'color 0.3s',
+              }}
+            >
+              {isEditing ? '300+' : displayVal}
+            </span>
+            {isEditing && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 1.5,
+                  height: 18,
+                  background: C.accent,
+                  animation: 'blink 1s step-end infinite',
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Other fields (decorative) */}
+        {[['LABEL', 'Partners Reached'], ['SUFFIX', 'across 14 markets']].map(([lbl, val]) => (
+          <div
+            key={lbl}
+            style={{
+              background: '#111',
+              borderRadius: 7,
+              padding: '8px 12px',
+              border: '1px solid #222',
+              marginBottom: 8,
+              opacity: 0.5,
+            }}
+          >
+            <div style={{ fontFamily: sans, fontSize: 9, color: '#555', marginBottom: 3, letterSpacing: '0.04em' }}>{lbl}</div>
+            <div style={{ fontFamily: sans, fontSize: 12, color: '#888' }}>{val}</div>
+          </div>
+        ))}
+
+        {/* Save indicator */}
+        <div
+          style={{
+            marginTop: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            opacity: isUpdated ? 1 : 0,
+            transition: 'opacity 0.4s',
+          }}
+        >
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
+          <span style={{ fontFamily: sans, fontSize: 10, color: '#4ade80' }}>Autosaved</span>
+        </div>
+      </div>
+
+      {/* Right: Live proposal view */}
+      <div style={{ background: '#0C0C0C', padding: '20px 18px' }}>
+        {/* Browser URL bar */}
+        <div
+          style={{
+            background: '#161616',
+            borderRadius: 5,
+            padding: '5px 10px',
+            marginBottom: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            border: '1px solid #2a2a2a',
+          }}
+        >
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#28c840', flexShrink: 0 }} />
+          <span style={{ fontFamily: sans, fontSize: 10, color: '#555', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            handshake.so/p/acme-2026
+          </span>
+        </div>
+
+        {/* Proposal content */}
+        <div style={{ fontFamily: sans, fontSize: 9, color: '#444', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          Live · always current
+        </div>
+
+        <div
+          style={{
+            fontFamily: serif,
+            fontSize: 13,
+            fontWeight: 700,
+            color: C.textOnDark,
+            marginBottom: 14,
+            lineHeight: 1.3,
+          }}
+        >
+          Partnership Impact
+        </div>
+
+        {/* Animated stat card */}
+        <div
+          style={{
+            background: `${C.accent}12`,
+            border: `1px solid ${isUpdated ? C.accent : `${C.accent}30`}`,
+            borderRadius: 8,
+            padding: '12px 14px',
+            transition: 'border-color 0.5s',
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: serif,
+              fontSize: 28,
+              fontWeight: 700,
+              color: C.accent,
+              lineHeight: 1,
+              marginBottom: 4,
+              transition: 'all 0.4s',
+              transform: isUpdated ? 'scale(1.06)' : 'scale(1)',
+            }}
+          >
+            {displayVal}
+          </div>
+          <div style={{ fontFamily: sans, fontSize: 10, color: C.textMuted }}>Partners Reached</div>
+          {isUpdated && (
+            <div
+              style={{
+                marginTop: 6,
+                fontFamily: sans,
+                fontSize: 9,
+                color: '#4ade80',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80' }} />
+              Just updated
+            </div>
+          )}
+        </div>
+
+        {/* Other stats (decorative) */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[['12', 'Markets'], ['3x', 'ROI']].map(([val, lbl]) => (
+            <div
+              key={lbl}
+              style={{
+                flex: 1,
+                background: '#161616',
+                borderRadius: 6,
+                padding: '8px 10px',
+                border: '1px solid #222',
+              }}
+            >
+              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: C.textOnDark }}>{val}</div>
+              <div style={{ fontFamily: sans, fontSize: 9, color: C.textMuted }}>{lbl}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Feature highlights ───────────────────────────────────────────────────────
 function FeaturesSection() {
   const features = [
@@ -1139,21 +1367,11 @@ function FeaturesSection() {
       bg: C.bgSecondary,
       textColor: C.textPrimary,
       bodyColor: C.textSecondary,
-      label: 'Preset Themes',
-      title: 'Three looks.\nZero design work.',
-      body: 'Switch between Dark Minimal, Light Corporate, and Bold Brand with one click. Colors, fonts, and transitions adapt instantly.',
-      visual: <ThemesMockup />,
+      label: 'Always Live',
+      title: 'Send once.\nUpdate forever.',
+      body: 'Your proposal isn\'t a file — it\'s a live page. Fix a typo, update pricing, swap a case study, add a new slide — your partner\'s link stays the same and always shows the latest version.\n\nNo resending. No version confusion. No "please see the updated attachment."',
+      visual: <LiveUpdateMockup />,
       reverse: false,
-    },
-    {
-      bg: C.bgDarkAlt,
-      textColor: C.textOnDark,
-      bodyColor: C.textMuted,
-      label: 'Built for Teams',
-      title: 'Your team\'s proposal\nengine.',
-      body: 'Magic link auth, per-user proposals, duplicate in one click, autosave, and keyboard shortcuts. No training needed.',
-      visual: <TeamMockup />,
-      reverse: true,
     },
   ];
 
@@ -1225,6 +1443,7 @@ function FeaturesSection() {
                     color: bodyColor,
                     lineHeight: 1.7,
                     maxWidth: 420,
+                    whiteSpace: 'pre-line',
                   }}
                 >
                   {body}
