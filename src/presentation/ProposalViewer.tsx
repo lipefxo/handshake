@@ -7,6 +7,7 @@ import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
+import { useDialKit } from 'dialkit';
 
 export function ProposalViewer() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,6 +15,21 @@ export function ProposalViewer() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const settings = useDialKit('Presentation', {
+    appearance: {
+      showNavDots: true,
+      showProgress: true,
+      grainOpacity: [0, 0.1, 0.005, 0.03] as [number, number, number, number],
+    },
+    animation: {
+      staggerDelay: [0.05, 0.4, 0.01, 0.12] as [number, number, number, number],
+      entryDuration: [0.3, 1.5, 0.05, 0.8] as [number, number, number, number],
+    },
+    counter: {
+      durationMs: [500, 3000, 100, 1800] as [number, number, number, number],
+    },
+  });
 
   useEffect(() => {
     if (!slug) return;
@@ -64,8 +80,12 @@ export function ProposalViewer() {
 
   return (
     <>
-      <ProgressBar current={current} total={enabledSlides.length} />
-      <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
+      {settings.appearance.showProgress && (
+        <ProgressBar current={current} total={enabledSlides.length} />
+      )}
+      {settings.appearance.showNavDots && (
+        <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
+      )}
 
       <div ref={containerRef} className="slide-container">
         {enabledSlides.map((slide, index) => (

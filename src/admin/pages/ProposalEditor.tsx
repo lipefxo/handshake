@@ -7,12 +7,23 @@ import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
 import { createDefaultSlide } from '../../data/slideDefaults';
 import { generateSlug, copyToClipboard } from '../../shared/utils/helpers';
+import { useDialKit } from 'dialkit';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export function ProposalEditor() {
   const { id } = useParams<{ id: string }>();
   const { proposals, updateProposal } = useProposalStore();
+
+  const editorValues = useDialKit('Editor', {
+    autosave: {
+      enabled: true,
+      debounceMs: [500, 5000, 250, 1000] as [number, number, number, number],
+    },
+    preview: {
+      showPanel: true,
+    },
+  });
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
@@ -55,10 +66,10 @@ export function ProposalEditor() {
   );
 
   useEffect(() => {
-    if (!proposal) return;
-    const timer = setTimeout(() => save(proposal), 1000);
+    if (!proposal || !editorValues.autosave.enabled) return;
+    const timer = setTimeout(() => save(proposal), editorValues.autosave.debounceMs);
     return () => clearTimeout(timer);
-  }, [proposal, save]);
+  }, [proposal, save, editorValues.autosave.enabled, editorValues.autosave.debounceMs]);
 
   const updateLocal = (updates: Partial<Proposal>) => {
     setProposal((prev) => prev ? { ...prev, ...updates } : prev);
@@ -239,8 +250,8 @@ export function ProposalEditor() {
           )}
         </div>
 
-        {/* Preview panel — right */}
-        <div className="w-80 flex-shrink-0 border-l border-gray-100 bg-gray-900 relative overflow-hidden">
+        {/* Preview panel — right (togglable via dialkit) */}
+        {editorValues.preview.showPanel && <div className="w-80 flex-shrink-0 border-l border-gray-100 bg-gray-900 relative overflow-hidden">
           <div className="absolute inset-0 flex flex-col">
             {/* Preview header */}
             <div className="px-4 py-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
@@ -274,7 +285,7 @@ export function ProposalEditor() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );
