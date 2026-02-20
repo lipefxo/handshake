@@ -1373,6 +1373,26 @@ function FeaturesSection() {
       visual: <LiveUpdateMockup />,
       reverse: false,
     },
+    {
+      bg: C.bgDark,
+      textColor: C.textOnDark,
+      bodyColor: C.textMuted,
+      label: 'Themes & Brand',
+      title: 'Your brand.\nNot a template.',
+      body: 'Choose from a curated set of themes — dark, light, bold — each designed for presentations that feel intentional. Override accent colors to match your brand in seconds.',
+      visual: <ThemesMockup />,
+      reverse: true,
+    },
+    {
+      bg: C.bgPrimary,
+      textColor: C.textPrimary,
+      bodyColor: C.textSecondary,
+      label: 'Proposal Dashboard',
+      title: 'Everything in\none place.',
+      body: 'Manage all your proposals from a single workspace. See which decks are live, track views, and jump straight back into editing — no hunting through folders or email threads.',
+      visual: <TeamMockup />,
+      reverse: false,
+    },
   ];
 
   return (
