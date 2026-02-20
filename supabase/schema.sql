@@ -49,6 +49,42 @@ create trigger proposals_updated_at
   for each row execute function update_updated_at();
 
 -- ============================================================
+-- Sharing controls on proposals
+-- ============================================================
+
+ALTER TABLE proposals
+  ADD COLUMN IF NOT EXISTS visibility text DEFAULT 'public'
+    CHECK (visibility IN ('public', 'password', 'email_gated')),
+  ADD COLUMN IF NOT EXISTS access_password text,
+  ADD COLUMN IF NOT EXISTS expires_at timestamptz,
+  ADD COLUMN IF NOT EXISTS brand_overrides jsonb DEFAULT '{}'::jsonb;
+
+-- Lead capture for email-gated proposals
+CREATE TABLE IF NOT EXISTS proposal_leads (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  proposal_id uuid REFERENCES proposals(id) ON DELETE CASCADE NOT NULL,
+  email text NOT NULL,
+  accessed_at timestamptz DEFAULT now(),
+  UNIQUE(proposal_id, email)
+);
+
+ALTER TABLE proposal_leads ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read leads for their proposals"
+  ON proposal_leads FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_leads.proposal_id
+        AND proposals.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Anyone can submit a lead"
+  ON proposal_leads FOR INSERT
+  WITH CHECK (true);
+
+-- ============================================================
 -- Waitlist (landing page email capture)
 -- ============================================================
 

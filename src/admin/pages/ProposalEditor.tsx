@@ -10,7 +10,7 @@ import { generateSlug, copyToClipboard } from '../../shared/utils/helpers';
 import { useDialKit } from 'dialkit';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
-import { ThemePicker } from '../../themes/ThemePicker';
+import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
 import { defaultThemeId, themes } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,7 @@ export function ProposalEditor() {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
@@ -186,6 +187,10 @@ export function ProposalEditor() {
     [proposal, ingestor, importMarkdownToProposal],
   );
 
+  const handleMarkdownApply = useCallback((slides: SlideConfig[]) => {
+    updateLocal({ slides });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleCopyLink = async () => {
     if (!proposal) return;
     await copyToClipboard(`${window.location.origin}/p/${proposal.slug}`);
@@ -261,6 +266,18 @@ export function ProposalEditor() {
           Proposals
         </Link>
 
+        {id && (
+          <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 gap-0.5 flex-shrink-0">
+            <span className="px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-gray-800">Slides</span>
+            <Link
+              to={`/admin/proposals/${id}/settings`}
+              className="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150"
+            >
+              Settings
+            </Link>
+          </div>
+        )}
+
         <div className="flex-1 flex items-center gap-3">
           <Input
             className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 flex-1 max-w-xs"
@@ -299,6 +316,17 @@ export function ProposalEditor() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            onClick={() => setMarkdownEditorOpen(true)}
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            title="Edit proposal as Markdown"
+          >
+            <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
+            Markdown
+          </Button>
+
           <Button
             onClick={() => ingestor.open('import')}
             variant="outline"
@@ -364,7 +392,7 @@ export function ProposalEditor() {
           {/* Preview panel */}
           {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
             <div className="h-full w-full max-w-[72rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
-              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-white flex items-center gap-3">
+              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
               </div>
               {selectedSlide && selectedSlide.enabled ? (
@@ -373,7 +401,7 @@ export function ProposalEditor() {
                     <iframe
                       ref={previewIframeRef}
                       src={`/p/${proposal.slug}#preview`}
-                      onLoad={postPreviewUpdate}
+                      onLoad={() => postPreviewUpdate()}
                       className="absolute inset-0 w-full h-full border-0 pointer-events-none"
                       style={{ transform: 'scale(0.675)', transformOrigin: 'top left', width: '148.15%', height: '148.15%' }}
                       title="Slide preview"
@@ -423,12 +451,6 @@ export function ProposalEditor() {
           {/* Configurator — right panel */}
           <div className="flex-1 min-w-0 overflow-y-auto admin-scroll border-l border-gray-100">
             <div className="max-w-lg mx-auto px-3 py-3">
-              <div className="mb-3">
-                <ThemePicker
-                  activeThemeId={proposal.themeId}
-                  onChange={(themeId) => updateLocal({ themeId })}
-                />
-              </div>
             {selectedSlide ? (
               <SlideConfigurator
                 slide={selectedSlide}
@@ -457,6 +479,15 @@ export function ProposalEditor() {
       onGenerate={handleMarkdownImport}
       onClose={ingestor.close}
     />
+
+    {proposal && (
+      <ProposalMarkdownEditorModal
+        isOpen={markdownEditorOpen}
+        proposal={proposal}
+        onApply={handleMarkdownApply}
+        onClose={() => setMarkdownEditorOpen(false)}
+      />
+    )}
     </>
   );
 }

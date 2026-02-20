@@ -97,6 +97,53 @@ export function SlideSortableList({
 
   const allItemIds = useMemo(() => slides.map((s) => s.id), [slides]);
 
+  /** Flat list of slide ids in visible order (expanded groups then ungrouped) for keyboard nav */
+  const flatOrderIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const group of groupedSlides.groups) {
+      if (!(collapsedGroups[group.id] ?? false)) {
+        ids.push(...group.slides.map((s) => s.id));
+      }
+    }
+    ids.push(...groupedSlides.ungrouped.map((s) => s.id));
+    return ids;
+  }, [groupedSlides, collapsedGroups]);
+
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listContainerRef.current;
+    if (!el) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      if (!selectedId || flatOrderIds.length === 0) return;
+      const target = e.target as Node;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (!el.contains(target)) return;
+
+      const idx = flatOrderIds.indexOf(selectedId);
+      if (idx === -1) return;
+
+      if (e.key === 'ArrowDown' && idx < flatOrderIds.length - 1) {
+        e.preventDefault();
+        onSelect(flatOrderIds[idx + 1]);
+      } else if (e.key === 'ArrowUp' && idx > 0) {
+        e.preventDefault();
+        onSelect(flatOrderIds[idx - 1]);
+      }
+    };
+
+    el.addEventListener('keydown', handleKeyDown, true);
+    return () => el.removeEventListener('keydown', handleKeyDown, true);
+  }, [selectedId, flatOrderIds, onSelect]);
+
   const clearMergeTimer = useCallback(() => {
     if (mergeTimerRef.current) {
       clearInterval(mergeTimerRef.current);
@@ -224,7 +271,11 @@ export function SlideSortableList({
 
   return (
     <div className="flex min-h-0 flex-col h-full">
-      <div className="flex-1 min-h-0 overflow-y-auto admin-scroll px-3 pt-3 space-y-1.5">
+      <div
+        ref={listContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto admin-scroll px-3 pt-3 space-y-1.5"
+        tabIndex={0}
+      >
         <div className="grid grid-cols-2 gap-1.5 pb-1.5">
           <button
             type="button"

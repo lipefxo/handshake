@@ -123,6 +123,11 @@ export type SlideContent =
   | BenefitsSlideContent
   | ClosingSlideContent;
 
+export interface BrandOverrides {
+  primaryColor?: string;
+  accentColor?: string;
+}
+
 export interface Proposal {
   id: string;
   user_id: string;
@@ -134,6 +139,12 @@ export interface Proposal {
   status: 'draft' | 'published';
   slides: SlideConfig[];
   themeId: ThemeId;
+  // Sharing
+  visibility?: 'public' | 'password' | 'email_gated';
+  accessPassword?: string;
+  expiresAt?: string;
+  // Brand overrides
+  brandOverrides?: BrandOverrides;
 }
 
 export interface AppUser {

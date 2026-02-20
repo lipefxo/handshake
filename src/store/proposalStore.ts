@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Proposal, SlideConfig } from '../types/proposal';
+import type { BrandOverrides, Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateSlug } from '../shared/utils/helpers';
 import { useAuthStore } from './authStore';
@@ -18,6 +18,7 @@ interface ProposalStore {
   createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Proposal | null>;
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
   deleteProposal: (id: string) => Promise<boolean>;
+  duplicateProposal: (id: string) => Promise<Proposal | null>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
   getOwnProposalBySlug: (slug: string) => Promise<Proposal | null>;
   createFromMarkdown: (
@@ -52,6 +53,10 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     status: row.status as 'draft' | 'published',
     slides,
     themeId: resolveThemeId(row),
+    visibility: (row.visibility as Proposal['visibility']) || 'public',
+    accessPassword: row.access_password as string | undefined,
+    expiresAt: row.expires_at as string | undefined,
+    brandOverrides: (row.brand_overrides as BrandOverrides) || {},
   };
 }
 
@@ -214,6 +219,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.slides !== undefined) dbUpdates.slides = normalizeSlidesIconIds(sanitizeSlides(updates.slides));
     if (updates.themeId !== undefined) dbUpdates.theme_id = updates.themeId;
+    if (updates.visibility !== undefined) dbUpdates.visibility = updates.visibility;
+    if (updates.accessPassword !== undefined) dbUpdates.access_password = updates.accessPassword;
+    if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
+    if (updates.brandOverrides !== undefined) dbUpdates.brand_overrides = updates.brandOverrides;
 
     const { error } = await supabase
       .from('proposals')
@@ -258,6 +267,39 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       proposals: state.proposals.filter((p) => p.id !== id),
     }));
     return true;
+  },
+
+  duplicateProposal: async (id) => {
+    const existing = get().proposals.find((p) => p.id === id);
+    if (!existing) return null;
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId || existing.user_id !== currentUserId) return null;
+
+    const newSlug = generateSafeSlug(generateSlug(`${existing.partnerName}-copy`));
+    const { data, error } = await supabase
+      .from('proposals')
+      .insert({
+        user_id: currentUserId,
+        slug: newSlug,
+        title: `${existing.title} (Copy)`,
+        partner_name: existing.partnerName,
+        status: 'draft',
+        slides: existing.slides,
+        theme_id: existing.themeId,
+        brand_overrides: existing.brandOverrides ?? {},
+        visibility: 'public',
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      logStructuredError('duplicateProposal failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
+      return null;
+    }
+    const newProposal = dbRowToProposal(data);
+    set((state) => ({ proposals: [newProposal, ...state.proposals] }));
+    return newProposal;
   },
 
   getProposalBySlug: async (slug) => {

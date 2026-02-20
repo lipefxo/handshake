@@ -7,14 +7,16 @@ import {
 import { defaultThemeId, themes } from './themeDefinitions';
 import type { ThemeId } from './themeTypes';
 import { ThemeContext } from './themeContext';
+import type { BrandOverrides } from '../types/proposal';
 
 interface ThemeProviderProps {
   themeId: ThemeId;
   children: ReactNode;
   className?: string;
+  brandOverrides?: BrandOverrides;
 }
 
-export function ThemeProvider({ themeId, children, className = '' }: ThemeProviderProps) {
+export function ThemeProvider({ themeId, children, className = '', brandOverrides }: ThemeProviderProps) {
   const theme = themes[themeId] ?? themes[defaultThemeId];
 
   useEffect(() => {
@@ -58,8 +60,16 @@ export function ThemeProvider({ themeId, children, className = '' }: ThemeProvid
         '--radius': theme.style.borderRadius,
         '--decorative-opacity': String(theme.style.decorativeOpacity),
         '--text-shadow': theme.style.textShadow ?? 'none',
+        ...(brandOverrides?.primaryColor && {
+          '--color-bg-primary': brandOverrides.primaryColor,
+        }),
+        ...(brandOverrides?.accentColor && {
+          '--color-accent': brandOverrides.accentColor,
+          '--color-accent-hover': brandOverrides.accentColor,
+          '--color-accent-muted': brandOverrides.accentColor + '33',
+        }),
       }) as CSSProperties,
-    [theme],
+    [theme, brandOverrides],
   );
 
   return (

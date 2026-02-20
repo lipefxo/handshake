@@ -12,6 +12,9 @@ import { getTransitionVariants } from '../shared/utils/animations';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
+import { PasswordGate } from './components/PasswordGate';
+import { EmailGate } from './components/EmailGate';
+import { ExpiredPage } from './components/ExpiredPage';
 
 function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
@@ -20,6 +23,7 @@ function ProposalViewerContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
+  const [accessGranted, setAccessGranted] = useState(false);
 
   const settings = useDialKit('Presentation', {
     appearance: {
@@ -51,6 +55,7 @@ function ProposalViewerContent() {
 
       if (publishedProposal) {
         setProposal(publishedProposal);
+        setAccessGranted((publishedProposal.visibility ?? 'public') === 'public');
         setLoading(false);
         return;
       }
@@ -60,6 +65,7 @@ function ProposalViewerContent() {
         if (cancelled) return;
         if (ownProposal) {
           setProposal(ownProposal);
+          setAccessGranted(true);
           setLoading(false);
           return;
         }
@@ -121,12 +127,21 @@ function ProposalViewerContent() {
     next();
   };
 
+  // Check expiration
+  const isExpired = proposal?.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
+
   return (
-    <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} className="contents">
+    <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} brandOverrides={proposal?.brandOverrides} className="contents">
       {loading ? (
         <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
           <div className="w-8 h-8 border rounded-full animate-spin" style={{ borderColor: 'var(--color-border)', borderTopColor: 'var(--color-accent)' }} />
         </div>
+      ) : isExpired ? (
+        <ExpiredPage />
+      ) : proposal && proposal.visibility === 'password' && !accessGranted ? (
+        <PasswordGate proposal={proposal} onGranted={() => setAccessGranted(true)} />
+      ) : proposal && proposal.visibility === 'email_gated' && !accessGranted ? (
+        <EmailGate proposal={proposal} onGranted={() => setAccessGranted(true)} />
       ) : error || !proposal ? (
         <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center"
           style={{ background: 'var(--color-bg-primary)' }}>

@@ -7,6 +7,7 @@ import { AdminLayout } from './admin/AdminLayout';
 import { ProposalList } from './admin/pages/ProposalList';
 import { ProposalEditor } from './admin/pages/ProposalEditor';
 import { ProposalSettings } from './admin/pages/ProposalSettings';
+import { ProposalSettingsPage } from './admin/pages/ProposalSettingsPage';
 import { ProposalViewer } from './presentation/ProposalViewer';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { LandingPage } from './landing/LandingPage';
@@ -36,6 +37,7 @@ export default function App() {
               <Route index element={<ProposalList />} />
               <Route path="proposals/new" element={<ProposalEditor />} />
               <Route path="proposals/:id" element={<ProposalEditor />} />
+              <Route path="proposals/:id/settings" element={<ProposalSettingsPage />} />
               <Route path="settings" element={<ProposalSettings />} />
             </Route>
 
