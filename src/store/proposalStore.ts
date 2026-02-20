@@ -12,6 +12,7 @@ interface ProposalStore {
   proposals: Proposal[];
   loading: boolean;
   error: string | null;
+  clearError: () => void;
   fetchProposals: () => Promise<void>;
   createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Proposal | null>;
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
@@ -106,6 +107,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   proposals: [],
   loading: false,
   error: null,
+  clearError: () => set({ error: null }),
 
   fetchProposals: async () => {
     set({ loading: true, error: null });
@@ -122,6 +124,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   createProposal: async (proposal) => {
+    set({ error: null });
     const currentUserId = getCurrentUserId();
     if (!currentUserId || currentUserId !== proposal.user_id) {
       set({ error: 'Unauthorized: cannot create proposal for another user.' });

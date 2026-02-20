@@ -26,6 +26,7 @@ export interface NewProposalFormValues {
 interface NewProposalDialogProps {
   isOpen: boolean;
   isCreating: boolean;
+  createError: string | null;
   onClose: () => void;
   onCreate: (values: NewProposalFormValues) => Promise<void>;
 }
@@ -47,7 +48,7 @@ function getInitialFormValues(): NewProposalFormValues {
   };
 }
 
-export function NewProposalDialog({ isOpen, isCreating, onClose, onCreate }: NewProposalDialogProps) {
+export function NewProposalDialog({ isOpen, isCreating, createError, onClose, onCreate }: NewProposalDialogProps) {
   const [values, setValues] = useState<NewProposalFormValues>(getInitialFormValues);
 
   useEffect(() => {
@@ -156,6 +157,11 @@ export function NewProposalDialog({ isOpen, isCreating, onClose, onCreate }: New
           </div>
 
           <DialogFooter>
+            {createError ? (
+              <p className="mr-auto rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {createError}
+              </p>
+            ) : null}
             <Button
               type="button"
               variant="outline"

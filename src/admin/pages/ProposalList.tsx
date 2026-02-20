@@ -16,7 +16,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export function ProposalList() {
-  const { proposals, loading, fetchProposals, createProposal, deleteProposal, createFromMarkdown } = useProposalStore();
+  const {
+    proposals,
+    loading,
+    error,
+    fetchProposals,
+    createProposal,
+    deleteProposal,
+    createFromMarkdown,
+    clearError,
+  } = useProposalStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
@@ -41,6 +50,7 @@ export function ProposalList() {
   }, [deletedProposalTitle]);
 
   const handleOpenCreateDialog = () => {
+    clearError();
     setShowNewProposalDialog(true);
   };
 
@@ -69,6 +79,7 @@ export function ProposalList() {
       });
 
       if (createdProposal) {
+        clearError();
         setShowNewProposalDialog(false);
       }
     } finally {
@@ -279,7 +290,11 @@ export function ProposalList() {
       <NewProposalDialog
         isOpen={showNewProposalDialog}
         isCreating={creating}
-        onClose={() => setShowNewProposalDialog(false)}
+        createError={error}
+        onClose={() => {
+          clearError();
+          setShowNewProposalDialog(false);
+        }}
         onCreate={handleCreateFromDialog}
       />
 
