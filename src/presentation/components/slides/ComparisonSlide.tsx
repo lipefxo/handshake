@@ -32,7 +32,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
           {content.heading}
         </motion.h2>
 
-        <motion.div variants={fadeUpChild} className="grid grid-cols-2 gap-px" style={{ background: 'var(--color-border)' }}>
+        <motion.div variants={fadeUpChild} className="grid grid-cols-2 gap-px">
           {/* Before column */}
           <div className="p-8" style={{ background: 'var(--color-bg-primary)' }}>
             <div

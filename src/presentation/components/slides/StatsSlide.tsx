@@ -34,8 +34,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
           </motion.p>
         )}
 
-        <div className={`grid gap-px ${content.stats.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}
-          style={{ background: 'var(--color-border)' }}>
+        <div className={`grid gap-px ${content.stats.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
           {content.stats.map((stat, i) => (
             <motion.div
               key={i}

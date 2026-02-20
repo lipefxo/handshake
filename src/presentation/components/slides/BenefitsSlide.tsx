@@ -35,7 +35,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
           {content.heading}
         </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-px" style={{ background: 'var(--color-border)' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px">
           {content.benefits.map((benefit, i) => (
             <motion.div
               key={i}

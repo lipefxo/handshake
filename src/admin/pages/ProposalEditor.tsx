@@ -395,7 +395,6 @@ export function ProposalEditor() {
                       <a
                         href={`/p/${proposal.slug}#preview`}
                         target="_blank"
-                        rel="noopener noreferrer"
                       >
                         Open full preview
                       </a>

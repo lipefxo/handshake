@@ -15,7 +15,7 @@ import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 
 function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
-  const { getProposalBySlug } = useProposalStore();
+  const { getProposalBySlug, getOwnProposalBySlug } = useProposalStore();
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,12 +38,43 @@ function ProposalViewerContent() {
 
   useEffect(() => {
     if (!slug) return;
-    getProposalBySlug(slug).then((p) => {
-      setProposal(p);
+
+    let cancelled = false;
+    const isPreviewMode = window.location.hash.includes('preview');
+
+    const loadProposal = async () => {
+      setLoading(true);
+      setError('');
+
+      const publishedProposal = await getProposalBySlug(slug);
+      if (cancelled) return;
+
+      if (publishedProposal) {
+        setProposal(publishedProposal);
+        setLoading(false);
+        return;
+      }
+
+      if (isPreviewMode) {
+        const ownProposal = await getOwnProposalBySlug(slug);
+        if (cancelled) return;
+        if (ownProposal) {
+          setProposal(ownProposal);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setProposal(null);
       setLoading(false);
-      if (!p) setError('This proposal was not found.');
-    });
-  }, [slug, getProposalBySlug]);
+      setError('This proposal was not found.');
+    };
+
+    void loadProposal();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, getProposalBySlug, getOwnProposalBySlug]);
 
   useEffect(() => {
     const isPreviewMode = window.location.hash.includes('preview');
@@ -112,14 +143,18 @@ function ProposalViewerContent() {
             <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
           )}
 
-          <div ref={containerRef} className="slide-container">
+          <div
+            ref={containerRef}
+            className="slide-container"
+            style={{ backgroundColor: 'var(--color-bg-primary)' }}
+          >
             {enabledSlides.map((slide, index) => (
               <motion.section
                 key={`${slide.id}-${slide.transition ?? 'slide-up'}`}
                 className="slide-section"
-                style={{ background: slide.backgroundOverride || undefined }}
+                style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
                 variants={getTransitionVariants(slide.transition)}
-                initial="hidden"
+                initial={false}
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.6 }}
               >

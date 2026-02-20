@@ -9,6 +9,7 @@ import { ProposalEditor } from './admin/pages/ProposalEditor';
 import { ProposalSettings } from './admin/pages/ProposalSettings';
 import { ProposalViewer } from './presentation/ProposalViewer';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
+import { LandingPage } from './landing/LandingPage';
 
 export default function App() {
   return (
@@ -16,6 +17,9 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Landing page */}
+            <Route path="/" element={<LandingPage />} />
+
             {/* Auth routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
@@ -38,7 +42,7 @@ export default function App() {
             {/* Public proposal viewer */}
             <Route path="/p/:slug" element={<ProposalViewer />} />
 
-            {/* Catch-all */}
+            {/* Catch-all → admin */}
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </AuthProvider>

@@ -53,8 +53,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
           )}
         </div>
 
-        <div className={`grid gap-px ${content.features.length <= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}
-          style={{ background: 'var(--color-border)' }}>
+        <div className={`grid gap-px ${content.features.length <= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {content.features.map((feature, i) => (
             <motion.div
               key={i}

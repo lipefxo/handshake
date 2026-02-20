@@ -19,6 +19,7 @@ interface ProposalStore {
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
   deleteProposal: (id: string) => Promise<boolean>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
+  getOwnProposalBySlug: (slug: string) => Promise<Proposal | null>;
   createFromMarkdown: (
     markdown: string,
     frontmatter: { title?: string; partner?: string; date?: string; theme?: string },
@@ -267,6 +268,22 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .eq('slug', safeSlug)
       .eq('status', 'published')
       .single();
+    if (error || !data) return null;
+    return dbRowToProposal(data);
+  },
+
+  getOwnProposalBySlug: async (slug) => {
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) return null;
+
+    const safeSlug = generateSafeSlug(slug);
+    const { data, error } = await supabase
+      .from('proposals')
+      .select('*')
+      .eq('slug', safeSlug)
+      .eq('user_id', currentUserId)
+      .single();
+
     if (error || !data) return null;
     return dbRowToProposal(data);
   },

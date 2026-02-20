@@ -49,6 +49,27 @@ create trigger proposals_updated_at
   for each row execute function update_updated_at();
 
 -- ============================================================
+-- Waitlist (landing page email capture)
+-- ============================================================
+
+create table if not exists waitlist (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null,
+  source text default 'landing_page',
+  created_at timestamptz default now()
+);
+
+alter table waitlist enable row level security;
+
+create policy "Anyone can join waitlist"
+  on waitlist for insert
+  with check (true);
+
+create policy "No public reads on waitlist"
+  on waitlist for select
+  using (false);
+
+-- ============================================================
 -- Storage
 -- ============================================================
 
