@@ -81,6 +81,7 @@ export function SlideSortableItem({
           value={slide.customLabel || meta.label}
           onChange={(e) => onRename(e.target.value)}
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
           maxLength={32}
           className={`w-full bg-transparent border-0 outline-none text-xs font-medium truncate px-0 py-0 ${
             isSelected ? 'text-indigo-700' : 'text-gray-700'

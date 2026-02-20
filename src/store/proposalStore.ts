@@ -11,7 +11,7 @@ interface ProposalStore {
   fetchProposals: () => Promise<void>;
   createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Proposal | null>;
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
-  deleteProposal: (id: string) => Promise<void>;
+  deleteProposal: (id: string) => Promise<boolean>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
   createFromMarkdown: (
     markdown: string,
@@ -109,11 +109,12 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { error } = await supabase.from('proposals').delete().eq('id', id);
     if (error) {
       set({ error: error.message });
-      return;
+      return false;
     }
     set((state) => ({
       proposals: state.proposals.filter((p) => p.id !== id),
     }));
+    return true;
   },
 
   getProposalBySlug: async (slug) => {

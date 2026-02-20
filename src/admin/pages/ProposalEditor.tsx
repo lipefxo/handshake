@@ -130,19 +130,6 @@ export function ProposalEditor() {
     updateSlide(slideId, { customLabel: label });
   };
 
-  const handleCreateGroupFromSlide = (slideId: string) => {
-    if (!proposal) return;
-    const groupCount = new Set(proposal.slides.filter((slide) => slide.groupId).map((slide) => slide.groupId)).size;
-    const groupId = `group-${crypto.randomUUID()}`;
-    const groupTitle = `Group ${groupCount + 1}`;
-    const slides = proposal.slides.map((slide) =>
-      slide.id === slideId
-        ? { ...slide, groupId, groupTitle }
-        : slide
-    );
-    updateLocal({ slides });
-  };
-
   const handleRenameGroup = (groupId: string, title: string) => {
     if (!proposal) return;
     const slides = proposal.slides.map((slide) =>
@@ -369,7 +356,6 @@ export function ProposalEditor() {
             onDelete={handleDeleteSlide}
             onAdd={handleAddSlide}
             onRenameSlide={handleRenameSlide}
-            onCreateGroupFromSlide={handleCreateGroupFromSlide}
             onRenameGroup={handleRenameGroup}
             onAssignGroup={handleAssignSlideGroup}
           />

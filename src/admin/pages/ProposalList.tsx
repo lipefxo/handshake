@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
 import type { Proposal, SlideConfig } from '../../types/proposal';
@@ -15,11 +15,23 @@ export function ProposalList() {
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Proposal | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletedProposalTitle, setDeletedProposalTitle] = useState<string | null>(null);
   const ingestor = useIngestorState();
 
   useEffect(() => {
     fetchProposals();
   }, [fetchProposals]);
+
+  useEffect(() => {
+    if (!deletedProposalTitle) return undefined;
+    const timeoutId = window.setTimeout(() => {
+      setDeletedProposalTitle(null);
+    }, 2600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [deletedProposalTitle]);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -43,9 +55,27 @@ export function ProposalList() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Delete this proposal? This cannot be undone.')) {
-      await deleteProposal(id);
+  const handleRequestDelete = (proposal: Proposal) => {
+    setDeleteTarget(proposal);
+  };
+
+  const handleCancelDelete = () => {
+    if (deletingId) return;
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const targetToDelete = deleteTarget;
+    setDeletingId(targetToDelete.id);
+    try {
+      const didDelete = await deleteProposal(targetToDelete.id);
+      setDeleteTarget(null);
+      if (didDelete) {
+        setDeletedProposalTitle(targetToDelete.title);
+      }
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -201,7 +231,8 @@ export function ProposalList() {
                 </Link>
 
                 <button
-                  onClick={() => handleDelete(proposal.id)}
+                  onClick={() => handleRequestDelete(proposal)}
+                  disabled={deletingId === proposal.id}
                   className="p-1.5 text-gray-300 hover:text-red-400 rounded-lg hover:bg-red-50 transition-colors"
                   title="Delete"
                 >
@@ -224,6 +255,84 @@ export function ProposalList() {
         onGenerate={handleMarkdownGenerate}
         onClose={ingestor.close}
       />
+
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 z-40"
+              onClick={handleCancelDelete}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-proposal-title"
+              className="fixed left-1/2 top-1/2 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            >
+              <h2 id="delete-proposal-title" className="text-sm font-semibold text-gray-900">
+                Delete proposal?
+              </h2>
+              <p className="mt-2 text-sm text-gray-500">
+                This will permanently delete
+                {' '}
+                <span className="font-medium text-gray-700">{deleteTarget.title}</span>.
+                This action cannot be undone.
+              </p>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  onClick={handleCancelDelete}
+                  disabled={Boolean(deletingId)}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={Boolean(deletingId)}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors"
+                >
+                  {deletingId ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : null}
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deletedProposalTitle && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.18 }}
+            className="fixed right-6 top-6 z-50 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-2 text-sm text-emerald-800">
+              <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>
+                Deleted
+                {' '}
+                <span className="font-medium">{deletedProposalTitle}</span>
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

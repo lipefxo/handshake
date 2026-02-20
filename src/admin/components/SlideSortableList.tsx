@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -6,8 +6,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
+import type { DragStartEvent, DragOverEvent, DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
@@ -20,6 +21,9 @@ import { SlideSortableItem } from './SlideSortableItem';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { SlideTypeThumbnail } from './SlideTypeThumbnail';
 
+const MERGE_HOLD_MS = 1200;
+const MERGE_TICK_MS = 50;
+
 interface SlideSortableListProps {
   slides: SlideConfig[];
   selectedId: string | null;
@@ -29,7 +33,6 @@ interface SlideSortableListProps {
   onDelete: (id: string) => void;
   onAdd: (type: SlideType) => void;
   onRenameSlide: (slideId: string, label: string) => void;
-  onCreateGroupFromSlide: (slideId: string) => void;
   onRenameGroup: (groupId: string, title: string) => void;
   onAssignGroup: (slideId: string, groupId: string | null) => void;
 }
@@ -43,15 +46,25 @@ export function SlideSortableList({
   onDelete,
   onAdd,
   onRenameSlide,
-  onCreateGroupFromSlide,
   onRenameGroup,
   onAssignGroup,
 }: SlideSortableListProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
+  // Drag state
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+
+  // Merge-on-hold state
+  const [mergeTarget, setMergeTarget] = useState<string | null>(null);
+  const [mergeProgress, setMergeProgress] = useState(0);
+  const mergeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mergeStartRef = useRef<number>(0);
+  const mergePendingRef = useRef(false);
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -84,52 +97,147 @@ export function SlideSortableList({
     return { groups, ungrouped };
   }, [slides]);
 
-  const groupOptions = useMemo(
-    () => groupedSlides.groups.map((group) => ({ id: group.id, title: group.title })),
-    [groupedSlides.groups]
+  const allItemIds = useMemo(() => slides.map((s) => s.id), [slides]);
+
+  const clearMergeTimer = useCallback(() => {
+    if (mergeTimerRef.current) {
+      clearInterval(mergeTimerRef.current);
+      mergeTimerRef.current = null;
+    }
+    setMergeTarget(null);
+    setMergeProgress(0);
+    mergePendingRef.current = false;
+  }, []);
+
+  const startMergeTimer = useCallback((targetId: string) => {
+    clearMergeTimer();
+    setMergeTarget(targetId);
+    mergeStartRef.current = Date.now();
+    mergePendingRef.current = true;
+
+    mergeTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - mergeStartRef.current;
+      const progress = Math.min((elapsed / MERGE_HOLD_MS) * 100, 100);
+      setMergeProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(mergeTimerRef.current!);
+        mergeTimerRef.current = null;
+      }
+    }, MERGE_TICK_MS);
+  }, [clearMergeTimer]);
+
+  useEffect(() => {
+    return () => clearMergeTimer();
+  }, [clearMergeTimer]);
+
+  const findSlideById = useCallback(
+    (id: UniqueIdentifier) => slides.find((s) => s.id === id),
+    [slides]
   );
 
-  const handleDragEnd = (sectionSlides: SlideConfig[], event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = sectionSlides.findIndex((slide) => slide.id === active.id);
-      const newIndex = sectionSlides.findIndex((slide) => slide.id === over.id);
-      const movedSection = arrayMove(sectionSlides, oldIndex, newIndex);
-      const sectionIds = new Set(sectionSlides.map((slide) => slide.id));
-      let cursor = 0;
-      onReorder(
-        slides.map((slide) => {
-          if (!sectionIds.has(slide.id)) return slide;
-          const nextSlide = movedSection[cursor];
-          cursor += 1;
-          return nextSlide;
-        })
-      );
-    }
-  };
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  }, []);
 
-  const selectedSlide = slides.find((slide) => slide.id === selectedId) ?? null;
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    setOverId(over?.id ?? null);
+
+    if (!over || active.id === over.id) {
+      clearMergeTimer();
+      return;
+    }
+
+    const draggedSlide = findSlideById(active.id);
+    const targetSlide = findSlideById(over.id);
+
+    if (!draggedSlide || !targetSlide) {
+      clearMergeTimer();
+      return;
+    }
+
+    const bothUngrouped = !draggedSlide.groupId && !targetSlide.groupId;
+    const targetIsString = typeof over.id === 'string';
+
+    if (bothUngrouped && targetIsString) {
+      if (mergeTarget !== over.id) {
+        startMergeTimer(over.id as string);
+      }
+    } else {
+      clearMergeTimer();
+    }
+  }, [clearMergeTimer, findSlideById, mergeTarget, startMergeTimer]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    const wasFullyCharged = mergePendingRef.current && mergeProgress >= 100;
+    const currentMergeTarget = mergeTarget;
+
+    clearMergeTimer();
+    setActiveId(null);
+    setOverId(null);
+
+    if (!over) return;
+
+    const draggedSlide = findSlideById(active.id);
+    const targetSlide = findSlideById(over.id);
+
+    if (!draggedSlide || !targetSlide) return;
+
+    // Merge into new group: both ungrouped and held long enough
+    if (wasFullyCharged && currentMergeTarget === over.id && !draggedSlide.groupId && !targetSlide.groupId) {
+      const groupId = `group-${crypto.randomUUID()}`;
+      const groupCount = new Set(slides.filter((s) => s.groupId).map((s) => s.groupId)).size;
+      const groupTitle = `Group ${groupCount + 1}`;
+
+      const updated = slides.map((s) => {
+        if (s.id === active.id || s.id === over.id) {
+          return { ...s, groupId, groupTitle };
+        }
+        return s;
+      });
+      onReorder(updated);
+      return;
+    }
+
+    // Moving slide into an existing group (drop on a grouped slide)
+    if (targetSlide.groupId && !draggedSlide.groupId) {
+      onAssignGroup(draggedSlide.id, targetSlide.groupId);
+      return;
+    }
+
+    // Dragging a slide out of a group (drop on an ungrouped slide)
+    if (!targetSlide.groupId && draggedSlide.groupId) {
+      onAssignGroup(draggedSlide.id, null);
+      return;
+    }
+
+    // Moving between different groups
+    if (draggedSlide.groupId && targetSlide.groupId && draggedSlide.groupId !== targetSlide.groupId) {
+      onAssignGroup(draggedSlide.id, targetSlide.groupId);
+      return;
+    }
+
+    // Same-section reorder
+    if (active.id !== over.id) {
+      const oldIndex = slides.findIndex((s) => s.id === active.id);
+      const newIndex = slides.findIndex((s) => s.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onReorder(arrayMove(slides, oldIndex, newIndex));
+      }
+    }
+  }, [clearMergeTimer, findSlideById, mergeProgress, mergeTarget, onAssignGroup, onReorder, slides]);
+
+  const activeSlide = activeId ? findSlideById(activeId) : null;
 
   return (
     <div className="flex min-h-0 flex-col h-full">
       <div className="flex-1 min-h-0 overflow-y-auto admin-scroll px-3 pt-3 space-y-1.5">
         <div className="grid grid-cols-2 gap-1.5 pb-1.5">
           <button
-            onClick={() => {
-              if (selectedSlide) onCreateGroupFromSlide(selectedSlide.id);
-            }}
-            disabled={!selectedSlide}
-            className="w-full flex items-center justify-center gap-1.5 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-            title={selectedSlide ? 'Create group from selected slide' : 'Select a slide to create a group'}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h5l2 2h11v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-            </svg>
-            Group selected
-          </button>
-          <button
             onClick={() => setShowPicker(!showPicker)}
-            className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors bg-white"
+            className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors bg-white col-span-2"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -167,45 +275,48 @@ export function SlideSortableList({
           </div>
         )}
 
-        {groupedSlides.groups.map((group) => {
-          const isCollapsed = collapsedGroups[group.id] ?? false;
-          return (
-            <div key={group.id} className="rounded-xl border border-gray-200 bg-white/80">
-              <div className="flex items-center gap-2 px-2.5 py-2 border-b border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setCollapsedGroups((prev) => ({ ...prev, [group.id]: !isCollapsed }))}
-                  className="h-5 w-5 rounded-md border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
-                  title={isCollapsed ? 'Expand group' : 'Collapse group'}
-                >
-                  <svg
-                    className={`h-3.5 w-3.5 mx-auto transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <input
-                  value={group.title}
-                  onChange={(event) => onRenameGroup(group.id, event.target.value)}
-                  maxLength={40}
-                  className="min-w-0 flex-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-semibold text-gray-700 outline-none focus:border-gray-200 focus:bg-white"
-                />
-                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-                  {group.slides.length} {group.slides.length === 1 ? 'slide' : 'slides'}
-                </span>
-              </div>
-              {!isCollapsed && (
-                <div className="space-y-1.5 p-1.5">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={(event) => handleDragEnd(group.slides, event)}
-                  >
-                    <SortableContext items={group.slides.map((slide) => slide.id)} strategy={verticalListSortingStrategy}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
+            {groupedSlides.groups.map((group) => {
+              const isCollapsed = collapsedGroups[group.id] ?? false;
+              return (
+                <div key={group.id} className="rounded-xl border border-gray-200 bg-white/80">
+                  <div className="flex items-center gap-2 px-2.5 py-2 border-b border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setCollapsedGroups((prev) => ({ ...prev, [group.id]: !isCollapsed }))}
+                      className="h-5 w-5 rounded-md border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+                      title={isCollapsed ? 'Expand group' : 'Collapse group'}
+                    >
+                      <svg
+                        className={`h-3.5 w-3.5 mx-auto transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <input
+                      value={group.title}
+                      onChange={(event) => onRenameGroup(group.id, event.target.value)}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      maxLength={40}
+                      className="min-w-0 flex-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-semibold text-gray-700 outline-none focus:border-gray-200 focus:bg-white"
+                    />
+                    <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+                      {group.slides.length} {group.slides.length === 1 ? 'slide' : 'slides'}
+                    </span>
+                  </div>
+                  {!isCollapsed && (
+                    <div className="space-y-1.5 p-1.5">
                       <AnimatePresence initial={false}>
                         {group.slides.map((slide) => (
                           <motion.div
@@ -218,36 +329,26 @@ export function SlideSortableList({
                           >
                             <SlideSortableItem
                               slide={slide}
-                              groups={groupOptions}
                               isSelected={slide.id === selectedId}
                               onSelect={() => onSelect(slide.id)}
                               onToggle={() => onToggle(slide.id)}
                               onDelete={() => onDelete(slide.id)}
                               onRename={(label) => onRenameSlide(slide.id, label)}
-                              onGroupChange={(groupId) => onAssignGroup(slide.id, groupId)}
                             />
                           </motion.div>
                         ))}
                       </AnimatePresence>
-                    </SortableContext>
-                  </DndContext>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
 
-        {groupedSlides.ungrouped.length > 0 && (
-          <div className="space-y-1.5 pt-1">
-            {groupedSlides.groups.length > 0 && (
-              <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Ungrouped</p>
-            )}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={(event) => handleDragEnd(groupedSlides.ungrouped, event)}
-            >
-              <SortableContext items={groupedSlides.ungrouped.map((slide) => slide.id)} strategy={verticalListSortingStrategy}>
+            {groupedSlides.ungrouped.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                {groupedSlides.groups.length > 0 && (
+                  <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Ungrouped</p>
+                )}
                 <AnimatePresence initial={false}>
                   {groupedSlides.ungrouped.map((slide) => (
                     <motion.div
@@ -260,21 +361,35 @@ export function SlideSortableList({
                     >
                       <SlideSortableItem
                         slide={slide}
-                        groups={groupOptions}
                         isSelected={slide.id === selectedId}
+                        mergeProgress={mergeTarget === slide.id ? mergeProgress : undefined}
                         onSelect={() => onSelect(slide.id)}
                         onToggle={() => onToggle(slide.id)}
                         onDelete={() => onDelete(slide.id)}
                         onRename={(label) => onRenameSlide(slide.id, label)}
-                        onGroupChange={(groupId) => onAssignGroup(slide.id, groupId)}
                       />
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
+              </div>
+            )}
+          </SortableContext>
+
+          <DragOverlay dropAnimation={null}>
+            {activeSlide && (
+              <div className="opacity-90 shadow-lg rounded-xl">
+                <SlideSortableItem
+                  slide={activeSlide}
+                  isSelected={activeSlide.id === selectedId}
+                  onSelect={() => {}}
+                  onToggle={() => {}}
+                  onDelete={() => {}}
+                  onRename={() => {}}
+                />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
 
         {slides.length === 0 && (
           <div className="text-center py-8">
@@ -285,4 +400,3 @@ export function SlideSortableList({
     </div>
   );
 }
-
