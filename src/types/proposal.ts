@@ -15,6 +15,9 @@ export interface SlideConfig {
   type: SlideType;
   enabled: boolean;
   content: SlideContent;
+  customLabel?: string;
+  groupId?: string;
+  groupTitle?: string;
   transition?: 'fade' | 'slide-up' | 'slide-left' | 'scale' | 'blur';
   backgroundOverride?: string;
 }

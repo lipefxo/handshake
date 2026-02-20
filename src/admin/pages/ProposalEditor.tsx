@@ -8,6 +8,8 @@ import { SlideConfigurator } from '../components/SlideConfigurator';
 import { createDefaultSlide } from '../../data/slideDefaults';
 import { generateSlug, copyToClipboard } from '../../shared/utils/helpers';
 import { useDialKit } from 'dialkit';
+import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
+import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -19,7 +21,9 @@ export function ProposalEditor() {
     error: proposalsError,
     fetchProposals,
     updateProposal,
+    importMarkdownToProposal,
   } = useProposalStore();
+  const ingestor = useIngestorState();
 
   const editorValues = useDialKit('Editor', {
     autosave: {
@@ -56,6 +60,9 @@ export function ProposalEditor() {
   }, [fetchProposals, proposals.length]);
 
   const selectedSlide = proposal?.slides.find((s) => s.id === selectedSlideId) ?? null;
+  const selectedSlideIndex = proposal?.slides.findIndex((s) => s.id === selectedSlideId) ?? -1;
+  const hasPrevSlide = selectedSlideIndex > 0;
+  const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
 
   // Debounced auto-save
   const save = useCallback(
@@ -119,11 +126,74 @@ export function ProposalEditor() {
     setSelectedSlideId(newSlide.id);
   };
 
+  const handleRenameSlide = (slideId: string, label: string) => {
+    updateSlide(slideId, { customLabel: label });
+  };
+
+  const handleCreateGroupFromSlide = (slideId: string) => {
+    if (!proposal) return;
+    const groupCount = new Set(proposal.slides.filter((slide) => slide.groupId).map((slide) => slide.groupId)).size;
+    const groupId = `group-${crypto.randomUUID()}`;
+    const groupTitle = `Group ${groupCount + 1}`;
+    const slides = proposal.slides.map((slide) =>
+      slide.id === slideId
+        ? { ...slide, groupId, groupTitle }
+        : slide
+    );
+    updateLocal({ slides });
+  };
+
+  const handleRenameGroup = (groupId: string, title: string) => {
+    if (!proposal) return;
+    const slides = proposal.slides.map((slide) =>
+      slide.groupId === groupId ? { ...slide, groupTitle: title } : slide
+    );
+    updateLocal({ slides });
+  };
+
+  const handleAssignSlideGroup = (slideId: string, groupId: string | null) => {
+    if (!proposal) return;
+    const targetGroupTitle = groupId
+      ? proposal.slides.find((slide) => slide.groupId === groupId)?.groupTitle || 'Untitled group'
+      : undefined;
+    const slides = proposal.slides.map((slide) => {
+      if (slide.id !== slideId) return slide;
+      if (!groupId) return { ...slide, groupId: undefined, groupTitle: undefined };
+      return { ...slide, groupId, groupTitle: targetGroupTitle };
+    });
+    updateLocal({ slides });
+  };
+
+  const handleGoToPrevSlide = useCallback(() => {
+    if (!proposal || !hasPrevSlide) return;
+    const prevSlide = proposal.slides[selectedSlideIndex - 1];
+    if (prevSlide) setSelectedSlideId(prevSlide.id);
+  }, [proposal, hasPrevSlide, selectedSlideIndex]);
+
+  const handleGoToNextSlide = useCallback(() => {
+    if (!proposal || !hasNextSlide) return;
+    const nextSlide = proposal.slides[selectedSlideIndex + 1];
+    if (nextSlide) setSelectedSlideId(nextSlide.id);
+  }, [proposal, hasNextSlide, selectedSlideIndex]);
+
   const handlePublish = async () => {
     if (!proposal) return;
     const newStatus = proposal.status === 'published' ? 'draft' : 'published';
     updateLocal({ status: newStatus });
   };
+
+  const handleMarkdownImport = useCallback(
+    async (newSlides: SlideConfig[], _frontmatter: { title?: string; partner?: string; date?: string }) => {
+      if (!proposal) return;
+      const mode = ingestor.mode === 'import' ? 'append' : 'replace';
+      await importMarkdownToProposal(proposal.id, newSlides, mode);
+      // Refresh local state
+      const updated = useProposalStore.getState().proposals.find((p) => p.id === proposal.id);
+      if (updated) setProposal({ ...updated });
+      ingestor.close();
+    },
+    [proposal, ingestor, importMarkdownToProposal],
+  );
 
   const handleCopyLink = async () => {
     if (!proposal) return;
@@ -194,6 +264,7 @@ export function ProposalEditor() {
   }
 
   return (
+    <>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
@@ -244,6 +315,17 @@ export function ProposalEditor() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => ingestor.open('import')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors"
+            title="Import slides from Markdown"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Import MD
+          </button>
+
           {proposal.status === 'published' && (
             <button
               onClick={handleCopyLink}
@@ -273,7 +355,7 @@ export function ProposalEditor() {
       {/* Main editor area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Slide list — left panel */}
-        <div className="w-[19.5rem] flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
+        <div className="w-[19.5rem] min-h-0 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
           <div className="px-3 pt-3 pb-1 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1">Slides</p>
             <span className="text-[11px] text-gray-400 px-1">{proposal.slides.filter((s) => s.enabled).length} active</span>
@@ -286,6 +368,10 @@ export function ProposalEditor() {
             onToggle={handleToggleSlide}
             onDelete={handleDeleteSlide}
             onAdd={handleAddSlide}
+            onRenameSlide={handleRenameSlide}
+            onCreateGroupFromSlide={handleCreateGroupFromSlide}
+            onRenameGroup={handleRenameGroup}
+            onAssignGroup={handleAssignSlideGroup}
           />
         </div>
 
@@ -294,12 +380,12 @@ export function ProposalEditor() {
           {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
             <div className="h-full w-full max-w-[72rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
               {/* Preview header */}
-              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-white">
+              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-white flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
               </div>
               {/* Mini preview */}
               {selectedSlide && selectedSlide.enabled ? (
-                <div className="flex-1 overflow-auto admin-scroll p-2 flex flex-col gap-2">
+                <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
                   <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
                     <iframe
                       ref={previewIframeRef}
@@ -310,15 +396,37 @@ export function ProposalEditor() {
                       title="Slide preview"
                     />
                   </div>
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGoToPrevSlide}
+                      disabled={!hasPrevSlide}
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Previous
+                    </button>
                     <a
                       href={`/p/${proposal.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition-colors border border-gray-200"
+                      className="px-3 py-1 rounded-md bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-medium transition-colors border border-gray-200"
                     >
                       Open full preview ↗
                     </a>
+                    <button
+                      type="button"
+                      onClick={handleGoToNextSlide}
+                      disabled={!hasNextSlide}
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -350,5 +458,16 @@ export function ProposalEditor() {
       </div>
     </div>
     </div>
+
+    <MarkdownIngestorModal
+      isOpen={ingestor.isOpen}
+      mode={ingestor.mode}
+      editorContent={ingestor.editorContent}
+      onContentChange={ingestor.setEditorContent}
+      onCursorChange={ingestor.setCursorPosition}
+      onGenerate={handleMarkdownImport}
+      onClose={ingestor.close}
+    />
+    </>
   );
 }

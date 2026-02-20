@@ -20,10 +20,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
   return (
     <div className="space-y-6">
       {/* Slide header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-sm">
-          {meta.icon}
-        </div>
+      <div className="pb-4 border-b border-gray-100">
         <div>
           <h3 className="text-sm font-semibold text-gray-900">{meta.label}</h3>
           <p className="text-xs text-gray-400">{meta.description}</p>

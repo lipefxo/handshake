@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import type { Proposal } from '../types/proposal';
+import type { Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
+import { generateSlug } from '../shared/utils/helpers';
+import { useAuthStore } from './authStore';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -11,6 +13,16 @@ interface ProposalStore {
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
   deleteProposal: (id: string) => Promise<void>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
+  createFromMarkdown: (
+    markdown: string,
+    frontmatter: { title?: string; partner?: string; date?: string },
+    slides: SlideConfig[],
+  ) => Promise<Proposal | null>;
+  importMarkdownToProposal: (
+    proposalId: string,
+    slides: SlideConfig[],
+    mode: 'append' | 'replace',
+  ) => Promise<void>;
 }
 
 function dbRowToProposal(row: Record<string, unknown>): Proposal {
@@ -28,7 +40,7 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
   };
 }
 
-export const useProposalStore = create<ProposalStore>((set) => ({
+export const useProposalStore = create<ProposalStore>((set, get) => ({
   proposals: [],
   loading: false,
   error: null,
@@ -113,4 +125,69 @@ export const useProposalStore = create<ProposalStore>((set) => ({
     if (error || !data) return null;
     return dbRowToProposal(data);
   },
+
+  createFromMarkdown: async (_markdown, frontmatter, slides) => {
+    const user = useAuthStore.getState().user;
+    if (!user) return null;
+
+    const partnerName = frontmatter.partner || 'Untitled Partner';
+    const title = frontmatter.title || `${partnerName} Proposal`;
+
+    const proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
+      user_id: user.id,
+      slug: generateSlug(partnerName),
+      title,
+      partnerName,
+      status: 'draft',
+      slides,
+    };
+
+    const { data, error } = await supabase
+      .from('proposals')
+      .insert({
+        user_id: proposal.user_id,
+        slug: proposal.slug,
+        title: proposal.title,
+        partner_name: proposal.partnerName,
+        status: proposal.status,
+        slides: proposal.slides,
+        theme: null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      set({ error: error.message });
+      return null;
+    }
+
+    const newProposal = dbRowToProposal(data);
+    set((state) => ({ proposals: [newProposal, ...state.proposals] }));
+    return newProposal;
+  },
+
+  importMarkdownToProposal: async (proposalId, newSlides, mode) => {
+    const existing = get().proposals.find((p) => p.id === proposalId);
+    const updatedSlides =
+      mode === 'replace'
+        ? newSlides
+        : [...(existing?.slides ?? []), ...newSlides];
+
+    const { error } = await supabase
+      .from('proposals')
+      .update({ slides: updatedSlides })
+      .eq('id', proposalId);
+
+    if (error) {
+      set({ error: error.message });
+      return;
+    }
+
+    set((state) => ({
+      proposals: state.proposals.map((p) =>
+        p.id === proposalId ? { ...p, slides: updatedSlides } : p
+      ),
+    }));
+  },
 }));
+

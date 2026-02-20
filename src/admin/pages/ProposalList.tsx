@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
-import type { Proposal } from '../../types/proposal';
+import type { Proposal, SlideConfig } from '../../types/proposal';
 import { generateSlug, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
 import { createDefaultProposalSlides } from '../../data/slideDefaults';
+import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
+import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 
 export function ProposalList() {
-  const { proposals, loading, fetchProposals, createProposal, deleteProposal } = useProposalStore();
+  const { proposals, loading, fetchProposals, createProposal, deleteProposal, createFromMarkdown } = useProposalStore();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const ingestor = useIngestorState();
 
   useEffect(() => {
     fetchProposals();
@@ -45,6 +49,17 @@ export function ProposalList() {
     }
   };
 
+  const handleMarkdownGenerate = useCallback(
+    async (slides: SlideConfig[], frontmatter: { title?: string; partner?: string; date?: string }) => {
+      const newProposal = await createFromMarkdown(ingestor.editorContent, frontmatter, slides);
+      if (newProposal) {
+        ingestor.close();
+        navigate(`/admin/proposals/${newProposal.id}`);
+      }
+    },
+    [createFromMarkdown, ingestor, navigate],
+  );
+
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
       {/* Header */}
@@ -53,20 +68,31 @@ export function ProposalList() {
           <h1 className="text-2xl font-semibold text-gray-900">Proposals</h1>
           <p className="text-sm text-gray-500 mt-0.5">{proposals.length} total</p>
         </div>
-        <button
-          onClick={handleCreate}
-          disabled={creating}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-all"
-        >
-          {creating ? (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => ingestor.open('new')}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-          )}
-          New proposal
-        </button>
+            From Markdown
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-all"
+          >
+            {creating ? (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+            New proposal
+          </button>
+        </div>
       </div>
 
       {/* Loading */}
@@ -188,6 +214,16 @@ export function ProposalList() {
           ))}
         </div>
       )}
+
+      <MarkdownIngestorModal
+        isOpen={ingestor.isOpen}
+        mode={ingestor.mode}
+        editorContent={ingestor.editorContent}
+        onContentChange={ingestor.setEditorContent}
+        onCursorChange={ingestor.setCursorPosition}
+        onGenerate={handleMarkdownGenerate}
+        onClose={ingestor.close}
+      />
     </div>
   );
 }

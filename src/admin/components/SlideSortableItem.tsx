@@ -2,21 +2,26 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { SlideConfig } from '../../types/proposal';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
+import { SlideTypeThumbnail } from './SlideTypeThumbnail';
 
 interface SlideSortableItemProps {
   slide: SlideConfig;
   isSelected: boolean;
+  mergeProgress?: number;
   onSelect: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onRename: (label: string) => void;
 }
 
 export function SlideSortableItem({
   slide,
   isSelected,
+  mergeProgress,
   onSelect,
   onToggle,
   onDelete,
+  onRename,
 }: SlideSortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: slide.id,
@@ -29,18 +34,28 @@ export function SlideSortableItem({
   };
 
   const meta = SLIDE_TYPE_META[slide.type];
+  const isMergeTarget = mergeProgress != null && mergeProgress > 0;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
-        isSelected
-          ? 'border-indigo-200 bg-indigo-50'
-          : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
+      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
+        isMergeTarget
+          ? 'border-indigo-300 bg-indigo-50/80 ring-2 ring-indigo-200/60'
+          : isSelected
+            ? 'border-indigo-200 bg-indigo-50'
+            : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
       } ${!slide.enabled ? 'opacity-50' : ''}`}
       onClick={onSelect}
     >
+      {isMergeTarget && (
+        <div
+          className="absolute inset-x-0 bottom-0 h-0.5 rounded-b-xl bg-indigo-500 transition-all duration-100 ease-linear"
+          style={{ width: `${mergeProgress}%` }}
+        />
+      )}
+
       {/* Drag handle */}
       <button
         {...attributes}
@@ -58,18 +73,19 @@ export function SlideSortableItem({
         </svg>
       </button>
 
-      {/* Icon */}
-      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
-        isSelected ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'
-      }`}>
-        {meta.icon}
-      </div>
+      <SlideTypeThumbnail type={slide.type} isSelected={isSelected} className="h-8 w-10 flex-shrink-0" />
 
-      {/* Label */}
+      {/* Editable label */}
       <div className="flex-1 min-w-0">
-        <p className={`text-xs font-medium truncate ${isSelected ? 'text-indigo-700' : 'text-gray-700'}`}>
-          {meta.label}
-        </p>
+        <input
+          value={slide.customLabel || meta.label}
+          onChange={(e) => onRename(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          maxLength={32}
+          className={`w-full bg-transparent border-0 outline-none text-xs font-medium truncate px-0 py-0 ${
+            isSelected ? 'text-indigo-700' : 'text-gray-700'
+          } focus:bg-gray-50 focus:rounded focus:px-1 transition-all`}
+        />
       </div>
 
       {/* Toggle */}
