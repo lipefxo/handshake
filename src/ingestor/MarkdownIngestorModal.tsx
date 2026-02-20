@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMarkdownParser } from './hooks/useMarkdownParser';
+import { markdownToSlides } from './parser/markdownToSlides';
 import { MarkdownEditor } from './MarkdownEditor';
 import { IngestorPreview } from './IngestorPreview';
 import { IngestorFormatGuide } from './IngestorFormatGuide';
@@ -14,6 +15,7 @@ interface MarkdownIngestorModalProps {
   onContentChange: (content: string) => void;
   onCursorChange: (pos: number) => void;
   onGenerate: (slides: SlideConfig[], frontmatter: { title?: string; partner?: string; date?: string; theme?: string }) => void;
+  generationError?: string | null;
   onClose: () => void;
 }
 
@@ -24,6 +26,7 @@ export function MarkdownIngestorModal({
   onContentChange,
   onCursorChange,
   onGenerate,
+  generationError,
   onClose,
 }: MarkdownIngestorModalProps) {
   const { result, isLoading, slideCount, warningCount, errorCount, hasBlockingErrors } =
@@ -31,6 +34,7 @@ export function MarkdownIngestorModal({
 
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [inlineFeedback, setInlineFeedback] = useState<string | null>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -52,6 +56,14 @@ export function MarkdownIngestorModal({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) setInlineFeedback(null);
+  }, [isOpen]);
+
+  useEffect(() => {
+    setInlineFeedback(null);
+  }, [editorContent]);
+
   const handleClose = useCallback(() => {
     if (editorContent.trim()) {
       const confirmed = window.confirm('Close the editor? Your markdown content will be lost.');
@@ -61,16 +73,44 @@ export function MarkdownIngestorModal({
   }, [editorContent, onClose]);
 
   const handleGenerate = useCallback(async () => {
-    if (!result || hasBlockingErrors) return;
+    setInlineFeedback(null);
+
+    const parsed = markdownToSlides(editorContent);
+    const parsedErrorCount =
+      parsed.validation.filter((v) => v.status === 'error').length + parsed.errors.length;
+    const hasParsedBlockingErrors = parsedErrorCount > 0;
+
+    if (hasParsedBlockingErrors) {
+      setInlineFeedback(parsed.errors[0] ?? 'Please resolve markdown errors before generating.');
+      return;
+    }
+
+    if (parsed.slides.length === 0) {
+      setInlineFeedback('No slides detected yet. Add content sections separated by ---.');
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      await onGenerate(result.slides, result.frontmatter);
+      await onGenerate(parsed.slides, parsed.frontmatter);
+    } catch (error) {
+      setInlineFeedback(
+        error instanceof Error ? error.message : 'Failed to generate proposal. Please try again.',
+      );
     } finally {
       setIsGenerating(false);
     }
-  }, [result, hasBlockingErrors, onGenerate]);
+  }, [editorContent, onGenerate]);
 
   const isEmpty = !editorContent.trim();
+  const disabledReason = isEmpty
+    ? 'Add markdown content to enable generation.'
+    : hasBlockingErrors
+      ? 'Resolve markdown errors to continue.'
+      : slideCount === 0
+        ? 'No slides detected yet.'
+        : null;
+  const feedbackMessage = inlineFeedback ?? generationError ?? disabledReason;
 
   return (
     <AnimatePresence>
@@ -95,62 +135,69 @@ export function MarkdownIngestorModal({
             className="fixed inset-4 md:inset-6 lg:inset-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[67.5vw] lg:h-[67.5vh] z-50 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200"
           >
             {/* Header */}
-            <div className="flex-shrink-0 flex items-center gap-4 px-6 py-4 border-b border-gray-100">
-              <button
-                onClick={handleClose}
-                className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                aria-label="Close"
-              >
-                <AppIcon icon="ui.close" className="w-4 h-4" />
-              </button>
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleClose}
+                  className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
+                >
+                  <AppIcon icon="ui.close" className="w-4 h-4" />
+                </button>
 
-              <div className="flex-1">
-                <h2 className="text-sm font-semibold text-gray-900">
-                  {mode === 'new' ? 'New proposal from Markdown' : 'Import slides from Markdown'}
-                </h2>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {mode === 'new'
-                    ? 'Write or paste structured markdown to generate a complete proposal.'
-                    : 'Write or paste markdown to add slides to the current proposal.'}
-                </p>
-              </div>
-
-              {/* Import mode selector (only in import mode) */}
-              {mode === 'import' && (
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
-                  {(['append', 'replace'] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setImportMode(m)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        importMode === m
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      {m === 'append' ? 'Append slides' : 'Replace slides'}
-                    </button>
-                  ))}
+                <div className="flex-1">
+                  <h2 className="text-sm font-semibold text-gray-900">
+                    {mode === 'new' ? 'New proposal from Markdown' : 'Import slides from Markdown'}
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {mode === 'new'
+                      ? 'Write or paste structured markdown to generate a complete proposal.'
+                      : 'Write or paste markdown to add slides to the current proposal.'}
+                  </p>
                 </div>
-              )}
 
-              {/* Generate button */}
-              <button
-                onClick={handleGenerate}
-                disabled={hasBlockingErrors || isEmpty || isGenerating || slideCount === 0}
-                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                {isGenerating ? (
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <AppIcon icon="slide.features.speed" className="w-3.5 h-3.5" />
+                {/* Import mode selector (only in import mode) */}
+                {mode === 'import' && (
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
+                    {(['append', 'replace'] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setImportMode(m)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                          importMode === m
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {m === 'append' ? 'Append slides' : 'Replace slides'}
+                      </button>
+                    ))}
+                  </div>
                 )}
-                {isGenerating
-                  ? 'Generating…'
-                  : mode === 'new'
-                    ? 'Generate proposal'
-                    : `Import ${slideCount > 0 ? slideCount + ' ' : ''}slide${slideCount !== 1 ? 's' : ''}`}
-              </button>
+
+                {/* Generate button */}
+                <button
+                  onClick={handleGenerate}
+                  disabled={hasBlockingErrors || isEmpty || isGenerating || slideCount === 0}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {isGenerating ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <AppIcon icon="slide.features.speed" className="w-3.5 h-3.5" />
+                  )}
+                  {isGenerating
+                    ? 'Generating…'
+                    : mode === 'new'
+                      ? 'Generate proposal'
+                      : `Import ${slideCount > 0 ? slideCount + ' ' : ''}slide${slideCount !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+              {feedbackMessage && (
+                <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-2.5 py-1.5">
+                  {feedbackMessage}
+                </p>
+              )}
             </div>
 
             {/* Split pane */}

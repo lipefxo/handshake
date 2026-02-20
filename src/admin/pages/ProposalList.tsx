@@ -120,13 +120,23 @@ export function ProposalList() {
 
   const handleMarkdownGenerate = useCallback(
     async (slides: SlideConfig[], frontmatter: { title?: string; partner?: string; date?: string; theme?: string }) => {
+      clearError();
+
+      if (!user) {
+        throw new Error('You need to be signed in to generate a proposal.');
+      }
+
       const newProposal = await createFromMarkdown(ingestor.editorContent, frontmatter, slides);
       if (newProposal) {
         ingestor.close();
         navigate(`/admin/proposals/${newProposal.id}`);
+        return;
       }
+
+      const storeError = useProposalStore.getState().error;
+      throw new Error(storeError ?? 'Failed to generate proposal. Please try again.');
     },
-    [createFromMarkdown, ingestor, navigate],
+    [clearError, createFromMarkdown, ingestor, navigate, user],
   );
 
   return (
@@ -139,7 +149,10 @@ export function ProposalList() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => ingestor.open('new')}
+            onClick={() => {
+              clearError();
+              ingestor.open('new');
+            }}
             variant="outline"
             className="gap-2"
           >
@@ -284,6 +297,7 @@ export function ProposalList() {
         onContentChange={ingestor.setEditorContent}
         onCursorChange={ingestor.setCursorPosition}
         onGenerate={handleMarkdownGenerate}
+        generationError={error}
         onClose={ingestor.close}
       />
 

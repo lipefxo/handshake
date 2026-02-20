@@ -193,18 +193,17 @@ export function ProposalEditor() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const postPreviewUpdate = useCallback(() => {
+  const postPreviewUpdate = useCallback((targetWindow?: Window | null) => {
     if (!proposal) return;
+    const message = {
+      type: 'handshake-editor-preview-update',
+      proposal,
+      selectedSlideId,
+    };
+
     const iframeWindow = previewIframeRef.current?.contentWindow;
-    if (!iframeWindow) return;
-    iframeWindow.postMessage(
-      {
-        type: 'handshake-editor-preview-update',
-        proposal,
-        selectedSlideId,
-      },
-      window.location.origin
-    );
+    iframeWindow?.postMessage(message, window.location.origin);
+    targetWindow?.postMessage(message, window.location.origin);
   }, [proposal, selectedSlideId]);
 
   useEffect(() => {
@@ -215,7 +214,7 @@ export function ProposalEditor() {
     const handlePreviewReady = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== 'handshake-editor-preview-ready') return;
-      postPreviewUpdate();
+      postPreviewUpdate(event.source instanceof Window ? event.source : null);
     };
 
     window.addEventListener('message', handlePreviewReady);
@@ -394,7 +393,7 @@ export function ProposalEditor() {
                     </Button>
                     <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
                       <a
-                        href={`/p/${proposal.slug}`}
+                        href={`/p/${proposal.slug}#preview`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

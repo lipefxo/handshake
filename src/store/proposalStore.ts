@@ -7,6 +7,7 @@ import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
 import type { ThemeId } from '../themes/themeTypes';
 import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
 import { generateSafeSlug, sanitizeText, validateUrl } from '../shared/utils/validation';
+import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -60,10 +61,30 @@ const GENERIC_DELETE_ERROR = 'Failed to delete proposal. Please try again.';
 function getSafeErrorMessage(error: unknown, fallback: string): string {
   const code = (error as { code?: string } | null)?.code;
   if (code === '23505') {
-    return 'A proposal with this URL already exists. Try a different name.';
+    return appendErrorDiagnostic('A proposal with this URL already exists. Try a different name.', error);
+  }
+  if (code === '42501') {
+    return appendErrorDiagnostic('Your session is no longer valid. Please sign in again.', error);
+  }
+  if (code === '42703') {
+    return appendErrorDiagnostic('Database schema is out of date. Please run the latest Supabase migrations.', error);
+  }
+  if (code === 'PGRST204') {
+    return appendErrorDiagnostic('Database schema cache is missing expected columns. Please refresh migrations/schema.', error);
   }
 
-  return fallback;
+  return appendErrorDiagnostic(fallback, error);
+}
+
+function isMissingThemeIdColumnError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === '42703' && (error.message?.includes('theme_id') || error.message?.includes('column "theme_id"'))) {
+    return true;
+  }
+  if (error.code === 'PGRST204' && error.message?.includes('theme_id')) {
+    return true;
+  }
+  return false;
 }
 
 function sanitizeUnknown(value: unknown, key = ''): unknown {
@@ -116,7 +137,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      console.error('fetchProposals failed', error);
+      logStructuredError('fetchProposals failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_FETCH_ERROR), loading: false });
       return;
     }
@@ -139,8 +160,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .gte('created_at', oneHourAgo);
 
     if (rateLimitError) {
-      console.error('createProposal rate-limit check failed', rateLimitError);
-      set({ error: GENERIC_SAVE_ERROR });
+      logStructuredError('createProposal rate-limit check failed', rateLimitError);
+      set({ error: getSafeErrorMessage(rateLimitError, GENERIC_SAVE_ERROR) });
       return null;
     }
 
@@ -168,7 +189,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .select()
       .single();
     if (error) {
-      console.error('createProposal failed', error);
+      logStructuredError('createProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return null;
     }
@@ -198,7 +219,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .update(dbUpdates)
       .eq('id', id);
     if (error) {
-      console.error('updateProposal failed', error);
+      logStructuredError('updateProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return;
     }
@@ -228,7 +249,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
     const { error } = await supabase.from('proposals').delete().eq('id', id);
     if (error) {
-      console.error('deleteProposal failed', error);
+      logStructuredError('deleteProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_DELETE_ERROR) });
       return false;
     }
@@ -251,6 +272,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   createFromMarkdown: async (_markdown, frontmatter, slides) => {
+    set({ error: null });
     const user = useAuthStore.getState().user;
     if (!user) return null;
 
@@ -260,7 +282,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
     const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(slides));
 
-    const proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
+    const proposalBase: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
       user_id: user.id,
       slug: generateSafeSlug(generateSlug(partnerName)),
       title,
@@ -270,27 +292,62 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       themeId,
     };
 
-    const { data, error } = await supabase
-      .from('proposals')
-      .insert({
+    let proposal = proposalBase;
+    let lastError: { code?: string; message?: string } | null = null;
+    let insertedRow: Record<string, unknown> | null = null;
+    let useLegacyThemeColumn = false;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const insertPayload = {
         user_id: proposal.user_id,
         slug: proposal.slug,
         title: proposal.title,
         partner_name: proposal.partnerName,
         status: proposal.status,
         slides: proposal.slides,
-        theme_id: proposal.themeId,
-      })
-      .select()
-      .single();
+        ...(useLegacyThemeColumn
+          ? { theme: { id: proposal.themeId } }
+          : { theme_id: proposal.themeId }),
+      };
 
-    if (error) {
-      console.error('createFromMarkdown failed', error);
-      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
+      const { data, error } = await supabase
+        .from('proposals')
+        .insert(insertPayload)
+        .select()
+        .single();
+
+      if (!error && data) {
+        insertedRow = data;
+        break;
+      }
+
+      lastError = error;
+
+      // Retry with a fresh slug when unique constraint collides.
+      if (error?.code === '23505') {
+        proposal = {
+          ...proposal,
+          slug: generateSafeSlug(generateSlug(`${partnerName}-${Math.random().toString(36).slice(2, 4)}`)),
+        };
+        continue;
+      }
+
+      // Backward compatibility: some environments still use "theme" JSONB instead of "theme_id".
+      if (isMissingThemeIdColumnError(error)) {
+        useLegacyThemeColumn = true;
+        continue;
+      }
+
+      break;
+    }
+
+    if (!insertedRow) {
+      logStructuredError('createFromMarkdown failed', lastError);
+      set({ error: getSafeErrorMessage(lastError, GENERIC_SAVE_ERROR) });
       return null;
     }
 
-    const newProposal = dbRowToProposal(data);
+    const newProposal = dbRowToProposal(insertedRow);
     set((state) => ({ proposals: [newProposal, ...state.proposals] }));
     return newProposal;
   },
@@ -315,7 +372,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .eq('id', proposalId);
 
     if (error) {
-      console.error('importMarkdownToProposal failed', error);
+      logStructuredError('importMarkdownToProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
       return;
     }

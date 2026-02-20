@@ -61,7 +61,9 @@ function ProposalViewerContent() {
     };
 
     window.addEventListener('message', handleEditorPreviewUpdate);
-    window.parent?.postMessage({ type: 'handshake-editor-preview-ready' }, window.location.origin);
+    const readyMessage = { type: 'handshake-editor-preview-ready' };
+    window.parent?.postMessage(readyMessage, window.location.origin);
+    window.opener?.postMessage(readyMessage, window.location.origin);
     return () => window.removeEventListener('message', handleEditorPreviewUpdate);
   }, []);
 
