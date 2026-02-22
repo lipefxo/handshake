@@ -137,6 +137,12 @@ function getWorkspaceError(error: unknown, fallback: string): string {
   if (code === '42501') {
     return appendErrorDiagnostic('You do not have permission for this workspace action.', error);
   }
+  if (code === 'PGRST204' || code === 'PGRST205') {
+    return appendErrorDiagnostic(
+      'Workspace tables are missing or schema cache is stale. Run the latest Supabase schema migration and reload the API schema cache.',
+      error,
+    );
+  }
   return appendErrorDiagnostic(fallback, error);
 }
 
