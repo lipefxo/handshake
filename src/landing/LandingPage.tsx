@@ -2079,6 +2079,7 @@ function PricingSection() {
           {plans.map((plan, i) => {
             const { ref: cardRef, inView: cardInView } = useReveal();
             const price = plan.name === 'Free' ? plan.price.annual : annualBilling ? plan.price.annual : plan.price.monthly;
+            const limits = plan.limits ?? [];
             return (
               <motion.div
                 key={plan.tier}
@@ -2197,7 +2198,7 @@ function PricingSection() {
                   </div>
                 )}
 
-                {'limits' in plan && (
+                {limits.length > 0 && (
                   <>
                     <div
                       style={{
@@ -2222,7 +2223,7 @@ function PricingSection() {
                         gap: 8,
                       }}
                     >
-                      {plan.limits.map((limit) => (
+                      {limits.map((limit) => (
                         <li
                           key={limit}
                           style={{
