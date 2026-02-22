@@ -34,7 +34,14 @@ export function ProposalList() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletedProposalTitle, setDeletedProposalTitle] = useState<string | null>(null);
   const [showNewProposalDialog, setShowNewProposalDialog] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const ingestor = useIngestorState();
+
+  const filteredProposals = statusFilter === 'all'
+    ? proposals
+    : proposals.filter((p) => p.status === statusFilter);
+  const publishedCount = proposals.filter((p) => p.status === 'published').length;
+  const draftCount = proposals.filter((p) => p.status === 'draft').length;
 
   useEffect(() => {
     fetchProposals();
@@ -142,7 +149,7 @@ export function ProposalList() {
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Proposals</h1>
           <p className="text-sm text-gray-500 mt-0.5">{proposals.length} total</p>
@@ -157,6 +164,32 @@ export function ProposalList() {
           </Button>
         </div>
       </div>
+
+      {/* Status filter tabs */}
+      {proposals.length > 0 && (
+        <div className="flex items-center gap-1 mb-5 p-0.5 bg-gray-100 rounded-lg w-fit">
+          {([
+            { key: 'all' as const, label: 'All', count: proposals.length },
+            { key: 'published' as const, label: 'Published', count: publishedCount },
+            { key: 'draft' as const, label: 'Drafts', count: draftCount },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                statusFilter === tab.key
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+              <span className={`ml-1.5 ${statusFilter === tab.key ? 'text-gray-400' : 'text-gray-400/60'}`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -188,12 +221,15 @@ export function ProposalList() {
       {/* Proposals grid */}
       {!loading && proposals.length > 0 && (
         <div className="grid gap-3">
-          {proposals.map((proposal, i) => (
+          <AnimatePresence mode="popLayout">
+          {filteredProposals.map((proposal, i) => (
             <motion.div
               key={proposal.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ delay: i * 0.03 }}
+              layout
               className="cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
               role="link"
               tabIndex={0}
@@ -205,15 +241,26 @@ export function ProposalList() {
                 }
               }}
             >
-              <Card className="transition-all duration-150 hover:border-gray-200 hover:shadow-sm">
+              <Card className={`transition-all duration-150 hover:shadow-sm ${
+                proposal.status === 'published'
+                  ? 'border-green-100 hover:border-green-200 bg-green-50/30'
+                  : 'hover:border-gray-200'
+              }`}>
                 <CardContent className="flex items-center gap-4 p-5">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${proposal.status === 'published' ? 'bg-green-400' : 'bg-gray-300'}`} />
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    proposal.status === 'published'
+                      ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.4)]'
+                      : 'bg-gray-300'
+                  }`} />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">{proposal.title}</h3>
-                      <Badge variant={proposal.status === 'published' ? 'secondary' : 'outline'}>
-                        {proposal.status}
+                      <Badge
+                        variant={proposal.status === 'published' ? 'secondary' : 'outline'}
+                        className={proposal.status === 'published' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                      >
+                        {proposal.status === 'published' ? 'Live' : 'Draft'}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-1">
@@ -226,16 +273,16 @@ export function ProposalList() {
                   </div>
 
                   <div
-                    className="flex items-center gap-2 flex-shrink-0"
+                    className="flex items-center gap-1.5 flex-shrink-0"
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
                   >
                     {proposal.status === 'published' && (
                       <Button
                         onClick={() => handleCopyLink(proposal)}
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
-                        className="gap-1.5 text-xs"
+                        className="gap-1.5 text-xs border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
                       >
                         {copiedId === proposal.id ? (
                           <>
@@ -272,6 +319,15 @@ export function ProposalList() {
               </Card>
             </motion.div>
           ))}
+          </AnimatePresence>
+
+          {filteredProposals.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-sm text-gray-400">
+                No {statusFilter === 'published' ? 'published' : 'draft'} proposals.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -10,6 +10,7 @@ import { copyToClipboard } from '../../shared/utils/helpers';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
+import { PublishSuccessModal } from '../components/PublishSuccessModal';
 import { defaultThemeId, themes } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ export function ProposalEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
 
@@ -201,6 +203,9 @@ export function ProposalEditor() {
     if (!proposal) return;
     const newStatus = proposal.status === 'published' ? 'draft' : 'published';
     updateLocal({ status: newStatus });
+    if (newStatus === 'published') {
+      setShowPublishSuccess(true);
+    }
   };
 
   const handlePartnerNameChange = (value: string) => {
@@ -547,6 +552,16 @@ export function ProposalEditor() {
         proposal={proposal}
         onApply={handleMarkdownApply}
         onClose={() => setMarkdownEditorOpen(false)}
+      />
+    )}
+
+    {proposal && (
+      <PublishSuccessModal
+        isOpen={showPublishSuccess}
+        proposalUrl={`${window.location.origin}/p/${proposal.slug}`}
+        partnerName={proposal.partnerName}
+        proposalTitle={proposal.title}
+        onClose={() => setShowPublishSuccess(false)}
       />
     )}
     </>
