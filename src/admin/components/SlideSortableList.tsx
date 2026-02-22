@@ -287,6 +287,9 @@ export function SlideSortableList({
             <AppIcon icon="ui.add" className="w-3.5 h-3.5" />
             Add slide
           </button>
+          <p className="col-span-2 px-1 text-[10px] text-gray-400">
+            Tip: drag and hold one slide over another to group them.
+          </p>
         </div>
 
         {showPicker && (
@@ -309,10 +312,7 @@ export function SlideSortableList({
                   >
                     <SlideTypeThumbnail type={type} className="h-8 w-10 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-900 flex items-center gap-1.5">
-                        <AppIcon icon={meta.icon} className="w-3.5 h-3.5" />
-                        {meta.label}
-                      </p>
+                      <p className="text-xs font-medium text-gray-900">{meta.label}</p>
                       <p className="text-xs text-gray-400">{meta.description}</p>
                     </div>
                   </button>

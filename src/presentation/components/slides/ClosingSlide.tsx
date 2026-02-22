@@ -121,7 +121,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
         )}
       </motion.div>
 
-      {/* SecureBags wordmark at bottom */}
+      {/* Company wordmark at bottom */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
         initial={{ opacity: 0 }}
@@ -133,7 +133,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
           className="text-xs tracking-widest uppercase"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          SecureBags
+          Acme Corp
         </span>
       </motion.div>
     </div>

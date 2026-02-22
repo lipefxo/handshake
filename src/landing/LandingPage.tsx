@@ -914,7 +914,7 @@ function MarkdownMockup() {
     { type: 'h1', content: '# Partnership Proposal' },
     { type: 'blank', content: '' },
     { type: 'h2', content: '## About Us' },
-    { type: 'body', content: 'SecureBags is a leading B2B...' },
+    { type: 'body', content: 'Acme Corp is a leading B2B...' },
     { type: 'body', content: 'Founded in 2018 with 200+ clients.' },
     { type: 'blank', content: '' },
     { type: 'h2', content: '## Key Metrics' },

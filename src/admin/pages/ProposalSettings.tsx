@@ -56,65 +56,61 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
     if (file) processFile(file);
   };
 
-  return (
-    <div className="flex items-start gap-4">
-      {/* Preview */}
-      <div
-        className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0"
-        style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)' }}
-      >
-        {logo ? (
+  if (logo) {
+    return (
+      <div className="space-y-2">
+        <div
+          className="w-full h-32 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden"
+          style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)' }}
+        >
           <img src={logo} alt="Company logo" className="w-full h-full object-contain" />
-        ) : (
-          <AppIcon icon="ui.image" className="w-6 h-6 text-gray-300" />
-        )}
-      </div>
-
-      {/* Drop zone */}
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        className="flex-1 cursor-pointer rounded-xl border-2 border-dashed px-4 py-4 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
-        style={{
-          borderColor: dragging ? '#6366f1' : '#e5e7eb',
-          background: dragging ? 'rgba(99,102,241,0.04)' : '#fafafa',
-        }}
-      >
-        <p className="text-xs font-medium text-gray-600">
-          {dragging ? 'Drop to upload' : 'Click or drag to upload logo'}
-        </p>
-        <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, SVG · Recommended 256×256</p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleChange}
-        />
-      </div>
-
-      {logo && (
+        </div>
         <Button
           type="button"
           onClick={() => onLogoChange(null)}
           variant="ghost"
           size="sm"
-          className="mt-1 h-auto flex-shrink-0 px-2 py-1 text-xs text-gray-500 hover:text-red-500"
+          className="h-auto px-0 py-0 text-xs text-gray-500 hover:text-red-500"
           title="Remove logo"
         >
-          Remove
+          Remove logo
         </Button>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+      style={{
+        borderColor: dragging ? '#6366f1' : '#e5e7eb',
+        background: dragging ? 'rgba(99,102,241,0.04)' : '#fafafa',
+      }}
+    >
+      <AppIcon icon="ui.image" className="mx-auto mb-1.5 w-6 h-6 text-gray-300" />
+      <p className="text-xs font-medium text-gray-600">
+        {dragging ? 'Drop to upload' : 'Click or drag to upload logo'}
+      </p>
+      <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, SVG · Recommended 256×256</p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleChange}
+      />
     </div>
   );
 }
@@ -199,21 +195,6 @@ export function ProposalSettings() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Domain */}
-        <Card className="rounded-2xl border-gray-100">
-          <CardHeader>
-            <CardTitle className="text-sm text-gray-900">Public URL</CardTitle>
-            <CardDescription className="text-xs">Proposals are publicly accessible at this domain.</CardDescription>
-          </CardHeader>
-          <CardContent>
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-            <AppIcon icon="ui.external-link" className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600 font-mono">partners.securebags.com/p/</span>
-            <span className="text-sm text-gray-400 font-mono">{'{slug}'}</span>
-          </div>
           </CardContent>
         </Card>
 

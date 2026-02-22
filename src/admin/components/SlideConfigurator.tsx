@@ -318,9 +318,8 @@ function TitleFields({ content, onChange }: { content: TitleSlideContent; onChan
       <FieldGroup label="Date">
         <Input value={content.date || ''} onChange={(e) => onChange({ date: e.target.value })} placeholder="January 2025" />
       </FieldGroup>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3">
         <ImageUploader label="Partner Logo" value={content.partnerLogo} onChange={(url) => onChange({ partnerLogo: url })} context="logo" />
-        <ImageUploader label="Company Logo" value={content.secureBagsLogo} onChange={(url) => onChange({ secureBagsLogo: url })} context="logo" />
       </div>
     </div>
   );

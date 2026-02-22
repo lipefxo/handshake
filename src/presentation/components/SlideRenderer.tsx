@@ -18,15 +18,22 @@ interface SlideRendererProps {
   slide: SlideConfig;
   index: number;
   proposalPartnerName?: string;
+  proposalCompanyLogo?: string;
 }
 
-export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps) {
+export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo }: SlideRendererProps) {
   const { type, content } = slide;
 
   let slideBody: ReactNode;
   switch (type) {
     case 'title':
-      slideBody = <TitleSlide content={content as TitleSlideContent} partnerName={proposalPartnerName} />;
+      slideBody = (
+        <TitleSlide
+          content={content as TitleSlideContent}
+          partnerName={proposalPartnerName}
+          companyLogo={proposalCompanyLogo}
+        />
+      );
       break;
     case 'intro':
       slideBody = <IntroSlide content={content as IntroSlideContent} />;

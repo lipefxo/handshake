@@ -301,7 +301,7 @@ export function ProposalEditor() {
     <>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {id && (
           <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
             <motion.div
@@ -311,10 +311,10 @@ export function ProposalEditor() {
               animate={{ x: '0%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
             />
-            <span className="relative z-10 px-3 py-1 text-xs font-medium text-gray-800 text-center">Slides</span>
+            <span className="relative z-10 px-3 py-1.5 text-xs font-medium text-gray-800 text-center">Slides</span>
             <Link
               to={`/admin/proposals/${id}/settings`}
-              className="relative z-10 px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
+              className="relative z-10 px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
             >
               Settings
             </Link>
@@ -362,7 +362,7 @@ export function ProposalEditor() {
               onClick={() => setMarkdownEditorOpen(true)}
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="h-9 gap-1.5 text-xs"
               title="Edit proposal as Markdown"
             >
               <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
@@ -374,7 +374,7 @@ export function ProposalEditor() {
                 onClick={handleCopyLink}
                 variant="secondary"
                 size="sm"
-                className="gap-1.5 text-xs"
+                className="h-9 gap-1.5 text-xs"
               >
                 {copiedLink ? (
                   <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
@@ -386,7 +386,7 @@ export function ProposalEditor() {
 
             <Button
               onClick={handlePublish}
-              className={`h-8 px-4 text-xs font-semibold transition-all ${
+              className={`h-9 px-4 text-xs font-semibold transition-all ${
                 proposal.status === 'published'
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-gray-900 text-white hover:bg-gray-800'
@@ -425,87 +425,109 @@ export function ProposalEditor() {
           />
         </div>
 
-        <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] overflow-hidden">
-          {/* Preview panel */}
-          {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
-            <div className="h-full w-full max-w-[66rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
-              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center gap-3">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
+        {proposal.slides.length === 0 ? (
+          <div className="flex-1 min-w-0 flex items-center justify-center bg-admin px-6">
+            <div className="w-full max-w-md rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                <AppIcon icon="slide.type.title" size={24} />
               </div>
-              {selectedSlide && selectedSlide.enabled ? (
-                <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
-                  <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
-                    <iframe
-                      ref={previewIframeRef}
-                      src={`/p/${proposal.slug}#preview`}
-                      onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
-                      className="absolute inset-0 border-0 pointer-events-none"
-                      style={{
-                        width: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                        height: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                        transform: `scale(${PREVIEW_SCALE})`,
-                        transformOrigin: 'top left',
-                      }}
-                      title="Slide preview"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <Button
-                      type="button"
-                      onClick={handleGoToPrevSlide}
-                      disabled={!hasPrevSlide}
-                      variant="outline"
-                      size="sm"
-                      className="h-7 gap-1 text-[11px] text-gray-600"
-                    >
-                      <AppIcon icon="ui.sidebar-toggle" className="h-3 w-3" />
-                      Previous
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
-                      <Link to={`/p/${proposal.slug}#preview`}>
-                        Open full preview
-                      </Link>
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleGoToNextSlide}
-                      disabled={!hasNextSlide}
-                      variant="outline"
-                      size="sm"
-                      className="h-7 gap-1 text-[11px] text-gray-600"
-                    >
-                      Next
-                      <AppIcon icon="ui.chevron-right" className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-xs text-gray-400">No preview available</p>
-                </div>
-              )}
-            </div>
-          </div>}
-
-          {/* Configurator — right panel */}
-          <div className="flex-1 min-w-0 overflow-y-auto admin-scroll border-l border-gray-100">
-            <div className="max-w-lg mx-auto px-3 py-3">
-            {selectedSlide ? (
-              <SlideConfigurator
-                slide={selectedSlide}
-                onChange={(updates) => updateSlide(selectedSlide.id, updates)}
-              />
-            ) : (
-              <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center">
-                <div className="mb-3 flex justify-center text-gray-300">
-                  <AppIcon icon="ui.home" size={28} />
-                </div>
-                <p className="text-sm text-gray-400">Select a slide to configure it</p>
-              </div>
-            )}
+              <h3 className="text-base font-semibold text-gray-900">Add your first slide to start</h3>
+              <p className="mt-1.5 text-sm text-gray-500">
+                Build your presentation by adding a first slide, then customize content and order from the sidebar.
+              </p>
+              <Button
+                type="button"
+                onClick={() => handleAddSlide('title')}
+                className="mt-5 inline-flex items-center gap-2"
+              >
+                <AppIcon icon="ui.add" className="h-3.5 w-3.5" />
+                Add slide
+              </Button>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] overflow-hidden">
+            {/* Preview panel */}
+            {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
+              <div className="h-full w-full max-w-[66rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
+                <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center gap-3">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
+                </div>
+                {selectedSlide && selectedSlide.enabled ? (
+                  <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
+                    <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                      <iframe
+                        ref={previewIframeRef}
+                        src={`/p/${proposal.slug}#preview`}
+                        onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
+                        className="absolute inset-0 border-0 pointer-events-none"
+                        style={{
+                          width: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                          height: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                          transform: `scale(${PREVIEW_SCALE})`,
+                          transformOrigin: 'top left',
+                        }}
+                        title="Slide preview"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleGoToPrevSlide}
+                        disabled={!hasPrevSlide}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 text-[11px] text-gray-600"
+                      >
+                        <AppIcon icon="ui.sidebar-toggle" className="h-3 w-3" />
+                        Previous
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
+                        <Link to={`/p/${proposal.slug}#preview`}>
+                          Open full preview
+                        </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleGoToNextSlide}
+                        disabled={!hasNextSlide}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 text-[11px] text-gray-600"
+                      >
+                        Next
+                        <AppIcon icon="ui.chevron-right" className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-xs text-gray-400">No preview available</p>
+                  </div>
+                )}
+              </div>
+            </div>}
+
+            {/* Configurator — right panel */}
+            <div className="flex-1 min-w-0 overflow-y-auto admin-scroll border-l border-gray-100">
+              <div className="max-w-lg mx-auto px-3 py-3">
+              {selectedSlide ? (
+                <SlideConfigurator
+                  slide={selectedSlide}
+                  onChange={(updates) => updateSlide(selectedSlide.id, updates)}
+                />
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center">
+                  <div className="mb-3 flex justify-center text-gray-300">
+                    <AppIcon icon="ui.home" size={28} />
+                  </div>
+                  <p className="text-sm text-gray-400">Select a slide to configure it</p>
+                </div>
+              )}
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
 

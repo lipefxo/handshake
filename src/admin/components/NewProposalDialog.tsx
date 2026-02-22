@@ -129,7 +129,9 @@ export function NewProposalDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-3 md:grid-cols-3 md:items-start">
               <div className="grid gap-1.5 md:col-span-2">
-                <Label htmlFor="new-proposal-title-input">Proposal title</Label>
+                <Label htmlFor="new-proposal-title-input">
+                  Proposal title <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="new-proposal-title-input"
                   type="text"
@@ -138,24 +140,26 @@ export function NewProposalDialog({
                   placeholder="Q3 2026 Partnership Proposal"
                   maxLength={INPUT_LIMITS.title}
                   required
-                  aria-invalid={!hasProposalTitle}
                 />
               </div>
               <div className="grid gap-1.5 md:col-span-1">
-                <Label htmlFor="new-proposal-date-input">Proposal date</Label>
+                <Label htmlFor="new-proposal-date-input">
+                  Proposal date <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="new-proposal-date-input"
                   type="date"
                   value={values.proposalDate}
                   onChange={(event) => updateField('proposalDate', event.target.value)}
                   required
-                  aria-invalid={Boolean(errors.proposalDate)}
                 />
               </div>
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="new-proposal-partner-input">Partner / client name</Label>
+              <Label htmlFor="new-proposal-partner-input">
+                Partner / client name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="new-proposal-partner-input"
                 type="text"
@@ -164,7 +168,6 @@ export function NewProposalDialog({
                 placeholder="Acme Corp"
                 maxLength={INPUT_LIMITS.partnerName}
                 required
-                aria-invalid={!hasPartnerName}
               />
             </div>
 

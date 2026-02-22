@@ -233,7 +233,12 @@ function ProposalViewerContent() {
                   whileInView="visible"
                   viewport={{ once: false, amount: 0.6 }}
                 >
-                  <SlideRenderer slide={slide} index={originalIndex >= 0 ? originalIndex : index} proposalPartnerName={proposal.partnerName} />
+                  <SlideRenderer
+                    slide={slide}
+                    index={originalIndex >= 0 ? originalIndex : index}
+                    proposalPartnerName={proposal.partnerName}
+                    proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
+                  />
                 </motion.section>
               );
             })}

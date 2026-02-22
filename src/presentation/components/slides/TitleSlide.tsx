@@ -7,10 +7,12 @@ import { OptimizedImage } from '../OptimizedImage';
 interface TitleSlideProps {
   content: TitleSlideContent;
   partnerName?: string;
+  companyLogo?: string;
 }
 
-export function TitleSlide({ content, partnerName }: TitleSlideProps) {
+export function TitleSlide({ content, partnerName, companyLogo }: TitleSlideProps) {
   const effectivePartnerName = partnerName || content.partnerName || 'Partner';
+  const effectiveCompanyLogo = companyLogo || content.secureBagsLogo;
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden"
@@ -33,13 +35,13 @@ export function TitleSlide({ content, partnerName }: TitleSlideProps) {
       >
         {/* Logos row */}
         <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-6 mb-12">
-          {content.secureBagsLogo ? (
-            <OptimizedImage src={content.secureBagsLogo} alt="SecureBags" className="h-8 object-contain opacity-90" />
+          {effectiveCompanyLogo ? (
+            <OptimizedImage src={effectiveCompanyLogo} alt="Company logo" className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
               <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>
-                SecureBags
+                Acme Corp
               </span>
             </div>
           )}

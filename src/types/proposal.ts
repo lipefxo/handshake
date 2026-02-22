@@ -142,6 +142,7 @@ export type SlideContent =
 export interface BrandOverrides {
   primaryColor?: string;
   accentColor?: string;
+  companyLogo?: string;
 }
 
 export interface Proposal {
