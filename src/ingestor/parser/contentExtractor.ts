@@ -26,9 +26,25 @@ function stripDirectiveComments(text: string): string {
   return text.replace(/<!--[\s\S]*?-->/g, '').trim();
 }
 
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/_([^\s_](?:.*?[^\s_])?)_/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1');
+}
+
+function cleanText(input: string): string {
+  return stripInlineMarkdown(sanitizeText(input)).trim();
+}
+
 function extractH1(text: string): string | undefined {
   const match = text.match(/^#\s+(.+)$/m);
-  return match?.[1]?.trim();
+  return cleanText(match?.[1] ?? '') || undefined;
 }
 
 function extractImage(text: string): { url: string; alt: string } | undefined {
@@ -36,7 +52,7 @@ function extractImage(text: string): { url: string; alt: string } | undefined {
   if (!match) return undefined;
   const validated = validateUrl(match[2]);
   return {
-    alt: sanitizeText(match[1]),
+    alt: cleanText(match[1]),
     url: validated.isValid ? validated.value : '',
   };
 }
@@ -51,7 +67,7 @@ function extractParagraphs(text: string): string[] {
 
   return cleaned
     .split(/\n{2,}/)
-    .map((p) => p.replace(/\n/g, ' ').trim())
+    .map((p) => cleanText(p.replace(/\n/g, ' ').trim()))
     .filter(Boolean);
 }
 
@@ -96,35 +112,35 @@ export function extractLinks(text: string): SlideLink[] {
 
 function extractTitle(section: TypedSection): TitleSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const rawHeading = sanitizeText(extractH1(clean) ?? '');
+  const rawHeading = cleanText(extractH1(clean) ?? '');
   const headingParts = rawHeading.split(/\s[-|]\s/, 2);
-  const headline = sanitizeText(headingParts[0] ?? '');
+  const headline = cleanText(headingParts[0] ?? '');
   const paragraphs = extractParagraphs(clean);
   const image = extractImage(clean);
 
   // Look for "Partner × SecureBags" style line
   const crossLine = clean.match(/^([^#\n!>-][^\n]*(×|x)[^\n]*)$/im);
-  const partnerName = sanitizeText(crossLine?.[1]?.split(/×|x/i)?.[0]?.trim() ?? '');
-  const headingSubheadline = sanitizeText(headingParts[1] ?? '');
+  const partnerName = cleanText(crossLine?.[1]?.split(/×|x/i)?.[0]?.trim() ?? '');
+  const headingSubheadline = cleanText(headingParts[1] ?? '');
 
   return {
     partnerName,
     headline,
-    subheadline: sanitizeText(paragraphs[0] ?? '') || headingSubheadline,
+    subheadline: cleanText(paragraphs[0] ?? '') || headingSubheadline,
     partnerLogo: image?.url || undefined,
   };
 }
 
 function extractIntro(section: TypedSection): IntroSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
   const image = extractImage(clean);
   const imagePosition = (section.directives['image_position'] as 'left' | 'right') ?? 'right';
 
   return {
     heading,
-    body: sanitizeText(paragraphs.join('\n\n')),
+    body: cleanText(paragraphs.join('\n\n')),
     image: image?.url || undefined,
     imagePosition,
   };
@@ -157,17 +173,17 @@ function parseStatValue(raw: string): { value: number; prefix?: string; suffix?:
 
 function extractStats(section: TypedSection): StatsSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const items = parsePipeItems(clean);
 
   const stats = items.map((parts) => {
-    const { value, prefix, suffix } = parseStatValue(parts[0] ?? '0');
+    const { value, prefix, suffix } = parseStatValue(cleanText(parts[0] ?? '0'));
     return {
       value,
       prefix,
       suffix,
-      label: sanitizeText(parts[1] ?? ''),
-      description: sanitizeText(parts[2] ?? ''),
+      label: cleanText(parts[1] ?? ''),
+      description: cleanText(parts[2] ?? ''),
     };
   });
 
@@ -189,28 +205,28 @@ function parseIconItem(parts: string[], fallbackIcon: AppIconId): { icon?: AppIc
 
   return {
     icon: normalizeIconId(explicitIconId ?? emojiIcon, fallbackIcon),
-    title: sanitizeText(title),
-    description: sanitizeText(parts[1] ?? ''),
+    title: cleanText(title),
+    description: cleanText(parts[1] ?? ''),
   };
 }
 
 function extractFeatures(section: TypedSection): FeaturesSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
   const items = parsePipeItems(clean);
   const normalizedItems = items.length > 0 ? items : extractPlainBullets(clean);
 
   return {
     heading,
-    subheading: sanitizeText(paragraphs[0] ?? ''),
+    subheading: cleanText(paragraphs[0] ?? ''),
     features: normalizedItems.map((item) => parseIconItem(item, 'slide.features.default')),
   };
 }
 
 function extractBenefits(section: TypedSection): BenefitsSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const items = parsePipeItems(clean);
   const normalizedItems = items.length > 0 ? items : extractPlainBullets(clean);
 
@@ -225,25 +241,25 @@ function extractTestimonial(section: TypedSection): TestimonialSlideContent {
   const lines = clean.split('\n').map((l) => l.trim());
 
   const quoteLines = lines.filter((l) => l.startsWith('> ')).map((l) => l.slice(2));
-  const quote = sanitizeText(quoteLines.join(' '));
+  const quote = cleanText(quoteLines.join(' '));
 
   const attributionLine = lines.find((l) => /^[—–-]\s+\w+/.test(l)) ?? '';
   const attrContent = attributionLine.replace(/^[—–-]\s+/, '').trim();
 
   // "Jane Smith, CFO at Acme Corp"
   const commaIdx = attrContent.indexOf(',');
-  const author = sanitizeText(commaIdx > -1 ? attrContent.slice(0, commaIdx).trim() : attrContent);
+  const author = cleanText(commaIdx > -1 ? attrContent.slice(0, commaIdx).trim() : attrContent);
   const afterComma = commaIdx > -1 ? attrContent.slice(commaIdx + 1).trim() : '';
   const atIdx = afterComma.toLowerCase().indexOf(' at ');
-  const role = sanitizeText(atIdx > -1 ? afterComma.slice(0, atIdx).trim() : afterComma);
-  const company = sanitizeText(atIdx > -1 ? afterComma.slice(atIdx + 4).trim() : '');
+  const role = cleanText(atIdx > -1 ? afterComma.slice(0, atIdx).trim() : afterComma);
+  const company = cleanText(atIdx > -1 ? afterComma.slice(atIdx + 4).trim() : '');
 
   return { quote, author, role: role || undefined, company: company || undefined };
 }
 
 function extractComparison(section: TypedSection): ComparisonSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
 
   // Find bold headers
   const boldHeaders = [...clean.matchAll(/^\*\*([^*]+)\*\*/gm)];
@@ -256,13 +272,13 @@ function extractComparison(section: TypedSection): ComparisonSlideContent {
     for (let i = startIdx + 1; i < lines.length; i++) {
       const l = lines[i].trim();
       if (/^\*\*[^*]+\*\*/.test(l)) break; // next header
-      if (/^[-*]\s+/.test(l)) bullets.push(sanitizeText(l.replace(/^[-*]\s+/, '')));
+      if (/^[-*]\s+/.test(l)) bullets.push(cleanText(l.replace(/^[-*]\s+/, '')));
     }
     return bullets;
   }
 
-  const before = sanitizeText(boldHeaders[0]?.[1]?.replace(/:$/, '') ?? 'Before');
-  const after = sanitizeText(boldHeaders[1]?.[1]?.replace(/:$/, '') ?? 'After');
+  const before = cleanText(boldHeaders[0]?.[1]?.replace(/:$/, '') ?? 'Before');
+  const after = cleanText(boldHeaders[1]?.[1]?.replace(/:$/, '') ?? 'After');
 
   return {
     heading,
@@ -273,15 +289,15 @@ function extractComparison(section: TypedSection): ComparisonSlideContent {
 
 function extractTimeline(section: TypedSection): TimelineSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const items = parsePipeItems(clean);
 
   return {
     heading,
     milestones: items.map((parts) => ({
-      date: sanitizeText(parts[0] ?? ''),
-      title: sanitizeText(parts[1] ?? ''),
-      description: sanitizeText(parts[2] ?? ''),
+      date: cleanText(parts[0] ?? ''),
+      title: cleanText(parts[1] ?? ''),
+      description: cleanText(parts[2] ?? ''),
     })),
   };
 }
@@ -291,7 +307,7 @@ function extractMedia(section: TypedSection): MediaSlideContent {
   const image = extractImage(clean);
   const validatedUrl = validateUrl(image?.url ?? '');
   const url = validatedUrl.isValid ? validatedUrl.value : '';
-  const caption = sanitizeText(image?.alt ?? '');
+  const caption = cleanText(image?.alt ?? '');
   const fit = (section.directives['fit'] as 'cover' | 'contain') ?? 'cover';
 
   let mediaType: 'image' | 'gif' | 'video' = 'image';
@@ -303,7 +319,7 @@ function extractMedia(section: TypedSection): MediaSlideContent {
 
 function extractClosing(section: TypedSection): ClosingSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
 
   // Email pattern
@@ -324,18 +340,18 @@ function extractClosing(section: TypedSection): ClosingSlideContent {
 
   return {
     heading,
-    subheading: sanitizeText(paragraphs[0] ?? ''),
-    contactName: sanitizeText(boldMatch?.[1] ?? '') || undefined,
-    contactEmail: sanitizeText(contactEmail ?? '') || undefined,
-    contactPhone: sanitizeText(phoneMatch?.[0] ?? '') || undefined,
-    ctaText: sanitizeText(linkMatch?.[1] ?? '') || undefined,
+    subheading: cleanText(paragraphs[0] ?? ''),
+    contactName: cleanText(boldMatch?.[1] ?? '') || undefined,
+    contactEmail: cleanText(contactEmail ?? '') || undefined,
+    contactPhone: cleanText(phoneMatch?.[0] ?? '') || undefined,
+    ctaText: cleanText(linkMatch?.[1] ?? '') || undefined,
     ctaUrl: validatedCtaUrl.isValid ? validatedCtaUrl.value : undefined,
   };
 }
 
 function extractTable(section: TypedSection): TableSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const heading = sanitizeText(extractH1(clean) ?? '');
+  const heading = cleanText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
   const tableLines = clean
     .split('\n')
@@ -345,7 +361,7 @@ function extractTable(section: TypedSection): TableSlideContent {
   const parsedRows = tableLines
     .map((line) => {
       const stripped = line.replace(/^\|/, '').replace(/\|$/, '');
-      return stripped.split('|').map((cell) => sanitizeText(cell.trim()));
+      return stripped.split('|').map((cell) => cleanText(cell.trim()));
     })
     .filter((row) => row.length > 0 && row.some(Boolean))
     .filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)));
@@ -357,7 +373,7 @@ function extractTable(section: TypedSection): TableSlideContent {
 
   return {
     heading,
-    description: sanitizeText(paragraphs[0] ?? ''),
+    description: cleanText(paragraphs[0] ?? ''),
     columns,
     rows,
   };
