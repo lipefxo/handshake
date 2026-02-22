@@ -13,6 +13,7 @@ import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ToastViewport } from './shared/components/ToastViewport';
 import { LandingPage } from './landing/LandingPage';
+import { ShakegroundPage } from './shakeground/ShakegroundPage';
 import { useAuthStore } from './store/authStore';
 import { Agentation } from 'agentation';
 
@@ -65,6 +66,16 @@ export default function App() {
               <Route path="proposals/:id/settings" element={<ProposalSettingsPage />} />
               <Route path="settings" element={<ProposalSettings />} />
             </Route>
+
+            {/* Design system */}
+            <Route
+              path="/shakeground"
+              element={
+                <ProtectedRoute>
+                  <ShakegroundPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Public proposal viewer */}
             <Route path="/p/:slug" element={<ProposalViewer />} />
