@@ -6,14 +6,21 @@ export const FIELD_LIMITS = {
   slug: 100,
   slideHeading: 300,
   slideBody: 5000,
+  introBody: 600,
   statLabel: 100,
   statValue: 50,
   featureTitle: 200,
   featureDescription: 500,
-  testimonialQuote: 2000,
+  testimonialQuote: 400,
+  closingSubheading: 300,
   contactField: 200,
   ctaText: 100,
   url: 2000,
+  maxStats: 4,
+  maxFeatures: 6,
+  maxBenefits: 6,
+  maxMilestones: 6,
+  maxComparisonItems: 6,
 } as const;
 
 export function sanitizeText(input: string): string {

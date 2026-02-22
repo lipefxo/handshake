@@ -128,12 +128,13 @@ export function ProposalSettingsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
         {/* Tab strip */}
         <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
           <motion.div
             aria-hidden="true"
             className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-white shadow-sm"
+            initial={{ x: '0%' }}
             animate={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
           />
@@ -148,7 +149,7 @@ export function ProposalSettingsPage() {
           </span>
         </div>
 
-        <div className="flex-1 min-w-0 flex items-center justify-center">
+        <div className="min-w-0 flex items-center justify-center">
           <Input
             className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
@@ -158,7 +159,7 @@ export function ProposalSettingsPage() {
         </div>
 
         {/* Keep Slides-tab right-side footprint so title alignment stays stable */}
-        <div className="flex-shrink-0 flex items-center justify-end gap-2 min-w-[17rem]">
+        <div className="w-[22rem] flex items-center justify-end gap-2">
           <AnimatePresence mode="wait">
             {saveState === 'saving' && (
               <motion.span
@@ -196,7 +197,7 @@ export function ProposalSettingsPage() {
               </motion.span>
             )}
           </AnimatePresence>
-          <div className="h-8 w-[11.5rem]" aria-hidden="true" />
+          <div className="h-8 w-[13.5rem]" aria-hidden="true" />
         </div>
       </div>
 

@@ -124,6 +124,24 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
   );
 }
 
+function ItemCounter({ count, max, label = 'items' }: { count: number; max: number; label?: string }) {
+  const atLimit = count >= max;
+  return (
+    <span className={`text-[11px] ${atLimit ? 'text-amber-600' : 'text-gray-400'}`}>
+      {count} / {max} {label}
+    </span>
+  );
+}
+
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const atLimit = value.length >= max;
+  return (
+    <p className={`mt-1 text-[11px] text-right ${atLimit ? 'text-amber-600' : 'text-gray-400'}`}>
+      {value.length} / {max}
+    </p>
+  );
+}
+
 function IconSelect({
   options,
   value,
@@ -227,7 +245,15 @@ function IntroFields({ content, onChange }: { content: IntroSlideContent; onChan
         <Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} />
       </FieldGroup>
       <FieldGroup label="Body">
-        <Textarea value={content.body || ''} onChange={(e) => onChange({ body: e.target.value })} rows={4} />
+        <div>
+          <Textarea
+            value={content.body || ''}
+            onChange={(e) => onChange({ body: e.target.value })}
+            rows={4}
+            maxLength={FIELD_LIMITS.introBody}
+          />
+          <CharCounter value={content.body || ''} max={FIELD_LIMITS.introBody} />
+        </div>
       </FieldGroup>
       <FieldGroup label="Image Position">
         <select className={selectClassName} value={content.imagePosition || 'right'} onChange={(e) => onChange({ imagePosition: e.target.value })}>
@@ -241,11 +267,14 @@ function IntroFields({ content, onChange }: { content: IntroSlideContent; onChan
 }
 
 function StatsFields({ content, onChange }: { content: StatsSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxStats = content.stats.length >= FIELD_LIMITS.maxStats;
+
   const updateStat = (index: number, field: string, value: string | number) => {
     const newStats = content.stats.map((s, i) => i === index ? { ...s, [field]: value } : s);
     onChange({ stats: newStats });
   };
   const addStat = () => {
+    if (atMaxStats) return;
     onChange({ stats: [...content.stats, { value: 0, label: 'New Metric' }] });
   };
   const removeStat = (index: number) => {
@@ -259,8 +288,21 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
       </FieldGroup>
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-600">Stats</label>
-          <Button type="button" variant="link" size="sm" onClick={addStat} className="h-auto p-0 text-xs text-indigo-600">+ Add stat</Button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Stats</label>
+            <ItemCounter count={content.stats.length} max={FIELD_LIMITS.maxStats} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addStat}
+            disabled={atMaxStats}
+            title={atMaxStats ? `Limit reached (${FIELD_LIMITS.maxStats})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add stat
+          </Button>
         </div>
         <div className="space-y-3">
           {content.stats.map((stat, i) => (
@@ -300,11 +342,14 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
 }
 
 function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxFeatures = content.features.length >= FIELD_LIMITS.maxFeatures;
+
   const updateFeature = (index: number, field: 'icon' | 'title' | 'description', value: string | AppIconId) => {
     const updated = content.features.map((f, i) => i === index ? { ...f, [field]: value } : f);
     onChange({ features: updated });
   };
   const addFeature = () => {
+    if (atMaxFeatures) return;
     onChange({ features: [...content.features, { icon: 'slide.features.default', title: 'New Feature', description: '' }] });
   };
   const removeFeature = (index: number) => {
@@ -317,8 +362,21 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
       <FieldGroup label="Subheading"><Input value={content.subheading || ''} onChange={(e) => onChange({ subheading: e.target.value })} /></FieldGroup>
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-600">Features</label>
-          <Button type="button" variant="link" size="sm" onClick={addFeature} className="h-auto p-0 text-xs text-indigo-600">+ Add feature</Button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Features</label>
+            <ItemCounter count={content.features.length} max={FIELD_LIMITS.maxFeatures} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addFeature}
+            disabled={atMaxFeatures}
+            title={atMaxFeatures ? `Limit reached (${FIELD_LIMITS.maxFeatures})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add feature
+          </Button>
         </div>
         <div className="space-y-3">
           {content.features.map((feature, i) => (
@@ -357,7 +415,16 @@ function TestimonialFields({ content, onChange }: { content: TestimonialSlideCon
   return (
     <div className="space-y-4">
       <FieldGroup label="Quote">
-        <Textarea value={content.quote || ''} onChange={(e) => onChange({ quote: e.target.value })} rows={4} placeholder="This partnership transformed our business..." />
+        <div>
+          <Textarea
+            value={content.quote || ''}
+            onChange={(e) => onChange({ quote: e.target.value })}
+            rows={4}
+            placeholder="This partnership transformed our business..."
+            maxLength={FIELD_LIMITS.testimonialQuote}
+          />
+          <CharCounter value={content.quote || ''} max={FIELD_LIMITS.testimonialQuote} />
+        </div>
       </FieldGroup>
       <FieldGroup label="Author Name">
         <Input value={content.author || ''} onChange={(e) => onChange({ author: e.target.value })} />
@@ -374,6 +441,9 @@ function TestimonialFields({ content, onChange }: { content: TestimonialSlideCon
 }
 
 function ComparisonFields({ content, onChange }: { content: ComparisonSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxBeforeItems = content.before.items.length >= FIELD_LIMITS.maxComparisonItems;
+  const atMaxAfterItems = content.after.items.length >= FIELD_LIMITS.maxComparisonItems;
+
   const updateBeforeItem = (index: number, value: string) => {
     const items = [...content.before.items];
     items[index] = value;
@@ -390,20 +460,52 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-gray-600 mb-2 block">Before label</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-medium text-gray-600">Before label</label>
+            <ItemCounter count={content.before.items.length} max={FIELD_LIMITS.maxComparisonItems} />
+          </div>
           <Input className="mb-2" value={content.before.label} onChange={(e) => onChange({ before: { ...content.before, label: e.target.value } })} />
           {content.before.items.map((item, i) => (
             <Input key={i} className="mb-1.5" value={item} onChange={(e) => updateBeforeItem(i, e.target.value)} />
           ))}
-          <Button type="button" variant="link" size="sm" onClick={() => onChange({ before: { ...content.before, items: [...content.before.items, ''] } })} className="h-auto p-0 text-xs text-indigo-600">+ Add item</Button>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => {
+              if (atMaxBeforeItems) return;
+              onChange({ before: { ...content.before, items: [...content.before.items, ''] } });
+            }}
+            disabled={atMaxBeforeItems}
+            title={atMaxBeforeItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add item
+          </Button>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600 mb-2 block">After label</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-medium text-gray-600">After label</label>
+            <ItemCounter count={content.after.items.length} max={FIELD_LIMITS.maxComparisonItems} />
+          </div>
           <Input className="mb-2" value={content.after.label} onChange={(e) => onChange({ after: { ...content.after, label: e.target.value } })} />
           {content.after.items.map((item, i) => (
             <Input key={i} className="mb-1.5" value={item} onChange={(e) => updateAfterItem(i, e.target.value)} />
           ))}
-          <Button type="button" variant="link" size="sm" onClick={() => onChange({ after: { ...content.after, items: [...content.after.items, ''] } })} className="h-auto p-0 text-xs text-indigo-600">+ Add item</Button>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => {
+              if (atMaxAfterItems) return;
+              onChange({ after: { ...content.after, items: [...content.after.items, ''] } });
+            }}
+            disabled={atMaxAfterItems}
+            title={atMaxAfterItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add item
+          </Button>
         </div>
       </div>
     </div>
@@ -411,11 +513,14 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
 }
 
 function TimelineFields({ content, onChange }: { content: TimelineSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxMilestones = content.milestones.length >= FIELD_LIMITS.maxMilestones;
+
   const updateMilestone = (index: number, field: string, value: string) => {
     const updated = content.milestones.map((m, i) => i === index ? { ...m, [field]: value } : m);
     onChange({ milestones: updated });
   };
   const addMilestone = () => {
+    if (atMaxMilestones) return;
     onChange({ milestones: [...content.milestones, { date: 'Phase X', title: 'New Milestone', description: '' }] });
   };
   const removeMilestone = (index: number) => {
@@ -427,8 +532,21 @@ function TimelineFields({ content, onChange }: { content: TimelineSlideContent; 
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-600">Milestones</label>
-          <Button type="button" variant="link" size="sm" onClick={addMilestone} className="h-auto p-0 text-xs text-indigo-600">+ Add</Button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Milestones</label>
+            <ItemCounter count={content.milestones.length} max={FIELD_LIMITS.maxMilestones} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addMilestone}
+            disabled={atMaxMilestones}
+            title={atMaxMilestones ? `Limit reached (${FIELD_LIMITS.maxMilestones})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add
+          </Button>
         </div>
         <div className="space-y-3">
           {content.milestones.map((milestone, i) => (
@@ -480,11 +598,14 @@ function MediaFields({ content, onChange }: { content: MediaSlideContent; onChan
 }
 
 function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxBenefits = content.benefits.length >= FIELD_LIMITS.maxBenefits;
+
   const updateBenefit = (index: number, field: 'icon' | 'title' | 'description', value: string | AppIconId) => {
     const updated = content.benefits.map((b, i) => i === index ? { ...b, [field]: value } : b);
     onChange({ benefits: updated });
   };
   const addBenefit = () => {
+    if (atMaxBenefits) return;
     onChange({ benefits: [...content.benefits, { icon: 'slide.benefits.default', title: 'New Benefit', description: '' }] });
   };
   const removeBenefit = (index: number) => {
@@ -496,8 +617,21 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-600">Benefits</label>
-          <Button type="button" variant="link" size="sm" onClick={addBenefit} className="h-auto p-0 text-xs text-indigo-600">+ Add benefit</Button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Benefits</label>
+            <ItemCounter count={content.benefits.length} max={FIELD_LIMITS.maxBenefits} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addBenefit}
+            disabled={atMaxBenefits}
+            title={atMaxBenefits ? `Limit reached (${FIELD_LIMITS.maxBenefits})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add benefit
+          </Button>
         </div>
         <div className="space-y-3">
           {content.benefits.map((benefit, i) => (
@@ -530,7 +664,17 @@ function ClosingFields({ content, onChange }: { content: ClosingSlideContent; on
   return (
     <div className="space-y-4">
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
-      <FieldGroup label="Subheading"><Textarea value={content.subheading || ''} onChange={(e) => onChange({ subheading: e.target.value })} rows={2} /></FieldGroup>
+      <FieldGroup label="Subheading">
+        <div>
+          <Textarea
+            value={content.subheading || ''}
+            onChange={(e) => onChange({ subheading: e.target.value })}
+            rows={2}
+            maxLength={FIELD_LIMITS.closingSubheading}
+          />
+          <CharCounter value={content.subheading || ''} max={FIELD_LIMITS.closingSubheading} />
+        </div>
+      </FieldGroup>
       <FieldGroup label="CTA Button Text"><Input value={content.ctaText || ''} onChange={(e) => onChange({ ctaText: e.target.value })} placeholder="Schedule a Call" /></FieldGroup>
       <FieldGroup label="CTA URL"><Input maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
       <div className="pt-2 border-t border-gray-100">

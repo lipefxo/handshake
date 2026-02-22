@@ -260,12 +260,13 @@ export function ProposalEditor() {
     <>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
         {id && (
           <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
             <motion.div
               aria-hidden="true"
               className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-white shadow-sm"
+              initial={{ x: '100%' }}
               animate={{ x: '0%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
             />
@@ -279,7 +280,7 @@ export function ProposalEditor() {
           </div>
         )}
 
-        <div className="flex-1 min-w-0 flex items-center justify-center">
+        <div className="min-w-0 flex items-center justify-center">
           <Input
             className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
@@ -288,64 +289,64 @@ export function ProposalEditor() {
           />
         </div>
 
-        {/* Save state */}
-        <div className="flex-shrink-0 flex items-center gap-1.5">
-          <AnimatePresence mode="wait">
-            {saveState === 'saving' && (
-              <motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="text-xs text-gray-400 flex items-center gap-1.5">
-                <span className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
-                Saving…
-              </motion.span>
-            )}
-            {saveState === 'saved' && (
-              <motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="text-xs text-green-500 flex items-center gap-1">
-                <AppIcon icon="ui.check" className="w-3 h-3" />
-                Saved
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
+        <div className="w-[22rem] flex items-center justify-end gap-2">
+          <div className="flex-shrink-0 flex items-center gap-1.5 min-w-[4.5rem] justify-end">
+            <AnimatePresence mode="wait">
+              {saveState === 'saving' && (
+                <motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs text-gray-400 flex items-center gap-1.5">
+                  <span className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+                  Saving…
+                </motion.span>
+              )}
+              {saveState === 'saved' && (
+                <motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs text-green-500 flex items-center gap-1">
+                  <AppIcon icon="ui.check" className="w-3 h-3" />
+                  Saved
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            onClick={() => setMarkdownEditorOpen(true)}
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            title="Edit proposal as Markdown"
-          >
-            <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
-            Markdown
-          </Button>
-
-          {proposal.status === 'published' && (
+          <div className="flex items-center gap-2">
             <Button
-              onClick={handleCopyLink}
-              variant="secondary"
+              onClick={() => setMarkdownEditorOpen(true)}
+              variant="outline"
               size="sm"
               className="gap-1.5 text-xs"
+              title="Edit proposal as Markdown"
             >
-              {copiedLink ? (
-                <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
-              ) : (
-                <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy link</>
-              )}
+              <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
+              Markdown
             </Button>
-          )}
 
-          <Button
-            onClick={handlePublish}
-            className={`h-8 px-4 text-xs font-semibold transition-all ${
-              proposal.status === 'published'
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gray-900 text-white hover:bg-gray-800'
-            }`}
-          >
-            {proposal.status === 'published' ? 'Published' : 'Publish'}
-          </Button>
+            {proposal.status === 'published' && (
+              <Button
+                onClick={handleCopyLink}
+                variant="secondary"
+                size="sm"
+                className="gap-1.5 text-xs"
+              >
+                {copiedLink ? (
+                  <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
+                ) : (
+                  <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy link</>
+                )}
+              </Button>
+            )}
+
+            <Button
+              onClick={handlePublish}
+              className={`h-8 px-4 text-xs font-semibold transition-all ${
+                proposal.status === 'published'
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+              }`}
+            >
+              {proposal.status === 'published' ? 'Published' : 'Publish'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -453,9 +454,9 @@ export function ProposalEditor() {
               </div>
             )}
             </div>
+          </div>
         </div>
       </motion.div>
-    </div>
     </div>
 
     <MarkdownIngestorModal

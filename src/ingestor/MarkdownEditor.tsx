@@ -4,7 +4,6 @@ import Prism from 'prismjs';
 import 'prismjs/components/prism-markdown';
 import type { SlideType } from '../types/proposal';
 import { snippets, SNIPPET_LABELS } from './templates/sectionSnippets';
-import exampleProposalMd from './templates/exampleProposal.md?raw';
 import { copyToClipboard } from '../shared/utils/helpers';
 import { AppIcon } from '../shared/icons/AppIcon';
 
@@ -69,11 +68,6 @@ export function MarkdownEditor({ value, onChange, onCursorChange }: MarkdownEdit
     [value, onChange],
   );
 
-  const handleLoadExample = useCallback(() => {
-    const confirmed = !value.trim() || window.confirm('Replace editor content with the example proposal?');
-    if (confirmed) onChange(exampleProposalMd);
-  }, [value, onChange]);
-
   const handleCopyPrompt = useCallback(async () => {
     const sourceContent = value.trim() || '[Paste your raw content here]';
     const prompt = `${MARKDOWN_CONVERSION_PROMPT_PREFIX}
@@ -110,7 +104,7 @@ ${sourceContent}
             color: '#374151',
           }}
           textareaClassName="outline-none resize-none"
-          placeholder={`Paste your markdown here, or click "Paste Example" to get started.
+          placeholder={`Paste your markdown content here to get started.
 
 Separate slides with --- horizontal rules.
 Add <!-- type: slideType --> to explicitly set a slide type.
@@ -157,13 +151,6 @@ Example:
                 Copy prompt
               </>
             )}
-          </button>
-          <button
-            onClick={handleLoadExample}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-800 bg-white border border-gray-200 rounded-md hover:border-gray-400 transition-all flex-shrink-0"
-          >
-            <AppIcon icon="ui.file" className="w-3 h-3" />
-            Paste example
           </button>
         </div>
       </div>
