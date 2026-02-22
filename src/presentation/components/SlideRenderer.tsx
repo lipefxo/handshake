@@ -10,6 +10,8 @@ import { MediaSlide } from './slides/MediaSlide';
 import { BenefitsSlide } from './slides/BenefitsSlide';
 import { TableSlide } from './slides/TableSlide';
 import { ClosingSlide } from './slides/ClosingSlide';
+import { AppIcon } from '../../shared/icons/AppIcon';
+import { sanitizeText, validateUrl } from '../../shared/utils/validation';
 
 interface SlideRendererProps {
   slide: SlideConfig;
@@ -20,35 +22,87 @@ interface SlideRendererProps {
 export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps) {
   const { type, content } = slide;
 
+  let slideBody: ReactNode;
   switch (type) {
     case 'title':
-      return <TitleSlide content={content as TitleSlideContent} partnerName={proposalPartnerName} />;
+      slideBody = <TitleSlide content={content as TitleSlideContent} partnerName={proposalPartnerName} />;
+      break;
     case 'intro':
-      return <IntroSlide content={content as IntroSlideContent} />;
+      slideBody = <IntroSlide content={content as IntroSlideContent} />;
+      break;
     case 'stats':
-      return <StatsSlide content={content as StatsSlideContent} />;
+      slideBody = <StatsSlide content={content as StatsSlideContent} />;
+      break;
     case 'features':
-      return <FeaturesSlide content={content as FeaturesSlideContent} />;
+      slideBody = <FeaturesSlide content={content as FeaturesSlideContent} />;
+      break;
     case 'testimonial':
-      return <TestimonialSlide content={content as TestimonialSlideContent} />;
+      slideBody = <TestimonialSlide content={content as TestimonialSlideContent} />;
+      break;
     case 'comparison':
-      return <ComparisonSlide content={content as ComparisonSlideContent} />;
+      slideBody = <ComparisonSlide content={content as ComparisonSlideContent} />;
+      break;
     case 'timeline':
-      return <TimelineSlide content={content as TimelineSlideContent} />;
+      slideBody = <TimelineSlide content={content as TimelineSlideContent} />;
+      break;
     case 'media':
-      return <MediaSlide content={content as MediaSlideContent} />;
+      slideBody = <MediaSlide content={content as MediaSlideContent} />;
+      break;
     case 'benefits':
       return <BenefitsSlide content={content as BenefitsSlideContent} />;
     case 'table':
       return <TableSlide content={content as TableSlideContent} />;
     case 'closing':
-      return <ClosingSlide content={content as ClosingSlideContent} />;
+      slideBody = <ClosingSlide content={content as ClosingSlideContent} />;
+      break;
     default:
-      return (
-        <div className="flex items-center justify-center w-full h-full"
-          style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-tertiary)' }}>
+      slideBody = (
+        <div
+          className="flex items-center justify-center w-full h-full"
+          style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-tertiary)' }}
+        >
           Unknown slide type: {type}
         </div>
       );
   }
+
+  const validLinks = (slide.links ?? []).filter((link) => {
+    const text = sanitizeText(link.text ?? '');
+    const urlValidation = validateUrl(link.url ?? '');
+    return Boolean(text) && urlValidation.isValid;
+  });
+
+  return (
+    <div className="relative w-full h-full">
+      {slideBody}
+
+      {validLinks.length > 0 && (
+        <div className="pointer-events-none absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-3 px-6">
+          {validLinks.map((link, index) => {
+            const text = sanitizeText(link.text ?? '');
+            const urlValidation = validateUrl(link.url ?? '');
+            if (!text || !urlValidation.isValid) return null;
+
+            return (
+              <a
+                key={`${urlValidation.value}-${index}`}
+                href={urlValidation.value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pointer-events-auto inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105"
+                style={{
+                  background: 'var(--color-text-primary)',
+                  color: 'var(--color-bg-primary)',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {text}
+                <AppIcon icon="ui.external-link" className="w-3.5 h-3.5" />
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }

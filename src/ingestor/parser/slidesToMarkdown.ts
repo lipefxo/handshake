@@ -166,30 +166,56 @@ function serializeClosing(content: ClosingSlideContent): string {
 // ---------------------------------------------------------------------------
 
 export function slideToMarkdown(slide: SlideConfig): string {
+  let markdown = '';
   switch (slide.type) {
     case 'title':
-      return serializeTitle(slide.content as TitleSlideContent);
+      markdown = serializeTitle(slide.content as TitleSlideContent);
+      break;
     case 'intro':
-      return serializeIntro(slide.content as IntroSlideContent);
+      markdown = serializeIntro(slide.content as IntroSlideContent);
+      break;
     case 'stats':
-      return serializeStats(slide.content as StatsSlideContent);
+      markdown = serializeStats(slide.content as StatsSlideContent);
+      break;
     case 'features':
-      return serializeFeatures(slide.content as FeaturesSlideContent);
+      markdown = serializeFeatures(slide.content as FeaturesSlideContent);
+      break;
     case 'testimonial':
-      return serializeTestimonial(slide.content as TestimonialSlideContent);
+      markdown = serializeTestimonial(slide.content as TestimonialSlideContent);
+      break;
     case 'comparison':
-      return serializeComparison(slide.content as ComparisonSlideContent);
+      markdown = serializeComparison(slide.content as ComparisonSlideContent);
+      break;
     case 'timeline':
-      return serializeTimeline(slide.content as TimelineSlideContent);
+      markdown = serializeTimeline(slide.content as TimelineSlideContent);
+      break;
     case 'media':
-      return serializeMedia(slide.content as MediaSlideContent);
+      markdown = serializeMedia(slide.content as MediaSlideContent);
+      break;
     case 'benefits':
       return serializeBenefits(slide.content as BenefitsSlideContent);
     case 'table':
       return serializeTable(slide.content as TableSlideContent);
     case 'closing':
-      return serializeClosing(slide.content as ClosingSlideContent);
+      markdown = serializeClosing(slide.content as ClosingSlideContent);
+      break;
   }
+
+  if (slide.links && slide.links.length > 0) {
+    const linkLines = slide.links
+      .map((link) => {
+        const text = link.text?.trim();
+        const url = link.url?.trim();
+        return text && url ? `[${text}](${url})` : '';
+      })
+      .filter(Boolean);
+
+    if (linkLines.length > 0) {
+      markdown += `\n\n${linkLines.join('\n')}`;
+    }
+  }
+
+  return markdown;
 }
 
 export function slidesToMarkdown(
