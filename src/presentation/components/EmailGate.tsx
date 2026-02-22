@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import type { Proposal } from '../../types/proposal';
-import { supabase } from '../../supabaseClient';
+import type { ProposalAccessGrant } from '../../types/proposal';
+import { useProposalStore } from '../../store/proposalStore';
 
 interface EmailGateProps {
-  proposal: Proposal;
-  onGranted: () => void;
+  proposalId: string;
+  proposalTitle: string;
+  onGranted: (grant: ProposalAccessGrant) => void | Promise<void>;
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function EmailGate({ proposal, onGranted }: EmailGateProps) {
+export function EmailGate({ proposalId, proposalTitle, onGranted }: EmailGateProps) {
+  const verifyProposalEmail = useProposalStore((state) => state.verifyProposalEmail);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -26,18 +28,18 @@ export function EmailGate({ proposal, onGranted }: EmailGateProps) {
     setSubmitting(true);
     setError('');
 
-    const { error: insertError } = await supabase
-      .from('proposal_leads')
-      .insert({ proposal_id: proposal.id, email: trimmed });
-
-    // Ignore duplicate error (23505) — grant access either way
-    if (insertError && insertError.code !== '23505') {
+    try {
+      const grant = await verifyProposalEmail(proposalId, trimmed);
+      if (!grant) {
+        setError('Something went wrong. Please try again.');
+        return;
+      }
+      await onGranted(grant);
+    } catch {
       setError('Something went wrong. Please try again.');
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    onGranted();
   };
 
   return (
@@ -64,6 +66,7 @@ export function EmailGate({ proposal, onGranted }: EmailGateProps) {
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
           Please provide your email address to view this proposal.
+          <span className="block mt-1 opacity-80">{proposalTitle}</span>
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">

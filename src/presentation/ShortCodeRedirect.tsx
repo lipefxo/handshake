@@ -4,7 +4,7 @@ import { useProposalStore } from '../store/proposalStore';
 
 export function ShortCodeRedirect() {
   const { code } = useParams<{ code: string }>();
-  const { getProposalByShortCode } = useProposalStore();
+  const { getProposalMetaByShortCode } = useProposalStore();
   const [targetSlug, setTargetSlug] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -19,7 +19,7 @@ export function ShortCodeRedirect() {
         return;
       }
 
-      const proposal = await getProposalByShortCode(code);
+      const proposal = await getProposalMetaByShortCode(code);
       if (cancelled) return;
 
       if (!proposal) {
@@ -37,7 +37,7 @@ export function ShortCodeRedirect() {
     return () => {
       cancelled = true;
     };
-  }, [code, getProposalByShortCode]);
+  }, [code, getProposalMetaByShortCode]);
 
   if (targetSlug) {
     return <Navigate to={`/p/${targetSlug}`} replace />;
