@@ -78,7 +78,7 @@ export function LoginPage() {
       >
         <div className="text-center mb-8">
           <h1 className="mb-1.5 inline-flex items-center justify-center gap-2">
-            <BrandLogo variant="light" className="h-5 w-5" aria-label="Handshake logo" />
+            <BrandLogo variant="light" className="h-9 w-9 translate-y-[1px]" aria-label="Handshake logo" />
             <BrandWordmark variant="light" className="h-8 w-auto" aria-label="Handshake" />
           </h1>
         </div>

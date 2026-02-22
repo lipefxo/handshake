@@ -378,6 +378,7 @@ function ProposalViewerContent() {
                   <SlideRenderer
                     slide={slide}
                     index={originalIndex >= 0 ? originalIndex : index}
+                    totalSlides={enabledSlides.length}
                     proposalPartnerName={proposal.partnerName}
                     proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
                     proposalCompanyName={proposal.brandOverrides?.companyName}

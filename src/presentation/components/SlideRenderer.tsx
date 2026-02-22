@@ -17,13 +17,22 @@ import { sanitizeText, validateUrl } from '../../shared/utils/validation';
 interface SlideRendererProps {
   slide: SlideConfig;
   index: number;
+  totalSlides: number;
   proposalPartnerName?: string;
   proposalCompanyLogo?: string;
   proposalCompanyName?: string;
 }
 
-export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo, proposalCompanyName }: SlideRendererProps) {
+export function SlideRenderer({
+  slide,
+  index,
+  totalSlides,
+  proposalPartnerName,
+  proposalCompanyLogo,
+  proposalCompanyName,
+}: SlideRendererProps) {
   const { type, content } = slide;
+  const isLastSlide = totalSlides > 0 && index === totalSlides - 1;
 
   let slideBody: ReactNode;
   switch (type) {
@@ -89,7 +98,7 @@ export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo,
       {slideBody}
 
       {validLinks.length > 0 && (
-        <div className="pointer-events-none absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-3 px-6">
+        <div className={`pointer-events-none absolute left-0 right-0 z-30 flex justify-center gap-3 px-6 ${isLastSlide ? 'bottom-14' : 'bottom-8'}`}>
           {validLinks.map((link, index) => {
             const text = sanitizeText(link.text ?? '');
             const urlValidation = validateUrl(link.url ?? '');
@@ -117,6 +126,41 @@ export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo,
             );
           })}
         </div>
+      )}
+
+      {isLastSlide && (
+        <a
+          href="https://www.handshake.design"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group pointer-events-auto absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1.5 no-underline"
+          aria-label="Built with Handshake"
+        >
+          <span
+            className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+            style={{
+              color: '#fff',
+              mixBlendMode: 'difference',
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Built with
+          </span>
+          <span className="flex items-center gap-2.5" style={{ mixBlendMode: 'difference' }}>
+            <img
+              src="/handshake-logo-nobg.svg"
+              alt=""
+              className="h-5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
+            <img
+              src="/handshake_wordmark.svg"
+              alt="Handshake"
+              className="h-7 w-auto opacity-85 transition-opacity group-hover:opacity-100"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
+          </span>
+        </a>
       )}
     </div>
   );
