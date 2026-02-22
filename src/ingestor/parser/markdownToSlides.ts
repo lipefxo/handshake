@@ -1,11 +1,17 @@
 import { v4 as generateUUID } from 'uuid';
-import type { SlideConfig } from '../../types/proposal';
+import type {
+  BenefitsSlideContent,
+  FeaturesSlideContent,
+  SlideConfig,
+  StatsSlideContent,
+  TimelineSlideContent,
+} from '../../types/proposal';
 import { detectSections, parseFrontmatter } from './sectionDetector';
 import { inferSlideType } from './slideTypeInferrer';
 import { extractContent } from './contentExtractor';
 import { validateSlides } from './validationLayer';
 import type { ValidationResult } from './validationLayer';
-import { sanitizeText } from '../../shared/utils/validation';
+import { FIELD_LIMITS, sanitizeText } from '../../shared/utils/validation';
 
 function insertDividersBeforeH2(markdown: string): string {
   const lines = markdown.split('\n');
@@ -87,36 +93,36 @@ function cleanTableCell(cell: string): string {
   return sanitizeText(cell.replace(/\*\*/g, '').replace(/__/g, '').trim());
 }
 
-function convertTableBlockToBulletLines(blockLines: string[]): string[] {
-  const rows: string[] = [];
-  for (const line of blockLines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (trimmed.startsWith('|')) {
-      rows.push(trimmed);
-    } else if (rows.length > 0) {
-      rows[rows.length - 1] = `${rows[rows.length - 1]} ${trimmed}`;
-    }
-  }
-
-  const separatorIndex = rows.findIndex(isTableSeparatorRow);
-  if (separatorIndex === -1) return blockLines;
-
-  const dataRows = rows.slice(separatorIndex + 1);
-  const bullets = dataRows
-    .map((row) => {
-      const trimmed = row.replace(/^\|/, '').replace(/\|$/, '');
-      const cells = trimmed.split('|').map(cleanTableCell).filter(Boolean);
-      if (cells.length === 0) return '';
-      return `- ${cells.join(' | ')}`;
-    })
-    .filter(Boolean);
-
-  return bullets.length > 0 ? bullets : blockLines;
+function hasAnyTypeDirective(section: string): boolean {
+  return /<!--[\s\S]*?\btype\s*:\s*[a-zA-Z]+\b[\s\S]*?-->/i.test(section);
 }
 
-function convertMarkdownTablesToBulletPipes(markdown: string): string {
-  const lines = markdown.split('\n');
+function hasTableTypeDirective(section: string): boolean {
+  return /<!--[\s\S]*?\btype\s*:\s*table\b[\s\S]*?-->/i.test(section);
+}
+
+function containsMarkdownTable(section: string): boolean {
+  const rows = section
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('|'));
+  if (rows.length < 2) return false;
+  return rows.some(isTableSeparatorRow);
+}
+
+function injectTableTypeDirectives(markdown: string): string {
+  const parts = markdown.split(/(^[ \t]*---[ \t]*$)/m);
+  return parts
+    .map((part) => {
+      if (/^[ \t]*---[ \t]*$/.test(part)) return part;
+      if (!containsMarkdownTable(part) || hasAnyTypeDirective(part)) return part;
+      return `<!-- type: table -->\n${part}`;
+    })
+    .join('');
+}
+
+function convertTablesInSection(section: string): string {
+  const lines = section.split('\n');
   const output: string[] = [];
 
   let i = 0;
@@ -152,6 +158,98 @@ function convertMarkdownTablesToBulletPipes(markdown: string): string {
   return output.join('\n');
 }
 
+function convertTableBlockToBulletLines(blockLines: string[]): string[] {
+  const rows: string[] = [];
+  for (const line of blockLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('|')) {
+      rows.push(trimmed);
+    } else if (rows.length > 0) {
+      rows[rows.length - 1] = `${rows[rows.length - 1]} ${trimmed}`;
+    }
+  }
+
+  const separatorIndex = rows.findIndex(isTableSeparatorRow);
+  if (separatorIndex === -1) return blockLines;
+
+  const dataRows = rows.slice(separatorIndex + 1);
+  const bullets = dataRows
+    .map((row) => {
+      const trimmed = row.replace(/^\|/, '').replace(/\|$/, '');
+      const cells = trimmed.split('|').map(cleanTableCell).filter(Boolean);
+      if (cells.length === 0) return '';
+      return `- ${cells.join(' | ')}`;
+    })
+    .filter(Boolean);
+
+  return bullets.length > 0 ? bullets : blockLines;
+}
+
+function convertMarkdownTablesToBulletPipes(markdown: string): string {
+  const parts = markdown.split(/(^[ \t]*---[ \t]*$)/m);
+  return parts
+    .map((part) => {
+      if (/^[ \t]*---[ \t]*$/.test(part)) return part;
+      if (hasTableTypeDirective(part)) return part;
+      return convertTablesInSection(part);
+    })
+    .join('');
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+function splitOversizedSlides(slides: SlideConfig[]): SlideConfig[] {
+  return slides.flatMap((slide) => {
+    switch (slide.type) {
+      case 'features': {
+        const content = slide.content as FeaturesSlideContent;
+        if (content.features.length <= FIELD_LIMITS.maxFeatures) return [slide];
+        return chunkArray(content.features, FIELD_LIMITS.maxFeatures).map((chunk, index) => ({
+          ...slide,
+          id: index === 0 ? slide.id : generateUUID(),
+          content: { ...content, features: chunk },
+        }));
+      }
+      case 'benefits': {
+        const content = slide.content as BenefitsSlideContent;
+        if (content.benefits.length <= FIELD_LIMITS.maxBenefits) return [slide];
+        return chunkArray(content.benefits, FIELD_LIMITS.maxBenefits).map((chunk, index) => ({
+          ...slide,
+          id: index === 0 ? slide.id : generateUUID(),
+          content: { ...content, benefits: chunk },
+        }));
+      }
+      case 'stats': {
+        const content = slide.content as StatsSlideContent;
+        if (content.stats.length <= FIELD_LIMITS.maxStats) return [slide];
+        return chunkArray(content.stats, FIELD_LIMITS.maxStats).map((chunk, index) => ({
+          ...slide,
+          id: index === 0 ? slide.id : generateUUID(),
+          content: { ...content, stats: chunk },
+        }));
+      }
+      case 'timeline': {
+        const content = slide.content as TimelineSlideContent;
+        if (content.milestones.length <= FIELD_LIMITS.maxMilestones) return [slide];
+        return chunkArray(content.milestones, FIELD_LIMITS.maxMilestones).map((chunk, index) => ({
+          ...slide,
+          id: index === 0 ? slide.id : generateUUID(),
+          content: { ...content, milestones: chunk },
+        }));
+      }
+      default:
+        return [slide];
+    }
+  });
+}
+
 function normalizeMarkdown(markdown: string): string {
   let normalized = markdown;
   normalized = stripLeadingDocumentH1(normalized);
@@ -159,6 +257,7 @@ function normalizeMarkdown(markdown: string): string {
   normalized = promoteLeadingH2ToH1PerSection(normalized);
   normalized = normalizeEmojiParagraphs(normalized);
   normalized = stripStrikethrough(normalized);
+  normalized = injectTableTypeDirectives(normalized);
   normalized = convertMarkdownTablesToBulletPipes(normalized);
   return normalized;
 }
@@ -229,12 +328,12 @@ export function markdownToSlides(markdown: string): ParseResult {
   // Step 5: Check for unknown type directives
   typedSections.forEach((ts) => {
     if (ts.directives['_unknownType']) {
-      errors.push(`Unknown slide type directive "type: ${ts.directives['_unknownType']}" in section ${ts.index + 1}. Valid types: title, intro, stats, features, benefits, testimonial, comparison, timeline, media, closing.`);
+      errors.push(`Unknown slide type directive "type: ${ts.directives['_unknownType']}" in section ${ts.index + 1}. Valid types: title, intro, stats, features, benefits, testimonial, comparison, timeline, media, table, closing.`);
     }
   });
 
   // Step 6: Extract content
-  const slides: SlideConfig[] = typedSections.map((section) => {
+  const extractedSlides: SlideConfig[] = typedSections.map((section) => {
     const content = extractContent(section);
 
     return {
@@ -245,6 +344,9 @@ export function markdownToSlides(markdown: string): ParseResult {
       transition: 'fade' as const,
     };
   });
+
+  // Step 6.5: Split oversized item collections into multiple slides.
+  const slides = splitOversizedSlides(extractedSlides);
 
   // Step 7: Validate
   const validation = validateSlides(slides);
