@@ -91,10 +91,6 @@ export function BrandThemeConfigurator({
   const [saveMessage, setSaveMessage] = useState<string>('');
 
   useEffect(() => {
-    setDraft(value ?? {});
-  }, [value]);
-
-  useEffect(() => {
     if (disabled) return;
     const timer = setTimeout(() => {
       setSaving(true);

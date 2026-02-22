@@ -9,6 +9,7 @@ import type { ThemeId } from '../themes/themeTypes';
 import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
 import { generateSafeSlug, sanitizeText, validateUrl } from '../shared/utils/validation';
 import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
+import type { WorkspaceBrandTheme } from '../types/workspace';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -65,6 +66,9 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     accessPassword: row.access_password as string | undefined,
     expiresAt: row.expires_at as string | undefined,
     brandOverrides: (row.brand_overrides as BrandOverrides) || {},
+    workspaceBrandTheme:
+      (row.workspace_brand_theme as WorkspaceBrandTheme | undefined)
+      ?? (row.workspaceBrandTheme as WorkspaceBrandTheme | undefined),
   };
 }
 

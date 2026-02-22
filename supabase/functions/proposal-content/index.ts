@@ -18,7 +18,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-function mapProposalResponse(row: Record<string, unknown>) {
+function mapProposalResponse(row: Record<string, unknown>, workspaceBrandTheme: unknown) {
   return {
     id: row.id,
     workspace_id: row.workspace_id,
@@ -34,6 +34,7 @@ function mapProposalResponse(row: Record<string, unknown>) {
     visibility: row.visibility,
     expiresAt: row.expires_at,
     brandOverrides: row.brand_overrides ?? {},
+    workspaceBrandTheme: workspaceBrandTheme ?? {},
   };
 }
 
@@ -122,7 +123,17 @@ Deno.serve(async (req) => {
         .eq('id', accessSession.id);
     }
 
-    return jsonResponse({ proposal: mapProposalResponse(proposal as Record<string, unknown>) });
+    let workspaceBrandTheme: unknown = {};
+    if (proposal.workspace_id) {
+      const { data: workspaceData } = await adminClient
+        .from('workspaces')
+        .select('brand_theme')
+        .eq('id', proposal.workspace_id)
+        .maybeSingle();
+      workspaceBrandTheme = workspaceData?.brand_theme ?? {};
+    }
+
+    return jsonResponse({ proposal: mapProposalResponse(proposal as Record<string, unknown>, workspaceBrandTheme) });
   } catch (error) {
     return jsonResponse({ error: error instanceof Error ? error.message : 'Unexpected error.' }, 500);
   }

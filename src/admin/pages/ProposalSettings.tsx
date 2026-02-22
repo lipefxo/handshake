@@ -314,6 +314,7 @@ export function ProposalSettings() {
             </div>
 
             <BrandThemeConfigurator
+              key={currentWorkspace?.id ?? 'workspace-brand-theme'}
               value={currentWorkspace?.brandTheme}
               onSave={updateBrandTheme}
               disabled={!isOwner}

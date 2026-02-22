@@ -63,6 +63,7 @@ function ProposalViewerContent() {
   } = useProposalStore();
   const user = useAuthStore((state) => state.user);
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
+  const currentWorkspaceBrandTheme = useWorkspaceStore((state) => state.currentWorkspace?.brandTheme);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [proposalMeta, setProposalMeta] = useState<ProposalAccessMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -247,7 +248,12 @@ function ProposalViewerContent() {
   const backToEditorPath = canReturnToEditor && proposal?.id ? `/admin/proposals/${proposal.id}` : undefined;
 
   return (
-    <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} brandOverrides={proposal?.brandOverrides} className="contents">
+    <ThemeProvider
+      themeId={proposal?.themeId ?? defaultThemeId}
+      brandOverrides={proposal?.brandOverrides}
+      workspaceBrandTheme={proposal?.workspaceBrandTheme ?? currentWorkspaceBrandTheme}
+      className="contents"
+    >
       {loading ? (
         <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
           <div className="w-8 h-8 border rounded-full animate-spin" style={{ borderColor: 'var(--color-border)', borderTopColor: 'var(--color-accent)' }} />

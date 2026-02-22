@@ -1,5 +1,6 @@
 import type { ThemeId } from '../themes/themeTypes';
 import type { AppIconId } from '../shared/icons/iconRegistry';
+import type { WorkspaceBrandTheme } from './workspace';
 
 export type SlideType =
   | 'title'
@@ -164,6 +165,7 @@ export interface Proposal {
   expiresAt?: string;
   // Brand overrides
   brandOverrides?: BrandOverrides;
+  workspaceBrandTheme?: WorkspaceBrandTheme;
 }
 
 export interface ProposalAccessMeta {
