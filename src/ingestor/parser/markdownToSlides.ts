@@ -2,7 +2,7 @@ import { v4 as generateUUID } from 'uuid';
 import type { SlideConfig } from '../../types/proposal';
 import { detectSections, parseFrontmatter } from './sectionDetector';
 import { inferSlideType } from './slideTypeInferrer';
-import { extractContent } from './contentExtractor';
+import { extractContent, extractLinks } from './contentExtractor';
 import { validateSlides } from './validationLayer';
 import type { ValidationResult } from './validationLayer';
 import { sanitizeText } from '../../shared/utils/validation';
@@ -236,12 +236,14 @@ export function markdownToSlides(markdown: string): ParseResult {
   // Step 6: Extract content
   const slides: SlideConfig[] = typedSections.map((section) => {
     const content = extractContent(section);
+    const links = extractLinks(section.raw);
 
     return {
       id: generateUUID(),
       type: section.slideType,
       enabled: true,
       content,
+      links: links.length > 0 ? links : undefined,
       transition: 'fade' as const,
     };
   });

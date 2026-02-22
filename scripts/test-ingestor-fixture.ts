@@ -38,8 +38,16 @@ async function main(): Promise<void> {
   const hasValidationErrors = result.validation.some((entry) => entry.status === 'error');
   assert.equal(hasValidationErrors, false, 'Expected no validation errors after conversion.');
 
+  const extractedLinks = result.slides.flatMap((slide) => slide.links ?? []);
+  assert.ok(extractedLinks.length > 0, 'Expected at least one extracted link.');
+  assert.ok(
+    extractedLinks.some((link) => link.url.includes('loom.com/share/3f7b4c0e47e54cef847136c59cd66ac9')),
+    'Expected Loom link to be extracted into slide links.',
+  );
+
   console.log('Fixture parse passed.');
   console.log(`Slides: ${result.slides.map((slide) => slide.type).join(' -> ')}`);
+  console.log(`Extracted links: ${extractedLinks.length}`);
 }
 
 main().catch((error) => {

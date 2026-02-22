@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, SlideLink, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { AppIcon } from '../../shared/icons/AppIcon';
@@ -98,6 +98,18 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
   const updateContent = (updates: Record<string, unknown>) => {
     onChange({ content: { ...slide.content, ...updates } });
   };
+  const links = slide.links ?? [];
+  const addLink = () => {
+    onChange({ links: [...links, { text: '', url: '' }] });
+  };
+  const updateLink = (index: number, updates: Partial<SlideLink>) => {
+    const nextLinks = links.map((link, i) => (i === index ? { ...link, ...updates } : link));
+    onChange({ links: nextLinks });
+  };
+  const removeLink = (index: number) => {
+    const nextLinks = links.filter((_, i) => i !== index);
+    onChange({ links: nextLinks.length > 0 ? nextLinks : undefined });
+  };
 
   const meta = SLIDE_TYPE_META[slide.type];
 
@@ -146,6 +158,52 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
       {slide.type === 'benefits' && <BenefitsFields content={slide.content as BenefitsSlideContent} onChange={updateContent} />}
       {slide.type === 'table' && <TableFields content={slide.content as TableSlideContent} onChange={updateContent} />}
       {slide.type === 'closing' && <ClosingFields content={slide.content as ClosingSlideContent} onChange={updateContent} />}
+
+      <div className="pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-medium text-gray-500">Action Links</p>
+          <Button type="button" variant="link" size="sm" onClick={addLink} className="h-auto p-0 text-xs text-indigo-600">
+            + Add link
+          </Button>
+        </div>
+        {links.length === 0 ? (
+          <p className="text-xs text-gray-400">No links added yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {links.map((link, index) => (
+              <div key={index} className="p-3 bg-gray-50 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-500">Link {index + 1}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeLink(index)}
+                    className="h-auto px-1 py-0 text-xs text-red-500 hover:text-red-600"
+                  >
+                    Remove
+                  </Button>
+                </div>
+                <FieldGroup label="Button Text">
+                  <Input
+                    value={link.text || ''}
+                    onChange={(e) => updateLink(index, { text: e.target.value })}
+                    placeholder="View demo"
+                  />
+                </FieldGroup>
+                <FieldGroup label="URL">
+                  <Input
+                    maxLength={FIELD_LIMITS.url}
+                    value={link.url || ''}
+                    onChange={(e) => updateLink(index, { url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </FieldGroup>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
