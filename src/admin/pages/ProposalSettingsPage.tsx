@@ -156,6 +156,13 @@ export function ProposalSettingsPage() {
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
           />
+          <Input
+            className="h-6 border-0 bg-transparent px-2 py-0 text-xs text-center text-gray-500 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-sm"
+            value={proposal.partnerName}
+            onChange={(e) => updateLocal({ partnerName: e.target.value })}
+            placeholder="Partner name"
+            aria-label="Partner name"
+          />
         </div>
 
         {/* Keep Slides-tab right-side footprint so title alignment stays stable */}
