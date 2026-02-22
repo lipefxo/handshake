@@ -266,6 +266,17 @@ function ProposalViewerContent() {
   );
   const backToEditorPath = canReturnToEditor && proposal?.id ? `/admin/proposals/${proposal.id}` : undefined;
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    html.style.backgroundColor = 'var(--color-bg-primary)';
+    body.style.backgroundColor = 'var(--color-bg-primary)';
+    return () => {
+      html.style.backgroundColor = '';
+      body.style.backgroundColor = '';
+    };
+  }, []);
+
   return (
     <ThemeProvider
       themeId={proposal?.themeId ?? defaultThemeId}

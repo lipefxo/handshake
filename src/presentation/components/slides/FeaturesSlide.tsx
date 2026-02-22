@@ -27,7 +27,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <div className="mb-14 text-center md:text-left">
+        <div className="mb-6 md:mb-14 text-center md:text-left">
           <motion.p
             variants={fadeUpChild}
             className="text-xs tracking-widest uppercase mb-3"
@@ -53,12 +53,12 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
           )}
         </div>
 
-        <div className={`grid gap-px ${content.features.length <= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className={`grid gap-px ${content.features.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
           {content.features.map((feature, i) => (
             <motion.div
               key={i}
               variants={fadeUpChild}
-              className="p-8 group"
+              className="p-4 md:p-8 group"
               style={{ background: 'var(--color-bg-primary)' }}
               whileHover={{ backgroundColor: theme.colors.bgSecondary }}
               transition={{ duration: 0.2 }}

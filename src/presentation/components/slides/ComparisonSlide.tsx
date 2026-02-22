@@ -26,15 +26,15 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
       >
         <motion.h2
           variants={fadeUpChild}
-          className="text-4xl md:text-5xl text-center mb-14"
+          className="text-4xl md:text-5xl text-center mb-8 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
         </motion.h2>
 
-        <motion.div variants={fadeUpChild} className="grid grid-cols-2 gap-px">
+        <motion.div variants={fadeUpChild} className="grid grid-cols-1 md:grid-cols-2 gap-px">
           {/* Before column */}
-          <div className="p-8" style={{ background: 'var(--color-bg-primary)' }}>
+          <div className="p-5 md:p-8" style={{ background: 'var(--color-bg-primary)' }}>
             <div
               className="text-xs tracking-widest uppercase mb-6 font-medium"
               style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
@@ -57,7 +57,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
           </div>
 
           {/* After column */}
-          <div className="p-8" style={{ background: 'var(--color-bg-secondary)' }}>
+          <div className="p-5 md:p-8" style={{ background: 'var(--color-bg-secondary)' }}>
             <div
               className="text-xs tracking-widest uppercase mb-6 font-medium"
               style={{ color: 'var(--color-success)', fontFamily: 'var(--font-body)' }}

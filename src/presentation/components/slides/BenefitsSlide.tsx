@@ -29,7 +29,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
       >
         <motion.h2
           variants={fadeUpChild}
-          className="text-4xl md:text-5xl text-center mb-14"
+          className="text-4xl md:text-5xl text-center mb-8 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
@@ -40,7 +40,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
             <motion.div
               key={i}
               variants={fadeUpChild}
-              className="p-8 flex gap-5"
+              className="p-4 md:p-8 flex gap-5"
               style={{ background: 'var(--color-bg-secondary)' }}
               whileHover={{ backgroundColor: theme.colors.bgSurface }}
               transition={{ duration: 0.2 }}

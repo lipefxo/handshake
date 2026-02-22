@@ -27,7 +27,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
         {/* Large quote mark */}
         <motion.div
           variants={fadeUpChild}
-          className="text-8xl leading-none mb-6"
+          className="text-6xl md:text-8xl leading-none mb-4 md:mb-6"
           style={{ color: 'var(--color-border)', fontFamily: 'var(--font-display)' }}
         >
           ❝
@@ -35,7 +35,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
 
         <motion.blockquote
           variants={fadeUpChild}
-          className="text-2xl md:text-3xl leading-relaxed mb-10 italic"
+          className="text-2xl md:text-3xl leading-relaxed mb-6 md:mb-10 italic"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.quote}

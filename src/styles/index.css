@@ -96,6 +96,7 @@
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
+    overscroll-behavior: none;
     background-color: var(--color-bg-primary);
   }
 
@@ -109,6 +110,14 @@
     transform: translateZ(0);
     backface-visibility: hidden;
     will-change: transform, opacity;
+  }
+
+  @media (max-width: 767px) {
+    .slide-section {
+      overflow-y: auto;
+      min-height: 100dvh;
+      height: auto;
+    }
   }
 
   .grain-overlay {
