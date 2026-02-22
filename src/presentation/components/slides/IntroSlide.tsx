@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { IntroSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { OptimizedImage } from '../OptimizedImage';
 
 interface IntroSlideProps {
   content: IntroSlideContent;
@@ -66,7 +67,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <img
+            <OptimizedImage
               src={content.image}
               alt={content.heading}
               className="w-full h-full object-cover rounded-2xl"

@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { TestimonialSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { OptimizedImage } from '../OptimizedImage';
 
 interface TestimonialSlideProps {
   content: TestimonialSlideContent;
@@ -42,7 +43,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
 
         <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-4">
           {content.avatar ? (
-            <img
+            <OptimizedImage
               src={content.avatar}
               alt={content.author}
               className="w-12 h-12 rounded-full object-cover"
