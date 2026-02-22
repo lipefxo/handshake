@@ -13,11 +13,17 @@ export type SlideType =
   | 'benefits'
   | 'closing';
 
+export interface SlideLink {
+  text: string;
+  url: string;
+}
+
 export interface SlideConfig {
   id: string;
   type: SlideType;
   enabled: boolean;
   content: SlideContent;
+  links?: SlideLink[];
   customLabel?: string;
   groupId?: string;
   groupTitle?: string;

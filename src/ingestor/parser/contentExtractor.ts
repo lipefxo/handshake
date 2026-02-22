@@ -1,5 +1,6 @@
 import type {
   SlideContent,
+  SlideLink,
   TitleSlideContent,
   IntroSlideContent,
   StatsSlideContent,
@@ -66,6 +67,26 @@ function extractPlainBullets(text: string): string[][] {
     .map((l) => l.trim())
     .filter((l) => /^[-*]\s+.+/.test(l) && !l.includes('|'))
     .map((l) => [l.replace(/^[-*]\s+/, '').trim()]);
+}
+
+export function extractLinks(text: string): SlideLink[] {
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const links: SlideLink[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    // Skip markdown image syntax ![alt](url)
+    const prevChar = match.index > 0 ? text[match.index - 1] : '';
+    if (prevChar === '!') continue;
+
+    const linkText = sanitizeText(match[1] ?? '');
+    const validatedUrl = validateUrl(match[2] ?? '');
+    if (!linkText || !validatedUrl.isValid) continue;
+
+    links.push({ text: linkText, url: validatedUrl.value });
+  }
+
+  return links;
 }
 
 // ---------------------------------------------------------------------------
