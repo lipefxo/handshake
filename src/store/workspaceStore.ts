@@ -122,21 +122,18 @@ async function ensureWorkspaceForUser(user: AppUser): Promise<void> {
   if (ownerError) throw ownerError;
 }
 
-async function activatePendingInvitesForUser(user: AppUser): Promise<void> {
+async function activatePendingInvitesForUser(user: AppUser): Promise<number> {
   const normalized = normalizeEmail(user.email);
-  const { error } = await supabase
-    .from('workspace_members')
-    .update({
-      user_id: user.id,
-      status: 'active',
-    })
-    .is('user_id', null)
-    .eq('status', 'pending')
-    .eq('email', normalized);
+  const { data, error } = await supabase.rpc('activate_pending_invites_for_user', {
+    target_user_id: user.id,
+    target_email: normalized,
+  });
 
   if (error) {
     throw error;
   }
+
+  return typeof data === 'number' ? data : 0;
 }
 
 const GENERIC_WORKSPACE_ERROR = 'Failed to load workspace. Please try again.';
@@ -156,11 +153,6 @@ function getWorkspaceError(error: unknown, fallback: string): string {
     );
   }
   return appendErrorDiagnostic(fallback, error);
-}
-
-function isWorkspacePermissionError(error: unknown): boolean {
-  const code = (error as { code?: string } | null)?.code;
-  return code === '42501';
 }
 
 function toNonEmptyString(value: unknown): string | null {
@@ -224,14 +216,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      try {
-        await activatePendingInvitesForUser(user);
-      } catch (error) {
-        if (!isWorkspacePermissionError(error)) {
-          throw error;
-        }
-        logStructuredError('activatePendingInvitesForUser skipped due to RLS permission error', error);
-      }
+      await activatePendingInvitesForUser(user);
       await ensureWorkspaceForUser(user);
       const primary = await fetchPrimaryWorkspaceForUser(user.id);
       if (!primary.workspace) {

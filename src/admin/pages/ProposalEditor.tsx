@@ -93,7 +93,7 @@ export function ProposalEditor() {
   const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
 
   const save = useCallback(
-    async (updatedProposal: Proposal) => {
+    async (updatedProposal: Proposal): Promise<boolean> => {
       setSaveState('saving');
       try {
         await updateProposal(updatedProposal.id, {
@@ -111,8 +111,10 @@ export function ProposalEditor() {
         setSaveState('saved');
         setHasUnsavedChanges(false);
         setTimeout(() => setSaveState('idle'), 2000);
+        return true;
       } catch {
         setSaveState('error');
+        return false;
       }
     },
     [updateProposal]
@@ -222,9 +224,16 @@ export function ProposalEditor() {
     setShowPublishConfirm(true);
   };
 
-  const handleConfirmUnpublish = () => {
+  const handleConfirmUnpublish = async () => {
     if (!proposal) return;
-    updateLocal({ status: 'draft' });
+    const previousProposal = proposal;
+    const nextProposal = { ...proposal, status: 'draft' as const };
+    setProposal(nextProposal);
+    const saved = await save(nextProposal);
+    if (!saved) {
+      setProposal(previousProposal);
+      return;
+    }
     setShowUnpublishConfirm(false);
   };
 
@@ -240,7 +249,14 @@ export function ProposalEditor() {
         const hash = await bcrypt.hash(publishPasswordInput.trim(), 10);
         updates.accessPassword = hash;
       }
-      updateLocal(updates);
+      const previousProposal = proposal;
+      const nextProposal = { ...proposal, ...updates };
+      setProposal(nextProposal);
+      const saved = await save(nextProposal);
+      if (!saved) {
+        setProposal(previousProposal);
+        return;
+      }
       setShowPublishConfirm(false);
       setShowPublishSuccess(true);
       setPublishPasswordInput('');
