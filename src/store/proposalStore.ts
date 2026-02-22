@@ -82,16 +82,6 @@ function getSafeErrorMessage(error: unknown, fallback: string): string {
   return appendErrorDiagnostic(fallback, error);
 }
 
-function isMissingThemeIdColumnError(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  if (error.code === '42703' && (error.message?.includes('theme_id') || error.message?.includes('column "theme_id"'))) {
-    return true;
-  }
-  if (error.code === 'PGRST204' && error.message?.includes('theme_id')) {
-    return true;
-  }
-  return false;
-}
 
 function sanitizeUnknown(value: unknown, key = ''): unknown {
   if (typeof value === 'string') {
@@ -231,7 +221,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (error) {
       logStructuredError('updateProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
-      return;
+      throw error;
     }
     set((state) => ({
       proposals: state.proposals.map((p) =>
@@ -354,24 +344,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     let proposal = proposalBase;
     let lastError: { code?: string; message?: string } | null = null;
     let insertedRow: Record<string, unknown> | null = null;
-    let useLegacyThemeColumn = false;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const insertPayload = {
-        user_id: proposal.user_id,
-        slug: proposal.slug,
-        title: proposal.title,
-        partner_name: proposal.partnerName,
-        status: proposal.status,
-        slides: proposal.slides,
-        ...(useLegacyThemeColumn
-          ? { theme: { id: proposal.themeId } }
-          : { theme_id: proposal.themeId }),
-      };
-
       const { data, error } = await supabase
         .from('proposals')
-        .insert(insertPayload)
+        .insert({
+          user_id: proposal.user_id,
+          slug: proposal.slug,
+          title: proposal.title,
+          partner_name: proposal.partnerName,
+          status: proposal.status,
+          slides: proposal.slides,
+          theme_id: proposal.themeId,
+        })
         .select()
         .single();
 
@@ -382,18 +367,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
       lastError = error;
 
-      // Retry with a fresh slug when unique constraint collides.
       if (error?.code === '23505') {
         proposal = {
           ...proposal,
           slug: generateSafeSlug(generateSlug(`${partnerName}-${Math.random().toString(36).slice(2, 4)}`)),
         };
-        continue;
-      }
-
-      // Backward compatibility: some environments still use "theme" JSONB instead of "theme_id".
-      if (isMissingThemeIdColumnError(error)) {
-        useLegacyThemeColumn = true;
         continue;
       }
 
