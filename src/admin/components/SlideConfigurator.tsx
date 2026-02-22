@@ -251,9 +251,6 @@ function IconSelect({
 function TitleFields({ content, onChange }: { content: TitleSlideContent; onChange: (u: Record<string, unknown>) => void }) {
   return (
     <div className="space-y-4">
-      <FieldGroup label="Partner Name">
-        <Input value={content.partnerName || ''} onChange={(e) => onChange({ partnerName: e.target.value })} placeholder="e.g. Acme Corp" />
-      </FieldGroup>
       <FieldGroup label="Headline">
         <Input value={content.headline || ''} onChange={(e) => onChange({ headline: e.target.value })} placeholder="A Strategic Partnership" />
       </FieldGroup>
@@ -702,8 +699,8 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
                 <span className="text-xs font-medium text-gray-500">Benefit {i + 1}</span>
                 <Button type="button" variant="ghost" size="sm" onClick={() => removeBenefit(i)} className="h-auto px-1 py-0 text-xs text-red-500 hover:text-red-600">Remove</Button>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                <div className="space-y-1 col-span-2">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 items-start">
+                <div className="space-y-1 w-fit">
                   <label className="text-xs text-gray-400 block">Icon</label>
                   <IconSelect
                     options={BENEFIT_ICON_OPTIONS}
@@ -711,7 +708,7 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
                     onChange={(next) => updateBenefit(i, 'icon', next)}
                   />
                 </div>
-                <div className="col-span-2"><label className="text-xs text-gray-400 mb-1 block">Title</label><Input value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
+                <div><label className="text-xs text-gray-400 mb-1 block">Title</label><Input value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
               </div>
               <div><label className="text-xs text-gray-400 mb-1 block">Description</label><Textarea style={{ minHeight: '56px' }} value={benefit.description} onChange={(e) => updateBenefit(i, 'description', e.target.value)} rows={2} /></div>
             </div>

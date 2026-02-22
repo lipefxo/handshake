@@ -130,6 +130,12 @@ function ProposalViewerContent() {
 
   const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
   const { current, goTo, next, containerRef } = useSlideNavigation(enabledSlides.length);
+  const embeddedPreviewSlides =
+    isEmbeddedEditorPreview
+      ? (previewSelectedSlideId
+          ? enabledSlides.filter((slide) => slide.id === previewSelectedSlideId)
+          : enabledSlides.slice(0, 1))
+      : enabledSlides;
 
   useEffect(() => {
     if (!previewSelectedSlideId || enabledSlides.length === 0) return;
@@ -211,11 +217,12 @@ function ProposalViewerContent() {
             style={{ backgroundColor: 'var(--color-bg-primary)' }}
             onClick={handleContainerClick}
           >
-            {enabledSlides.map((slide, index) => {
+            {embeddedPreviewSlides.map((slide, index) => {
               const fp = isPreviewMode ? getContentFingerprint(slide) : '';
               const slideKey = fp
                 ? `${slide.id}-${slide.transition ?? 'slide-up'}-${fp}`
                 : `${slide.id}-${slide.transition ?? 'slide-up'}`;
+              const originalIndex = enabledSlides.findIndex((enabledSlide) => enabledSlide.id === slide.id);
               return (
                 <motion.section
                   key={slideKey}
@@ -226,7 +233,7 @@ function ProposalViewerContent() {
                   whileInView="visible"
                   viewport={{ once: false, amount: 0.6 }}
                 >
-                  <SlideRenderer slide={slide} index={index} />
+                  <SlideRenderer slide={slide} index={originalIndex >= 0 ? originalIndex : index} proposalPartnerName={proposal.partnerName} />
                 </motion.section>
               );
             })}

@@ -74,26 +74,6 @@ export function AdminLayout() {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className={`py-3 border-t border-light ${isSidebarExpanded ? 'px-3' : 'px-2'}`}>
-          <Button
-            asChild
-            variant="ghost"
-            className={`h-auto text-gray-500 hover:text-gray-700 ${
-              isSidebarExpanded ? 'justify-start gap-2 px-2.5 py-2 text-xs' : 'justify-center px-2 py-2.5 text-sm'
-            }`}
-          >
-            <a
-              href="https://partners.securebags.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={isSidebarExpanded ? undefined : 'Public site'}
-            >
-              <AppIcon icon="ui.external-link" className="w-3.5 h-3.5" />
-              {isSidebarExpanded && 'Public site'}
-            </a>
-          </Button>
-        </div>
       </aside>
 
       {/* Main content */}

@@ -6,9 +6,12 @@ import { OptimizedImage } from '../OptimizedImage';
 
 interface TitleSlideProps {
   content: TitleSlideContent;
+  partnerName?: string;
 }
 
-export function TitleSlide({ content }: TitleSlideProps) {
+export function TitleSlide({ content, partnerName }: TitleSlideProps) {
+  const effectivePartnerName = partnerName || content.partnerName || 'Partner';
+
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}>
@@ -48,11 +51,11 @@ export function TitleSlide({ content }: TitleSlideProps) {
           </div>
 
           {content.partnerLogo ? (
-            <OptimizedImage src={content.partnerLogo} alt={content.partnerName} className="h-8 object-contain opacity-90" />
+            <OptimizedImage src={content.partnerLogo} alt={effectivePartnerName} className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>
-                {content.partnerName || 'Partner'}
+                {effectivePartnerName}
               </span>
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
             </div>

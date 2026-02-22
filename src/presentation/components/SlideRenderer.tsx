@@ -13,14 +13,15 @@ import { ClosingSlide } from './slides/ClosingSlide';
 interface SlideRendererProps {
   slide: SlideConfig;
   index: number;
+  proposalPartnerName?: string;
 }
 
-export function SlideRenderer({ slide }: SlideRendererProps) {
+export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps) {
   const { type, content } = slide;
 
   switch (type) {
     case 'title':
-      return <TitleSlide content={content as TitleSlideContent} />;
+      return <TitleSlide content={content as TitleSlideContent} partnerName={proposalPartnerName} />;
     case 'intro':
       return <IntroSlide content={content as IntroSlideContent} />;
     case 'stats':

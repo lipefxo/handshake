@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
-import type { Proposal, SlideConfig, SlideType } from '../../types/proposal';
+import type { Proposal, SlideConfig, SlideType, TitleSlideContent } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
 import { createDefaultSlide } from '../../data/slideDefaults';
@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const AUTOSAVE_DELAY = 800;
+const PREVIEW_SCALE = 0.7;
+const PREVIEW_SCALE_INVERSE = 1 / PREVIEW_SCALE;
 
 export function ProposalEditor() {
   const { id } = useParams<{ id: string }>();
@@ -201,6 +203,22 @@ export function ProposalEditor() {
     updateLocal({ status: newStatus });
   };
 
+  const handlePartnerNameChange = (value: string) => {
+    if (!proposal) return;
+    const slides = proposal.slides.map((slide) => {
+      if (slide.type !== 'title') return slide;
+      const titleContent = slide.content as TitleSlideContent;
+      return {
+        ...slide,
+        content: {
+          ...titleContent,
+          partnerName: value,
+        },
+      };
+    });
+    updateLocal({ partnerName: value, slides });
+  };
+
   const handleMarkdownImport = useCallback(
     async (newSlides: SlideConfig[]) => {
       if (!proposal) return;
@@ -303,12 +321,19 @@ export function ProposalEditor() {
           </div>
         )}
 
-        <div className="min-w-0 flex items-center justify-center">
+        <div className="min-w-0 flex flex-col items-center justify-center gap-1.5">
           <Input
             className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
+          />
+          <Input
+            className="h-7 border-0 bg-transparent px-2 py-1 text-xs text-center text-gray-500 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-sm"
+            value={proposal.partnerName}
+            onChange={(e) => handlePartnerNameChange(e.target.value)}
+            placeholder="Partner name"
+            aria-label="Partner name"
           />
         </div>
 
@@ -403,18 +428,24 @@ export function ProposalEditor() {
         <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] overflow-hidden">
           {/* Preview panel */}
           {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
-            <div className="h-full w-full max-w-[72rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
+            <div className="h-full w-full max-w-[66rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
               <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
               </div>
               {selectedSlide && selectedSlide.enabled ? (
                 <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
-                  <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                  <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
                     <iframe
                       ref={previewIframeRef}
                       src={`/p/${proposal.slug}#preview`}
                       onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
-                      className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+                      className="absolute inset-0 border-0 pointer-events-none"
+                      style={{
+                        width: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                        height: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                        transform: `scale(${PREVIEW_SCALE})`,
+                        transformOrigin: 'top left',
+                      }}
                       title="Slide preview"
                     />
                   </div>
