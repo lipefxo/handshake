@@ -150,8 +150,8 @@ export function ProposalList() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Proposals</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{proposals.length} total</p>
+          <h1 className="font-brand-serif text-2xl text-gray-900">Proposals</h1>
+          <p className="mt-1 text-sm text-[#6b6b6b]">{proposals.length} total</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -225,8 +225,8 @@ export function ProposalList() {
           <div className="mb-4 flex justify-center">
             <AppIcon icon="ui.home" size={32} className="text-gray-400" />
           </div>
-          <h2 className="text-base font-semibold text-gray-700 mb-2">No proposals yet</h2>
-          <p className="text-sm text-gray-400 mb-6">Create your first partnership proposal to get started.</p>
+          <h2 className="font-brand-serif text-base text-gray-700 mb-2">No proposals yet</h2>
+          <p className="mb-6 text-sm text-[#6b6b6b]">Create your first partnership proposal to get started.</p>
           <Button
             onClick={handleOpenCreateDialog}
           >
@@ -247,7 +247,7 @@ export function ProposalList() {
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ delay: i * 0.03 }}
               layout
-              className="cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+              className="cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
               role="link"
               tabIndex={0}
               onClick={() => navigate(`/admin/proposals/${proposal.id}`)}
@@ -384,8 +384,8 @@ export function ProposalList() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete proposal?</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="font-brand-serif">Delete proposal?</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
               This will permanently delete{' '}
               <span className="font-medium text-gray-700">{deleteTarget?.title}</span>.
               This action cannot be undone.

@@ -358,7 +358,7 @@ export function ProposalEditor() {
           </p>
           <Link
             to="/admin"
-            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
           >
             <AppIcon icon="ui.sidebar-toggle" className="w-3.5 h-3.5" />
             Back to proposals
@@ -492,8 +492,8 @@ export function ProposalEditor() {
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                 <AppIcon icon="slide.type.title" size={24} />
               </div>
-              <h3 className="text-base font-semibold text-gray-900">Add your first slide to start</h3>
-              <p className="mt-1.5 text-sm text-gray-500">
+              <h3 className="font-brand-serif text-base text-gray-900">Add your first slide to start</h3>
+              <p className="mt-1.5 text-sm text-[#6b6b6b]">
                 Build your presentation by adding a first slide, then customize content and order from the sidebar.
               </p>
               <Button
@@ -651,8 +651,8 @@ export function ProposalEditor() {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Publish proposal?</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="font-brand-serif">Publish proposal?</DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
             Choose how people can access this proposal once it is published.
           </DialogDescription>
         </DialogHeader>
@@ -725,8 +725,8 @@ export function ProposalEditor() {
     <Dialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Unpublish proposal?</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="font-brand-serif">Unpublish proposal?</DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
             If this proposal is unpublished, it will no longer be available to anyone who currently has access to it.
           </DialogDescription>
         </DialogHeader>

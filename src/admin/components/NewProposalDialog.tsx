@@ -120,8 +120,8 @@ export function NewProposalDialog({
       <DialogContent className="w-[min(44rem,calc(100vw-2rem))]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle id="new-proposal-title">New Proposal</DialogTitle>
-            <DialogDescription>
+            <DialogTitle id="new-proposal-title" className="font-brand-serif">New Proposal</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
               Set the global configuration before creating the proposal.
             </DialogDescription>
           </DialogHeader>

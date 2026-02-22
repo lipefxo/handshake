@@ -4,20 +4,32 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { defaultThemeId, themes } from './themeDefinitions';
+import { defaultThemeId, resolveBrandTheme, themes } from './themeDefinitions';
 import type { ThemeId } from './themeTypes';
 import { ThemeContext } from './themeContext';
 import type { BrandOverrides } from '../types/proposal';
+import type { WorkspaceBrandTheme } from '../types/workspace';
 
 interface ThemeProviderProps {
   themeId: ThemeId;
   children: ReactNode;
   className?: string;
   brandOverrides?: BrandOverrides;
+  workspaceBrandTheme?: WorkspaceBrandTheme;
 }
 
-export function ThemeProvider({ themeId, children, className = '', brandOverrides }: ThemeProviderProps) {
-  const theme = themes[themeId] ?? themes[defaultThemeId];
+export function ThemeProvider({
+  themeId,
+  children,
+  className = '',
+  brandOverrides,
+  workspaceBrandTheme,
+}: ThemeProviderProps) {
+  const baseTheme = themes[themeId] ?? themes[defaultThemeId];
+  const theme = useMemo(() => {
+    if (baseTheme.id !== 'bold-brand') return baseTheme;
+    return resolveBrandTheme(workspaceBrandTheme);
+  }, [baseTheme, workspaceBrandTheme]);
 
   useEffect(() => {
     const linkId = `theme-fonts-${theme.id}`;

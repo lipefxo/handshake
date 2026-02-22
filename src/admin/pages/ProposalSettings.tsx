@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatDateTime, formatRelativeTime } from '../../shared/utils/helpers';
 import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
+import { BrandThemeConfigurator } from '../components/settings/BrandThemeConfigurator';
 
 const LIMITS = {
   companyName: 50,
@@ -98,10 +99,10 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       }}
       role="button"
       tabIndex={0}
-      className="w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+      className="w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
       style={{
-        borderColor: dragging ? '#6366f1' : '#e5e7eb',
-        background: dragging ? 'rgba(99,102,241,0.04)' : '#fafafa',
+        borderColor: dragging ? '#d4785c' : '#e5e3de',
+        background: dragging ? 'rgba(212,120,92,0.06)' : '#fafaf7',
       }}
     >
       <AppIcon icon="ui.image" className="mx-auto mb-1.5 w-6 h-6 text-gray-300" />
@@ -132,6 +133,7 @@ export function ProposalSettings() {
     removeMember,
     renameWorkspace,
     updateCompanyName,
+    updateBrandTheme,
     refreshMembers,
     clearError,
   } = useWorkspaceStore();
@@ -243,8 +245,8 @@ export function ProposalSettings() {
   return (
     <div className="max-w-2xl mx-auto px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Global settings for your proposal workspace.</p>
+        <h1 className="font-brand-serif text-2xl text-gray-900">Settings</h1>
+        <p className="mt-1 text-sm text-[#6b6b6b]">Global settings for your proposal workspace.</p>
       </div>
 
       <motion.div
@@ -255,8 +257,10 @@ export function ProposalSettings() {
         {/* Brand */}
         <Card className="rounded-2xl border-gray-100">
           <CardHeader>
-            <CardTitle className="text-sm text-gray-900">Brand</CardTitle>
-            <CardDescription className="text-xs">Configure your company's identity for proposals.</CardDescription>
+            <CardTitle className="font-brand-serif text-base text-gray-900">Brand</CardTitle>
+            <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
+              Configure your company's identity for proposals.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Logo */}
@@ -308,14 +312,25 @@ export function ProposalSettings() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+
+            <BrandThemeConfigurator
+              value={currentWorkspace?.brandTheme}
+              onSave={updateBrandTheme}
+              disabled={!isOwner}
+            />
+            {!isOwner && (
+              <p className="text-xs text-gray-500">
+                Only workspace owners can edit brand theme settings.
+              </p>
+            )}
           </CardContent>
         </Card>
 
         {/* Team */}
         <Card className="rounded-2xl border-gray-100">
           <CardHeader>
-            <CardTitle className="text-sm text-gray-900">Team</CardTitle>
-            <CardDescription className="text-xs">
+            <CardTitle className="font-brand-serif text-base text-gray-900">Team</CardTitle>
+            <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
               Invite teammates to access and manage proposals in this workspace.
             </CardDescription>
           </CardHeader>

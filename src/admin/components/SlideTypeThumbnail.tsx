@@ -8,9 +8,9 @@ interface SlideTypeThumbnailProps {
 }
 
 export function SlideTypeThumbnail({ type, isSelected = false, className = '' }: SlideTypeThumbnailProps) {
-  const fill = isSelected ? 'bg-indigo-300/90' : 'bg-gray-300';
-  const softFill = isSelected ? 'bg-indigo-200/80' : 'bg-gray-200';
-  const border = isSelected ? 'border-indigo-200 bg-indigo-50/80' : 'border-gray-200 bg-gray-50';
+  const fill = isSelected ? 'bg-[#d4785c]/80' : 'bg-gray-300';
+  const softFill = isSelected ? 'bg-[#d4785c]/45' : 'bg-gray-200';
+  const border = isSelected ? 'border-[#d4785c]/40 bg-[#d4785c]/10' : 'border-gray-200 bg-gray-50';
 
   const shapeByType = {
     // Centered headline + subline + logo block

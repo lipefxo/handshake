@@ -6,6 +6,8 @@
 
 @layer base {
   :root {
+    --font-brand-serif: "Libre Baskerville", Georgia, serif;
+    --font-brand-sans: "DM Sans", system-ui, sans-serif;
     --transition-fast: 150ms ease;
     --transition-normal: 300ms ease;
     --transition-slow: 600ms ease;
@@ -19,7 +21,7 @@
   }
 
   html {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: var(--font-brand-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -35,6 +37,13 @@
   /* Theme-aware utilities — only effective inside a ThemeProvider wrapper */
   .font-display {
     font-family: var(--font-display);
+  }
+  .font-brand-serif {
+    font-family: var(--font-brand-serif);
+    letter-spacing: -0.01em;
+  }
+  .font-brand-sans {
+    font-family: var(--font-brand-sans);
   }
   .font-body {
     font-family: var(--font-body);
@@ -55,7 +64,7 @@
     border-color: var(--color-border);
   }
   .border-light {
-    border-color: #e5e7eb;
+    border-color: #e5e3de;
   }
   .border-accent {
     border-color: var(--color-accent);
@@ -196,18 +205,18 @@ code[class*="language-"] { background: transparent !important; }
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --primary: #d4785c;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f1ed;
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: #f2f1ed;
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: #f2f1ed;
+  --accent-foreground: #1a1a1a;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #e5e3de;
+  --input: #e5e3de;
+  --ring: #d4785c;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);

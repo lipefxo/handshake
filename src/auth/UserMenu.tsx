@@ -52,11 +52,11 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-auto gap-2 px-3 py-1.5">
           <Avatar className="h-7 w-7">
-            <AvatarFallback className="bg-gray-900 text-xs font-semibold text-white">
+            <AvatarFallback className="bg-[#1a1a1a] text-xs font-semibold text-[#f0ede8]">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="max-w-32 truncate text-sm text-gray-600">{user?.email}</span>
+          <span className="max-w-32 truncate text-sm text-[#6b6b6b]">{user?.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

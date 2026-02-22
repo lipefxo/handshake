@@ -31,11 +31,11 @@ export function IdleTimeout({ children }: IdleTimeoutProps) {
       {showWarning && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h2 className="text-base font-semibold text-gray-900">Inactive session</h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <h2 className="font-brand-serif text-lg text-gray-900">Inactive session</h2>
+            <p className="mt-1.5 text-sm text-[#6b6b6b]">
               You&apos;ll be signed out in 5 minutes due to inactivity.
             </p>
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-[#6b6b6b]">
               Move your mouse, type, or interact with the page to stay signed in.
             </p>
           </div>

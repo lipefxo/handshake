@@ -64,8 +64,8 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-admin flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-100 rounded-full blur-3xl opacity-40" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-100 rounded-full blur-3xl opacity-40" />
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-[#d4785c]/20 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-[#d4785c]/12 blur-3xl" />
       </div>
 
       <motion.div
@@ -75,21 +75,21 @@ export function LoginPage() {
         className="relative w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-white rounded-2xl shadow-lg shadow-black/5 border border-gray-100 mb-4">
-            <AppIcon icon="ui.home" size={28} />
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#1a1a1a] rounded-2xl shadow-lg shadow-black/10 border border-black/5 mb-4">
+            <AppIcon icon="ui.home" size={28} className="text-[#f0ede8]" />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1" style={{ fontFamily: 'var(--font-body)' }}>
+          <h1 className="text-3xl text-gray-900 mb-1.5" style={{ fontFamily: 'var(--font-brand-serif)', letterSpacing: '-0.01em' }}>
             Handshake
           </h1>
-          <p className="text-sm text-gray-500">Partnership Proposal Studio</p>
+          <p className="text-sm text-[#6b6b6b]">Partnership Proposal Studio</p>
         </div>
 
-        <Card className="rounded-2xl shadow-xl shadow-black/5">
+        <Card className="rounded-2xl border-[#e5e3de] shadow-xl shadow-black/5">
           {!sent ? (
             <>
               <CardHeader className="px-6 pt-6 pb-0">
-                <CardTitle className="text-lg text-gray-900">Sign in</CardTitle>
-                <CardDescription>We'll send a magic link to your email.</CardDescription>
+                <CardTitle className="font-brand-serif text-xl text-gray-900">Sign in</CardTitle>
+                <CardDescription className="mt-1 text-sm text-[#6b6b6b]">We'll send a magic link to your email.</CardDescription>
               </CardHeader>
               <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -161,8 +161,8 @@ export function LoginPage() {
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AppIcon icon="ui.check" className="w-6 h-6 text-green-600" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Check your inbox</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="font-brand-serif text-lg text-gray-900 mb-1.5">Check your inbox</h3>
+                <p className="text-sm text-[#6b6b6b]">
                   We sent a magic link to <strong className="text-gray-700">{email}</strong>.
                   Click it to sign in.
                 </p>

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../supabaseClient';
 import type { AppUser } from '../types/auth';
-import type { Workspace, WorkspaceMember } from '../types/workspace';
+import type { Workspace, WorkspaceBrandTheme, WorkspaceMember } from '../types/workspace';
 import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
 import { sanitizeText } from '../shared/utils/validation';
 
@@ -19,6 +19,7 @@ interface WorkspaceStore {
   removeMember: (memberId: string) => Promise<boolean>;
   renameWorkspace: (name: string) => Promise<boolean>;
   updateCompanyName: (companyName: string) => Promise<boolean>;
+  updateBrandTheme: (brandTheme: WorkspaceBrandTheme) => Promise<boolean>;
   refreshMembers: () => Promise<void>;
 }
 
@@ -27,12 +28,55 @@ function normalizeEmail(email: string): string {
 }
 
 function toWorkspace(row: Record<string, unknown>): Workspace {
+  const brandTheme = (row.brand_theme as WorkspaceBrandTheme | null | undefined) ?? undefined;
   return {
     id: row.id as string,
     name: (row.name as string) || 'My Workspace',
     companyName: (row.company_name as string) || '',
+    brandTheme,
     createdBy: row.created_by as string | undefined,
     createdAt: row.created_at as string,
+  };
+}
+
+function sanitizeCssColor(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? sanitizeText(trimmed) : undefined;
+}
+
+function sanitizeFontValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = sanitizeText(value).trim();
+  return cleaned || undefined;
+}
+
+function sanitizePositiveNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return undefined;
+  return value;
+}
+
+function sanitizeWorkspaceBrandTheme(brandTheme: WorkspaceBrandTheme): WorkspaceBrandTheme {
+  return {
+    colors: {
+      bgPrimary: sanitizeCssColor(brandTheme.colors?.bgPrimary),
+      bgSecondary: sanitizeCssColor(brandTheme.colors?.bgSecondary),
+      accent: sanitizeCssColor(brandTheme.colors?.accent),
+      accentHover: sanitizeCssColor(brandTheme.colors?.accentHover),
+      textPrimary: sanitizeCssColor(brandTheme.colors?.textPrimary),
+      textSecondary: sanitizeCssColor(brandTheme.colors?.textSecondary),
+    },
+    fonts: {
+      display: sanitizeFontValue(brandTheme.fonts?.display),
+      displayWeight: sanitizePositiveNumber(brandTheme.fonts?.displayWeight),
+      body: sanitizeFontValue(brandTheme.fonts?.body),
+      bodyWeight: sanitizePositiveNumber(brandTheme.fonts?.bodyWeight),
+      googleFontsImport: sanitizeFontValue(brandTheme.fonts?.googleFontsImport),
+    },
+    style: {
+      borderRadius: sanitizeFontValue(brandTheme.style?.borderRadius),
+      slideTransitionDefault: brandTheme.style?.slideTransitionDefault,
+    },
   };
 }
 
@@ -70,6 +114,7 @@ async function fetchPrimaryWorkspaceForUser(userId: string): Promise<{
         id,
         name,
         company_name,
+        brand_theme,
         created_by,
         created_at
       )
@@ -471,6 +516,38 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     if (rpcError) {
       logStructuredError('propagate company name to proposals failed', rpcError);
     }
+
+    return true;
+  },
+
+  updateBrandTheme: async (brandTheme) => {
+    const workspace = get().currentWorkspace;
+    const role = get().currentUserRole;
+    if (!workspace || role !== 'owner') {
+      set({ error: 'Only workspace owners can update brand theme settings.' });
+      return false;
+    }
+
+    const cleanTheme = sanitizeWorkspaceBrandTheme(brandTheme);
+
+    set({ error: null });
+    const { error } = await supabase
+      .from('workspaces')
+      .update({ brand_theme: cleanTheme })
+      .eq('id', workspace.id);
+
+    if (error) {
+      logStructuredError('updateBrandTheme failed', error);
+      set({ error: getWorkspaceError(error, 'Failed to update brand theme settings. Please try again.') });
+      return false;
+    }
+
+    set({
+      currentWorkspace: {
+        ...workspace,
+        brandTheme: cleanTheme,
+      },
+    });
 
     return true;
   },

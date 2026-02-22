@@ -28,7 +28,7 @@ export function AdminLayout() {
     <div className="flex h-screen bg-admin overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`flex-shrink-0 border-r border-light bg-white flex flex-col transition-all duration-200 ${
+        className={`flex-shrink-0 border-r border-light bg-[#fafaf7] flex flex-col transition-all duration-200 ${
           isSidebarExpanded ? 'w-56' : 'w-16'
         }`}
       >
@@ -42,13 +42,20 @@ export function AdminLayout() {
             >
               <AppIcon icon="ui.home" className={`${isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-white`} />
             </div>
-            {isSidebarExpanded && <span className="font-semibold text-gray-900 text-sm">Handshake</span>}
+            {isSidebarExpanded && (
+              <span
+                className="text-sm text-[#1a1a1a]"
+                style={{ fontFamily: 'var(--font-brand-serif)', letterSpacing: '-0.01em' }}
+              >
+                Handshake
+              </span>
+            )}
             <Button
               type="button"
               onClick={() => setIsSidebarExpanded((prev) => !prev)}
               variant="ghost"
               size="icon"
-              className={`text-gray-500 hover:text-gray-900 shrink-0 ${isSidebarExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
+              className={`text-[#6b6b6b] hover:text-[#1a1a1a] shrink-0 ${isSidebarExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
               aria-label={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               title={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >
@@ -75,10 +82,10 @@ export function AdminLayout() {
               end={item.end}
               title={isSidebarExpanded ? undefined : item.label}
               className={({ isActive }) =>
-                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors duration-150 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-1 ${
+                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors duration-150 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
                   isActive
-                    ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-[#f2f1ed] text-[#1a1a1a] font-medium'
+                    : 'text-[#6b6b6b] hover:bg-white hover:text-[#1a1a1a]'
                 }`
               }
             >
@@ -93,12 +100,12 @@ export function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 border-b border-light bg-white flex items-center justify-between px-6 flex-shrink-0">
+        <header className="h-14 border-b border-light bg-white/95 backdrop-blur flex items-center justify-between px-6 flex-shrink-0">
           <div>
             {showTopProposalsLink && (
               <Link
                 to="/admin"
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+                className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
               >
                 <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
                 Proposals

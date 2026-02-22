@@ -1,4 +1,5 @@
 import type { ThemeDefinition, ThemeId } from './themeTypes';
+import type { WorkspaceBrandTheme } from '../types/workspace';
 
 export const themes: Record<ThemeId, ThemeDefinition> = {
   'dark-minimal': {
@@ -133,4 +134,25 @@ export const themeIds: ThemeId[] = ['dark-minimal', 'light-corporate', 'bold-bra
 
 export function isValidThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && value in themes;
+}
+
+export function resolveBrandTheme(overrides?: WorkspaceBrandTheme): ThemeDefinition {
+  const baseTheme = themes['bold-brand'];
+  if (!overrides) return baseTheme;
+
+  return {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      ...overrides.colors,
+    },
+    fonts: {
+      ...baseTheme.fonts,
+      ...overrides.fonts,
+    },
+    style: {
+      ...baseTheme.style,
+      ...overrides.style,
+    },
+  };
 }

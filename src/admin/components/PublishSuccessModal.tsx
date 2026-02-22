@@ -81,8 +81,8 @@ export function PublishSuccessModal({
               </motion.div>
             )}
           </AnimatePresence>
-          <DialogTitle className="text-center">Proposal published</DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogTitle className="font-brand-serif text-center">Proposal published</DialogTitle>
+          <DialogDescription className="mt-1 text-center text-sm text-[#6b6b6b]">
             Your proposal for <span className="font-medium text-gray-700">{partnerName}</span> is
             now live and ready to share.
           </DialogDescription>

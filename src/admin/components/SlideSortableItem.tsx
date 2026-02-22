@@ -42,11 +42,11 @@ export function SlideSortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-1 ${
+      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
         !slide.enabled ? 'opacity-50' : ''
       } ${
         isMergeTarget
-          ? 'border-indigo-400 bg-indigo-50'
+          ? 'border-[#d4785c] bg-[#d4785c]/10'
           : isSelected
             ? 'border-gray-300 bg-gray-50'
             : 'border-gray-100 bg-white hover:border-gray-200'
@@ -64,7 +64,7 @@ export function SlideSortableItem({
     >
       {isMergeTarget && (
         <div
-          className="absolute inset-x-0 bottom-0 h-0.5 rounded-b-xl bg-indigo-500 transition-all duration-100 ease-linear"
+          className="absolute inset-x-0 bottom-0 h-0.5 rounded-b-xl bg-[#d4785c] transition-all duration-100 ease-linear"
           style={{ width: `${mergeProgress}%` }}
         />
       )}
@@ -102,7 +102,7 @@ export function SlideSortableItem({
         type="button"
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
         className="flex-shrink-0 w-8 h-4 rounded-full transition-colors relative"
-        style={{ background: slide.enabled ? '#6366f1' : '#d1d5db' }}
+        style={{ background: slide.enabled ? '#d4785c' : '#d1d5db' }}
         title={slide.enabled ? 'Disable slide' : 'Enable slide'}
         aria-label={slide.enabled ? 'Disable slide' : 'Enable slide'}
         aria-pressed={slide.enabled}

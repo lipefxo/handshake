@@ -158,7 +158,7 @@ export function ImageUploader({
           onDrop={handleDrop}
           className={`w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
             dragOver
-              ? 'border-indigo-400 bg-indigo-50'
+              ? 'border-[#d4785c] bg-[#d4785c]/10'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
           }`}
           role="button"
@@ -167,7 +167,7 @@ export function ImageUploader({
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-1">
-              <div className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-gray-200 border-t-[#d4785c] rounded-full animate-spin" />
               {compressionProgress !== null && (
                 <span className="text-[10px] text-gray-400">Optimizing {compressionProgress}%</span>
               )}

@@ -213,8 +213,22 @@ function NavBar() {
   }, []);
 
   const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    setMobileOpen(false);
+    const executeScroll = () => {
+      const target = document.getElementById(id);
+      if (!target) return;
+      const headerOffset = 74;
+      const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    };
+
+    // On mobile, close the animated menu first so scrolling is reliable.
+    if (mobileOpen) {
+      setMobileOpen(false);
+      window.setTimeout(executeScroll, 220);
+      return;
+    }
+
+    executeScroll();
   };
   const goToAdmin = () => {
     setMobileOpen(false);
@@ -249,6 +263,7 @@ function NavBar() {
         {/* Wordmark */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          type="button"
           style={{
             fontFamily: serif,
             fontSize: 20,
@@ -282,6 +297,7 @@ function NavBar() {
             <button
               key={id}
               onClick={() => scrollTo(id)}
+              type="button"
               style={{
                 fontFamily: sans,
                 fontSize: 14,
@@ -301,6 +317,7 @@ function NavBar() {
           ))}
           <button
             onClick={goToAdmin}
+            type="button"
             style={{
               fontFamily: sans,
               fontSize: 14,
@@ -320,6 +337,7 @@ function NavBar() {
           </button>
           <button
             onClick={() => scrollTo('waitlist')}
+            type="button"
             style={{
               fontFamily: sans,
               fontSize: 14,
@@ -342,6 +360,7 @@ function NavBar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
+          type="button"
           className="landing-hamburger"
           style={{
             background: 'none',
@@ -401,6 +420,7 @@ function NavBar() {
                 <button
                   key={id}
                   onClick={() => scrollTo(id)}
+                  type="button"
                   style={{
                     fontFamily: sans,
                     fontSize: 15,
@@ -417,6 +437,7 @@ function NavBar() {
               ))}
               <button
                 onClick={goToAdmin}
+                type="button"
                 style={{
                   fontFamily: sans,
                   fontSize: 15,
@@ -434,6 +455,7 @@ function NavBar() {
               </button>
               <button
                 onClick={() => scrollTo('waitlist')}
+                type="button"
                 style={{
                   fontFamily: sans,
                   fontSize: 15,
@@ -1531,6 +1553,37 @@ function FeaturesSection() {
 // ─── Live example CTA ─────────────────────────────────────────────────────────
 function LiveExampleCTA() {
   const { ref, inView } = useReveal();
+  const [liveDemoHref, setLiveDemoHref] = useState('/admin');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLiveDemoHref = async () => {
+      const { data, error } = await supabase
+        .from('proposals')
+        .select('slug')
+        .eq('status', 'published')
+        .eq('visibility', 'public')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error || !data?.slug) {
+        setLiveDemoHref('/admin');
+        return;
+      }
+
+      setLiveDemoHref(`/p/${data.slug}`);
+    };
+
+    void loadLiveDemoHref();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section
@@ -1597,7 +1650,7 @@ function LiveExampleCTA() {
           animate={inView ? 'visible' : 'hidden'}
           custom={0.2}
           variants={fadeUp}
-          href="/p/demo"
+          href={liveDemoHref}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -2118,6 +2171,7 @@ function PricingSection() {
             return (
               <motion.div
                 key={plan.tier}
+                className="landing-pricing-card"
                 ref={cardRef}
                 initial="hidden"
                 animate={cardInView ? 'visible' : 'hidden'}
@@ -2137,6 +2191,7 @@ function PricingSection() {
               >
                 {plan.featured && (
                   <div
+                    className="landing-pricing-badge"
                     style={{
                       position: 'absolute',
                       top: -12,
@@ -2847,6 +2902,10 @@ function Footer() {
 
 // ─── Landing page CSS ─────────────────────────────────────────────────────────
 const landingStyles = `
+  html, body {
+    background: ${C.bgDark};
+  }
+
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
@@ -2932,7 +2991,20 @@ const landingStyles = `
       grid-template-columns: 1fr !important;
     }
     .landing-pricing-grid {
-      grid-template-columns: 1fr 1fr !important;
+      grid-template-columns: 1fr !important;
+      max-width: 680px;
+      margin: 0 auto;
+      gap: 18px !important;
+    }
+    .landing-pricing-card {
+      padding: 30px 22px !important;
+    }
+    .landing-pricing-badge {
+      top: 12px !important;
+      left: auto !important;
+      right: 14px !important;
+      transform: none !important;
+      font-size: 10px !important;
     }
     .landing-comparison-table {
       min-width: 720px !important;

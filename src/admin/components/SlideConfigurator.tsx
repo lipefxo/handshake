@@ -138,7 +138,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
       <div className="pt-2 border-t border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-medium text-gray-500">Action Links</p>
-          <Button type="button" variant="link" size="sm" onClick={addLink} className="h-auto p-0 text-xs text-indigo-600">
+          <Button type="button" variant="link" size="sm" onClick={addLink} className="h-auto p-0 text-xs text-[#d4785c]">
             + Add link
           </Button>
         </div>
@@ -259,7 +259,7 @@ function IconSelect({
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        className="h-9 w-9 rounded-md border border-gray-200 bg-white text-gray-700 hover:border-gray-300 transition-colors duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+        className="h-9 w-9 rounded-md border border-gray-200 bg-white text-gray-700 hover:border-gray-300 transition-colors duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
         onClick={() => setIsOpen((prev) => !prev)}
         title={activeOption.label}
         aria-label={`Icon: ${activeOption.label}`}
@@ -289,9 +289,9 @@ function IconSelect({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full rounded-md px-2 py-1.5 text-left text-xs flex items-center gap-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-1 ${
+                className={`w-full rounded-md px-2 py-1.5 text-left text-xs flex items-center gap-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
                   selected
-                    ? 'bg-indigo-50 text-indigo-700'
+                    ? 'bg-[#d4785c]/10 text-[#a65740]'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                 }`}
               >
@@ -386,7 +386,7 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
             onClick={addStat}
             disabled={atMaxStats}
             title={atMaxStats ? `Limit reached (${FIELD_LIMITS.maxStats})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add stat
           </Button>
@@ -460,7 +460,7 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
             onClick={addFeature}
             disabled={atMaxFeatures}
             title={atMaxFeatures ? `Limit reached (${FIELD_LIMITS.maxFeatures})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add feature
           </Button>
@@ -583,7 +583,7 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
             }}
             disabled={atMaxBeforeItems}
             title={atMaxBeforeItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add item
           </Button>
@@ -619,7 +619,7 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
             }}
             disabled={atMaxAfterItems}
             title={atMaxAfterItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add item
           </Button>
@@ -660,7 +660,7 @@ function TimelineFields({ content, onChange }: { content: TimelineSlideContent; 
             onClick={addMilestone}
             disabled={atMaxMilestones}
             title={atMaxMilestones ? `Limit reached (${FIELD_LIMITS.maxMilestones})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add
           </Button>
@@ -746,7 +746,7 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
             onClick={addBenefit}
             disabled={atMaxBenefits}
             title={atMaxBenefits ? `Limit reached (${FIELD_LIMITS.maxBenefits})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add benefit
           </Button>
@@ -844,7 +844,7 @@ function TableFields({ content, onChange }: { content: TableSlideContent; onChan
             onClick={addColumn}
             disabled={atMaxColumns}
             title={atMaxColumns ? `Limit reached (${FIELD_LIMITS.maxTableColumns})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add column
           </Button>
@@ -886,7 +886,7 @@ function TableFields({ content, onChange }: { content: TableSlideContent; onChan
             onClick={addRow}
             disabled={atMaxRows}
             title={atMaxRows ? `Limit reached (${FIELD_LIMITS.maxTableRows})` : undefined}
-            className="h-auto p-0 text-xs text-indigo-600"
+            className="h-auto p-0 text-xs text-[#d4785c]"
           >
             + Add row
           </Button>

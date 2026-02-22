@@ -234,11 +234,13 @@ CREATE TABLE IF NOT EXISTS workspaces (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL DEFAULT 'My Workspace',
   company_name text NOT NULL DEFAULT '',
+  brand_theme jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz DEFAULT now()
 );
 
 ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS company_name text NOT NULL DEFAULT '';
+ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS brand_theme jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS workspace_members (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
