@@ -205,17 +205,32 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       throw new Error('Unauthorized: cannot update proposal you do not own.');
     }
 
+    const sanitizedUpdates: Partial<Proposal> = {
+      ...updates,
+      ...(updates.title !== undefined && { title: sanitizeText(updates.title) }),
+      ...(updates.partnerName !== undefined && { partnerName: sanitizeText(updates.partnerName) }),
+      ...(updates.slug !== undefined && { slug: generateSafeSlug(updates.slug) }),
+      ...(updates.slides && { slides: normalizeSlidesIconIds(sanitizeSlides(updates.slides)) }),
+    };
+
+    const previousProposals = get().proposals;
+    set((state) => ({
+      proposals: state.proposals.map((p) =>
+        p.id === id ? { ...p, ...sanitizedUpdates } : p
+      ),
+    }));
+
     const dbUpdates: Record<string, unknown> = {};
-    if (updates.title !== undefined) dbUpdates.title = sanitizeText(updates.title);
-    if (updates.partnerName !== undefined) dbUpdates.partner_name = sanitizeText(updates.partnerName);
-    if (updates.slug !== undefined) dbUpdates.slug = generateSafeSlug(updates.slug);
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.slides !== undefined) dbUpdates.slides = normalizeSlidesIconIds(sanitizeSlides(updates.slides));
-    if (updates.themeId !== undefined) dbUpdates.theme_id = updates.themeId;
-    if (updates.visibility !== undefined) dbUpdates.visibility = updates.visibility;
-    if (updates.accessPassword !== undefined) dbUpdates.access_password = updates.accessPassword;
-    if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
-    if (updates.brandOverrides !== undefined) dbUpdates.brand_overrides = updates.brandOverrides;
+    if (sanitizedUpdates.title !== undefined) dbUpdates.title = sanitizedUpdates.title;
+    if (sanitizedUpdates.partnerName !== undefined) dbUpdates.partner_name = sanitizedUpdates.partnerName;
+    if (sanitizedUpdates.slug !== undefined) dbUpdates.slug = sanitizedUpdates.slug;
+    if (sanitizedUpdates.status !== undefined) dbUpdates.status = sanitizedUpdates.status;
+    if (sanitizedUpdates.slides !== undefined) dbUpdates.slides = sanitizedUpdates.slides;
+    if (sanitizedUpdates.themeId !== undefined) dbUpdates.theme_id = sanitizedUpdates.themeId;
+    if (sanitizedUpdates.visibility !== undefined) dbUpdates.visibility = sanitizedUpdates.visibility;
+    if (sanitizedUpdates.accessPassword !== undefined) dbUpdates.access_password = sanitizedUpdates.accessPassword;
+    if (sanitizedUpdates.expiresAt !== undefined) dbUpdates.expires_at = sanitizedUpdates.expiresAt;
+    if (sanitizedUpdates.brandOverrides !== undefined) dbUpdates.brand_overrides = sanitizedUpdates.brandOverrides;
 
     const { error } = await supabase
       .from('proposals')
@@ -223,23 +238,9 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .eq('id', id);
     if (error) {
       logStructuredError('updateProposal failed', error);
-      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR) });
+      set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR), proposals: previousProposals });
       throw error;
     }
-    set((state) => ({
-      proposals: state.proposals.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              ...updates,
-              title: updates.title !== undefined ? sanitizeText(updates.title) : p.title,
-              partnerName: updates.partnerName !== undefined ? sanitizeText(updates.partnerName) : p.partnerName,
-              slug: updates.slug !== undefined ? generateSafeSlug(updates.slug) : p.slug,
-              slides: updates.slides ? normalizeSlidesIconIds(sanitizeSlides(updates.slides)) : p.slides,
-            }
-          : p
-      ),
-    }));
   },
 
   deleteProposal: async (id) => {

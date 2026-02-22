@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+const AUTOSAVE_DELAY = 800;
+
 export function ProposalEditor() {
   const { id } = useParams<{ id: string }>();
   const {
@@ -32,7 +34,6 @@ export function ProposalEditor() {
   const editorValues = {
     autosave: {
       enabled: true,
-      debounceMs: 1000,
     },
     preview: {
       showPanel: true,
@@ -46,18 +47,28 @@ export function ProposalEditor() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const hydratedProposalIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
-    if (p) {
+    if (p && hydratedProposalIdRef.current !== p.id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProposal({ ...p });
+      hydratedProposalIdRef.current = p.id;
       setHasUnsavedChanges(false);
       if (!selectedSlideId && p.slides.length > 0) {
         setSelectedSlideId(p.slides[0].id);
       }
     }
-  }, [id, proposals]);
+  }, [id, proposals]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (id && hydratedProposalIdRef.current !== id) {
+      hydratedProposalIdRef.current = null;
+      setProposal(null);
+      setHasUnsavedChanges(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (proposals.length > 0) return;
@@ -93,18 +104,34 @@ export function ProposalEditor() {
 
   useEffect(() => {
     if (!proposal || !editorValues.autosave.enabled || !hasUnsavedChanges) return;
-    const timer = setTimeout(() => save(proposal), editorValues.autosave.debounceMs);
+    const timer = setTimeout(() => void save(proposal), AUTOSAVE_DELAY);
     return () => clearTimeout(timer);
-  }, [proposal, save, editorValues.autosave.enabled, editorValues.autosave.debounceMs, hasUnsavedChanges]);
+  }, [proposal, save, editorValues.autosave.enabled, hasUnsavedChanges]);
+
+  const sendPreviewMessage = useCallback((p: Proposal, slideId: string | null, targetWindow?: Window | null) => {
+    const message = {
+      type: 'handshake-editor-preview-update',
+      proposal: p,
+      selectedSlideId: slideId,
+    };
+    const iframeWindow = previewIframeRef.current?.contentWindow;
+    iframeWindow?.postMessage(message, window.location.origin);
+    targetWindow?.postMessage(message, window.location.origin);
+  }, []);
 
   const updateLocal = (updates: Partial<Proposal>) => {
-    setProposal((prev) => prev ? { ...prev, ...updates } : prev);
+    setProposal((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...updates };
+      queueMicrotask(() => sendPreviewMessage(next, selectedSlideId));
+      return next;
+    });
     setHasUnsavedChanges(true);
   };
 
-  const updateSlide = (id: string, updates: Partial<SlideConfig>) => {
+  const updateSlide = (slideId: string, updates: Partial<SlideConfig>) => {
     if (!proposal) return;
-    const slides = proposal.slides.map((s) => s.id === id ? { ...s, ...updates } : s);
+    const slides = proposal.slides.map((s) => s.id === slideId ? { ...s, ...updates } : s);
     updateLocal({ slides });
   };
 
@@ -197,33 +224,30 @@ export function ProposalEditor() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const postPreviewUpdate = useCallback((targetWindow?: Window | null) => {
-    if (!proposal) return;
-    const message = {
-      type: 'handshake-editor-preview-update',
-      proposal,
-      selectedSlideId,
-    };
-
-    const iframeWindow = previewIframeRef.current?.contentWindow;
-    iframeWindow?.postMessage(message, window.location.origin);
-    targetWindow?.postMessage(message, window.location.origin);
-  }, [proposal, selectedSlideId]);
+  const proposalRef = useRef(proposal);
+  proposalRef.current = proposal;
+  const selectedSlideIdRef = useRef(selectedSlideId);
+  selectedSlideIdRef.current = selectedSlideId;
 
   useEffect(() => {
-    postPreviewUpdate();
-  }, [postPreviewUpdate]);
+    if (proposal) {
+      sendPreviewMessage(proposal, selectedSlideId);
+    }
+  }, [selectedSlideId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handlePreviewReady = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== 'handshake-editor-preview-ready') return;
-      postPreviewUpdate(event.source instanceof Window ? event.source : null);
+      const p = proposalRef.current;
+      if (p) {
+        sendPreviewMessage(p, selectedSlideIdRef.current, event.source instanceof Window ? event.source : null);
+      }
     };
 
     window.addEventListener('message', handlePreviewReady);
     return () => window.removeEventListener('message', handlePreviewReady);
-  }, [postPreviewUpdate]);
+  }, [sendPreviewMessage]);
 
   if (!proposal && proposalsLoading) {
     return (
@@ -389,7 +413,7 @@ export function ProposalEditor() {
                     <iframe
                       ref={previewIframeRef}
                       src={`/p/${proposal.slug}#preview`}
-                      onLoad={() => postPreviewUpdate()}
+                      onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
                       className="absolute inset-0 w-full h-full border-0 pointer-events-none"
                       style={{ transform: 'scale(0.675)', transformOrigin: 'top left', width: '148.15%', height: '148.15%' }}
                       title="Slide preview"
