@@ -45,11 +45,10 @@ function MiniPreview({ themeId, brandOverrides }: { themeId: ThemeId; brandOverr
 
 interface ThemeSectionProps {
   proposal: Proposal;
-  onChange: (updates: Partial<Proposal>) => void;
   onImmediateSave: (updates: Partial<Proposal>) => Promise<void>;
 }
 
-export function ThemeSection({ proposal, onChange, onImmediateSave }: ThemeSectionProps) {
+export function ThemeSection({ proposal, onImmediateSave }: ThemeSectionProps) {
   return (
     <section id="theme" className="scroll-mt-6">
       <div className="mb-5">

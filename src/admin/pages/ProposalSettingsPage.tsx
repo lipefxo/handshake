@@ -222,7 +222,6 @@ export function ProposalSettingsPage() {
               />
               <ThemeSection
                 proposal={proposal}
-                onChange={updateLocal}
                 onImmediateSave={immediateSave}
               />
               <SharingSection
