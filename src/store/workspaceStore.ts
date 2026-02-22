@@ -158,6 +158,11 @@ function getWorkspaceError(error: unknown, fallback: string): string {
   return appendErrorDiagnostic(fallback, error);
 }
 
+function isWorkspacePermissionError(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  return code === '42501';
+}
+
 function toNonEmptyString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -219,7 +224,14 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      await activatePendingInvitesForUser(user);
+      try {
+        await activatePendingInvitesForUser(user);
+      } catch (error) {
+        if (!isWorkspacePermissionError(error)) {
+          throw error;
+        }
+        logStructuredError('activatePendingInvitesForUser skipped due to RLS permission error', error);
+      }
       await ensureWorkspaceForUser(user);
       const primary = await fetchPrimaryWorkspaceForUser(user.id);
       if (!primary.workspace) {

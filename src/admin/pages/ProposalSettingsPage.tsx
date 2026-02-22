@@ -9,6 +9,7 @@ import { MetadataSection } from '../components/settings/MetadataSection';
 import { ThemeSection } from '../components/settings/ThemeSection';
 import { SharingSection } from '../components/settings/SharingSection';
 import { DangerZoneSection } from '../components/settings/DangerZoneSection';
+import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
 import { Input } from '@/components/ui/input';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -130,24 +131,15 @@ export function ProposalSettingsPage() {
       {/* Top bar */}
       <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {/* Tab strip */}
-        <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
-          <motion.div
-            aria-hidden="true"
-            className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-white shadow-sm"
-            initial={{ x: '0%' }}
-            animate={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
-          />
-          <Link
-            to={`/admin/proposals/${id}`}
-            className="relative z-10 px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
-          >
-            Slides
-          </Link>
-          <span className="relative z-10 px-3 py-1.5 text-xs font-medium text-gray-800 text-center">
-            Settings
-          </span>
-        </div>
+        <SegmentedTabs
+          value="settings"
+          className="w-44 flex-shrink-0"
+          tabClassName="flex-1"
+          options={[
+            { value: 'slides', label: 'Slides', href: `/admin/proposals/${id}` },
+            { value: 'settings', label: 'Settings' },
+          ]}
+        />
 
         <div className="min-w-0 flex flex-col items-center justify-center gap-0.5">
           <Input

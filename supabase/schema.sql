@@ -185,6 +185,20 @@ AS $$
   );
 $$;
 
+CREATE OR REPLACE FUNCTION public.current_user_email()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+  SELECT lower(COALESCE(
+    (SELECT u.email FROM auth.users u WHERE u.id = auth.uid()),
+    auth.jwt() ->> 'email',
+    ''
+  ));
+$$;
+
 DROP POLICY IF EXISTS "Members can read their workspaces" ON workspaces;
 CREATE POLICY "Members can read their workspaces"
   ON workspaces FOR SELECT
@@ -218,7 +232,7 @@ CREATE POLICY "Owners can invite workspace members"
       role = 'owner'
       AND status = 'active'
       AND user_id = auth.uid()
-      AND lower(email) = lower(COALESCE(auth.jwt() ->> 'email', ''))
+      AND lower(email) = public.current_user_email()
       AND EXISTS (
         SELECT 1 FROM workspaces w
         WHERE w.id = workspace_members.workspace_id
@@ -244,12 +258,12 @@ CREATE POLICY "Invited users can accept invitations"
   USING (
     status = 'pending'
     AND user_id IS NULL
-    AND lower(email) = lower(COALESCE(auth.jwt() ->> 'email', ''))
+    AND lower(email) = public.current_user_email()
   )
   WITH CHECK (
     user_id = auth.uid()
     AND status = 'active'
-    AND lower(email) = lower(COALESCE(auth.jwt() ->> 'email', ''))
+    AND lower(email) = public.current_user_email()
   );
 
 ALTER TABLE proposals

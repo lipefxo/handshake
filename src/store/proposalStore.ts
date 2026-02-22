@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { BrandOverrides, Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateShortCode, generateSlug } from '../shared/utils/helpers';
+import { useAuthStore } from './authStore';
 import { useWorkspaceStore } from './workspaceStore';
 import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
 import type { ThemeId } from '../themes/themeTypes';
@@ -125,6 +126,10 @@ function getCurrentWorkspaceId(): string | null {
   return useWorkspaceStore.getState().currentWorkspace?.id ?? null;
 }
 
+function getCurrentUserId(): string | null {
+  return useAuthStore.getState().user?.id ?? null;
+}
+
 function normalizeShortCode(shortCode: string): string {
   return shortCode.trim().replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
 }
@@ -152,6 +157,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   createProposal: async (proposal) => {
     set({ error: null });
     const currentWorkspaceId = getCurrentWorkspaceId();
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) {
+      set({ error: 'You must be signed in to create proposals.' });
+      return null;
+    }
     if (!currentWorkspaceId || currentWorkspaceId !== proposal.workspace_id) {
       set({ error: 'Unauthorized: cannot create proposal for another workspace.' });
       return null;
@@ -184,6 +194,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase
       .from('proposals')
       .insert({
+        user_id: currentUserId,
         workspace_id: proposal.workspace_id,
         slug: safeSlug,
         short_code: safeShortCode,
@@ -275,6 +286,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const existing = get().proposals.find((p) => p.id === id);
     if (!existing) return null;
     const currentWorkspaceId = getCurrentWorkspaceId();
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) return null;
     if (!currentWorkspaceId || existing.workspace_id !== currentWorkspaceId) return null;
 
     const newSlug = generateSafeSlug(generateSlug(`${existing.partnerName}-copy`));
@@ -282,6 +295,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase
       .from('proposals')
       .insert({
+        user_id: currentUserId,
         workspace_id: currentWorkspaceId,
         slug: newSlug,
         short_code: newShortCode,
@@ -351,7 +365,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   createFromMarkdown: async (_markdown, frontmatter, slides) => {
     set({ error: null });
     const workspaceId = getCurrentWorkspaceId();
-    if (!workspaceId) return null;
+    const currentUserId = getCurrentUserId();
+    if (!workspaceId || !currentUserId) return null;
 
     const partnerName = sanitizeText(frontmatter.partner || 'Untitled Partner');
     const title = sanitizeText(frontmatter.title || `${partnerName} Proposal`);
@@ -378,6 +393,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       const { data, error } = await supabase
         .from('proposals')
         .insert({
+          user_id: currentUserId,
           workspace_id: proposal.workspace_id,
           slug: proposal.slug,
           short_code: proposal.shortCode,

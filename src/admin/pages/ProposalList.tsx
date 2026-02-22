@@ -11,6 +11,7 @@ import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { NewProposalDialog, type NewProposalFormValues } from '../components/NewProposalDialog';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -171,28 +172,46 @@ export function ProposalList() {
 
       {/* Status filter tabs */}
       {proposals.length > 0 && (
-        <div className="flex items-center gap-1 mb-5 p-0.5 bg-gray-100 rounded-lg w-fit">
-          {([
-            { key: 'all' as const, label: 'All', count: proposals.length },
-            { key: 'published' as const, label: 'Published', count: publishedCount },
-            { key: 'draft' as const, label: 'Drafts', count: draftCount },
-          ]).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setStatusFilter(tab.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                statusFilter === tab.key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-              <span className={`ml-1.5 ${statusFilter === tab.key ? 'text-gray-400' : 'text-gray-400/60'}`}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          className="mb-5 w-fit border-0 bg-gray-100"
+          options={[
+            {
+              value: 'all',
+              label: (isActive: boolean) => (
+                <>
+                  All
+                  <span className={isActive ? 'ml-1.5 text-gray-400' : 'ml-1.5 text-gray-400/60'}>
+                    {proposals.length}
+                  </span>
+                </>
+              ),
+            },
+            {
+              value: 'published',
+              label: (isActive: boolean) => (
+                <>
+                  Published
+                  <span className={isActive ? 'ml-1.5 text-gray-400' : 'ml-1.5 text-gray-400/60'}>
+                    {publishedCount}
+                  </span>
+                </>
+              ),
+            },
+            {
+              value: 'draft',
+              label: (isActive: boolean) => (
+                <>
+                  Drafts
+                  <span className={isActive ? 'ml-1.5 text-gray-400' : 'ml-1.5 text-gray-400/60'}>
+                    {draftCount}
+                  </span>
+                </>
+              ),
+            },
+          ]}
+        />
       )}
 
       {/* Loading */}
