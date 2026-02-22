@@ -72,13 +72,13 @@ function mapMetaRowToProposalAccessMeta(row: Record<string, unknown>): ProposalA
   return {
     id: row.id as string,
     slug: row.slug as string,
-    shortCode: (row.shortCode as string | undefined) ?? (row.short_code as string | undefined),
+    shortCode: row.shortCode as string | undefined,
     title: row.title as string,
-    partnerName: (row.partnerName as string) ?? (row.partner_name as string),
+    partnerName: row.partnerName as string,
     status: row.status as ProposalAccessMeta['status'],
     visibility: (row.visibility as Proposal['visibility']) ?? 'public',
-    expiresAt: (row.expiresAt as string | undefined) ?? (row.expires_at as string | undefined),
-    themeId: isValidThemeId(row.themeId) ? row.themeId : isValidThemeId(row.theme_id) ? row.theme_id : defaultThemeId,
+    expiresAt: row.expiresAt as string | undefined,
+    themeId: isValidThemeId(row.themeId) ? row.themeId : defaultThemeId,
   };
 }
 
@@ -270,14 +270,23 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (sanitizedUpdates.expiresAt !== undefined) dbUpdates.expires_at = sanitizedUpdates.expiresAt;
     if (sanitizedUpdates.brandOverrides !== undefined) dbUpdates.brand_overrides = sanitizedUpdates.brandOverrides;
 
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from('proposals')
       .update(dbUpdates)
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) {
       logStructuredError('updateProposal failed', error);
       set({ error: getSafeErrorMessage(error, GENERIC_SAVE_ERROR), proposals: previousProposals });
       throw error;
+    }
+    if (!updatedRows || updatedRows.length === 0) {
+      const noMatchError = new Error(
+        'Update had no effect — the proposal may belong to a different workspace or your session has expired.',
+      );
+      logStructuredError('updateProposal affected 0 rows', { id, dbUpdates });
+      set({ error: noMatchError.message, proposals: previousProposals });
+      throw noMatchError;
     }
   },
 
@@ -343,6 +352,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const safeSlug = generateSafeSlug(slug);
     if (!safeSlug) return null;
 
+    // Try edge function first (handles all visibility types via service role).
     const { data, error } = await supabase.functions.invoke('proposal-meta', {
       body: { slug: safeSlug },
     });
@@ -350,15 +360,25 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
     }
 
-    // Fallback for public proposals if edge function is unavailable/misconfigured.
-    const { data: fallback } = await supabase
+    // Direct query fallback — works for public published proposals via RLS.
+    const { data: row } = await supabase
       .from('proposals')
       .select('id, slug, short_code, title, partner_name, status, visibility, expires_at, theme_id')
       .eq('slug', safeSlug)
       .eq('status', 'published')
       .maybeSingle();
-    if (!fallback) return null;
-    return mapMetaRowToProposalAccessMeta(fallback as Record<string, unknown>);
+    if (!row) return null;
+    return mapMetaRowToProposalAccessMeta({
+      id: row.id,
+      slug: row.slug,
+      shortCode: row.short_code,
+      title: row.title,
+      partnerName: row.partner_name,
+      status: row.status,
+      visibility: row.visibility,
+      expiresAt: row.expires_at,
+      themeId: row.theme_id,
+    });
   },
 
   getProposalMetaByShortCode: async (shortCode) => {
@@ -372,21 +392,31 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
     }
 
-    // Fallback for public proposals if edge function is unavailable/misconfigured.
-    const { data: fallback } = await supabase
+    const { data: row } = await supabase
       .from('proposals')
       .select('id, slug, short_code, title, partner_name, status, visibility, expires_at, theme_id')
       .eq('short_code', safeShortCode)
       .eq('status', 'published')
       .maybeSingle();
-    if (!fallback) return null;
-    return mapMetaRowToProposalAccessMeta(fallback as Record<string, unknown>);
+    if (!row) return null;
+    return mapMetaRowToProposalAccessMeta({
+      id: row.id,
+      slug: row.slug,
+      shortCode: row.short_code,
+      title: row.title,
+      partnerName: row.partner_name,
+      status: row.status,
+      visibility: row.visibility,
+      expiresAt: row.expires_at,
+      themeId: row.theme_id,
+    });
   },
 
   getProposalContentBySlug: async (slug, accessToken) => {
     const safeSlug = generateSafeSlug(slug);
     if (!safeSlug) return null;
 
+    // Try edge function first (handles gated access, workspace member bypass, etc.).
     const { data, error } = await supabase.functions.invoke('proposal-content', {
       body: { slug: safeSlug, accessToken: accessToken?.trim() || undefined },
     });
@@ -394,15 +424,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       return dbRowToProposal(data.proposal as Record<string, unknown>);
     }
 
-    // Fallback for public proposals if edge function is unavailable/misconfigured.
-    const { data: fallback } = await supabase
-      .from('proposals')
-      .select('*')
-      .eq('slug', safeSlug)
-      .eq('status', 'published')
-      .maybeSingle();
-    if (!fallback) return null;
-    return dbRowToProposal(fallback as Record<string, unknown>);
+    // Direct query fallback — only works for public published proposals via RLS.
+    // Gated proposals (password/email) still require the edge function.
+    if (!accessToken) {
+      const { data: row } = await supabase
+        .from('proposals')
+        .select('*')
+        .eq('slug', safeSlug)
+        .eq('status', 'published')
+        .maybeSingle();
+      if (row) return dbRowToProposal(row as Record<string, unknown>);
+    }
+
+    return null;
   },
 
   verifyProposalPassword: async (proposalId, password) => {
