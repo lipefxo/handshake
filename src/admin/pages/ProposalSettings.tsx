@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { formatDateTime, formatRelativeTime } from '../../shared/utils/helpers';
 import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
 import { BrandThemeConfigurator } from '../components/settings/BrandThemeConfigurator';
+import { SettingsNav } from '../components/settings/SettingsNav';
 
 const LIMITS = {
   companyName: 50,
@@ -154,7 +155,6 @@ export function ProposalSettings() {
   const [renamingWorkspace, setRenamingWorkspace] = useState(false);
   const [resendingMemberId, setResendingMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
-  const [activeSectionId, setActiveSectionId] = useState<(typeof SETTINGS_SECTIONS)[number]['id']>('brand');
   const isOwner = currentUserRole === 'owner';
   const { executeWithFeedback } = useActionFeedback();
 
@@ -193,30 +193,6 @@ export function ProposalSettings() {
     : companyName.length > LIMITS.companyName
     ? `Max ${LIMITS.companyName} characters`
     : null;
-
-  useEffect(() => {
-    const sectionEls = SETTINGS_SECTIONS
-      .map((section) => document.getElementById(section.id))
-      .filter(Boolean) as HTMLElement[];
-    if (sectionEls.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting);
-        if (visible.length === 0) return;
-        const firstVisible = visible.reduce((a, b) =>
-          a.boundingClientRect.top < b.boundingClientRect.top ? a : b,
-        );
-        if (firstVisible.target.id === 'brand' || firstVisible.target.id === 'team') {
-          setActiveSectionId(firstVisible.target.id);
-        }
-      },
-      { threshold: 0.35, rootMargin: '-15% 0px -55% 0px' },
-    );
-
-    sectionEls.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
 
   const handleInviteMember = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -274,23 +250,22 @@ export function ProposalSettings() {
     setRenamingWorkspace(false);
   };
 
-  const handleSectionNavClick = (id: (typeof SETTINGS_SECTIONS)[number]['id']) => {
-    setActiveSectionId(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   return (
-    <div className="max-w-2xl mx-auto px-8 py-8 pb-28">
-      <div className="mb-8">
-        <h1 className="font-brand-serif text-2xl text-gray-900">Settings</h1>
-        <p className="mt-1 text-sm text-[#6b6b6b]">Global settings for your proposal workspace.</p>
-      </div>
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-8 items-start">
+        <SettingsNav sections={SETTINGS_SECTIONS.map((section) => ({ ...section }))} />
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
+        <div>
+          <div className="mb-8">
+            <h1 className="font-brand-serif text-2xl text-gray-900">Settings</h1>
+            <p className="mt-1 text-sm text-[#6b6b6b]">Global settings for your proposal workspace.</p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
         {/* Brand */}
         <Card id="brand" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
@@ -364,8 +339,8 @@ export function ProposalSettings() {
           </CardContent>
         </Card>
 
-        {/* Team */}
-        <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">
+            {/* Team */}
+            <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
             <CardTitle className="font-brand-serif text-base text-gray-900">Team</CardTitle>
             <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
@@ -504,30 +479,9 @@ export function ProposalSettings() {
               )}
             </div>
           </CardContent>
-        </Card>
+            </Card>
 
-      </motion.div>
-
-      <div className="fixed bottom-6 left-1/2 z-30 -translate-x-1/2">
-        <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-white/95 p-1 shadow-lg backdrop-blur">
-          {SETTINGS_SECTIONS.map((section) => {
-            const isActive = activeSectionId === section.id;
-            return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => handleSectionNavClick(section.id)}
-                className={cn(
-                  'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-                  isActive
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
-                )}
-              >
-                {section.label}
-              </button>
-            );
-          })}
+          </motion.div>
         </div>
       </div>
     </div>

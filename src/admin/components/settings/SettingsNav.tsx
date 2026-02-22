@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 
-const sections = [
+const defaultSections = [
   { id: 'general', label: 'General' },
   { id: 'theme', label: 'Theme & Brand' },
   { id: 'sharing', label: 'Sharing' },
   { id: 'danger', label: 'Danger Zone' },
 ];
 
-export function SettingsNav() {
-  const [activeId, setActiveId] = useState('general');
+interface SettingsNavProps {
+  sections?: Array<{ id: string; label: string }>;
+}
+
+export function SettingsNav({ sections = defaultSections }: SettingsNavProps) {
+  const [activeId, setActiveId] = useState(sections[0]?.id ?? '');
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    setActiveId(sections[0]?.id ?? '');
+  }, [sections]);
 
   useEffect(() => {
     const sectionEls = sections.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];

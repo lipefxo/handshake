@@ -12,6 +12,8 @@
     --color-brand-wordmark-on-dark: #f0ede8;
     --color-brand-logo: #1a1a1a;
     --color-brand-logo-on-dark: #ffffff;
+    --color-brand-logo-accent: #d4785c;
+    --color-brand-logo-accent-on-dark: #ffffff;
     --transition-fast: 150ms ease;
     --transition-normal: 300ms ease;
     --transition-slow: 600ms ease;

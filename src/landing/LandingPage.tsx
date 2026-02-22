@@ -274,7 +274,7 @@ function NavBar() {
             lineHeight: 0,
           }}
         >
-          <BrandWordmark variant={scrolled ? 'light' : 'dark'} className="h-5 w-auto" aria-label="Handshake" />
+          <BrandWordmark variant="light" className="h-5 w-auto" aria-label="Handshake" />
         </button>
 
         {/* Desktop nav */}

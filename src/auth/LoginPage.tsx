@@ -77,13 +77,10 @@ export function LoginPage() {
         className="relative w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#1a1a1a] rounded-2xl shadow-lg shadow-black/10 border border-black/5 mb-4">
-            <BrandLogo variant="dark" className="w-7 h-7" aria-label="Handshake logo" />
-          </div>
-          <h1 className="mb-1.5 inline-flex items-center justify-center">
+          <h1 className="mb-1.5 inline-flex items-center justify-center gap-2">
+            <BrandLogo variant="light" className="h-5 w-5" aria-label="Handshake logo" />
             <BrandWordmark variant="light" className="h-8 w-auto" aria-label="Handshake" />
           </h1>
-          <p className="text-sm text-[#6b6b6b]">Partnership Proposal Studio</p>
         </div>
 
         <Card className="rounded-2xl border-[#e5e3de] shadow-xl shadow-black/5">

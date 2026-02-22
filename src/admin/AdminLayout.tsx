@@ -37,13 +37,9 @@ export function AdminLayout() {
         {/* Logo */}
         <div className={`py-4 border-b border-light ${isSidebarExpanded ? 'px-5' : 'px-2'}`}>
           <div className={`flex ${isSidebarExpanded ? 'items-center justify-between' : 'flex-col items-center justify-center gap-1'}`}>
-            <div
-              className={`rounded-lg bg-gray-900 flex items-center justify-center shrink-0 ${
-                isSidebarExpanded ? 'w-7 h-7' : 'w-6 h-6'
-              }`}
-            >
+            <div className={`flex items-center justify-center shrink-0 ${isSidebarExpanded ? 'w-7 h-7' : 'w-6 h-6'}`}>
               <BrandLogo
-                variant="dark"
+                variant="light"
                 className={isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}
                 aria-label="Handshake logo"
               />
