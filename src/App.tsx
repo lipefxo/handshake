@@ -11,6 +11,7 @@ import { ProposalSettingsPage } from './admin/pages/ProposalSettingsPage';
 import { ProposalViewer } from './presentation/ProposalViewer';
 import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
+import { ToastViewport } from './shared/components/ToastViewport';
 import { LandingPage } from './landing/LandingPage';
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
             {/* Catch-all → admin */}
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
+          <ToastViewport />
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

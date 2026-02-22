@@ -8,10 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { formatDateTime, formatRelativeTime } from '../../shared/utils/helpers';
+import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
 
 const LIMITS = {
   companyName: 50,
   email: 100,
+  workspaceName: 80,
 };
 
 function CharCounter({ value, max }: { value: string; max: number }) {
@@ -125,7 +128,9 @@ export function ProposalSettings() {
     members,
     error: workspaceError,
     inviteMember,
+    resendInvite,
     removeMember,
+    renameWorkspace,
     refreshMembers,
     clearError,
   } = useWorkspaceStore();
@@ -135,8 +140,12 @@ export function ProposalSettings() {
   const [companyNameTouched, setCompanyNameTouched] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [renamingWorkspace, setRenamingWorkspace] = useState(false);
+  const [resendingMemberId, setResendingMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const isOwner = currentUserRole === 'owner';
+  const { executeWithFeedback } = useActionFeedback();
 
   useEffect(() => {
     if (email || !user?.email) return;
@@ -148,6 +157,10 @@ export function ProposalSettings() {
     void refreshMembers();
   }, [currentWorkspace?.id, refreshMembers]);
 
+  useEffect(() => {
+    setWorkspaceName(currentWorkspace?.name ?? '');
+  }, [currentWorkspace?.name]);
+
   const companyNameError = companyNameTouched && companyName.trim() === ''
     ? 'Company name is required'
     : companyName.length > LIMITS.companyName
@@ -157,19 +170,57 @@ export function ProposalSettings() {
   const handleInviteMember = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!inviteEmail.trim()) return;
+    const targetEmail = inviteEmail.trim().toLowerCase();
 
     setInviting(true);
-    const invited = await inviteMember(inviteEmail);
-    if (invited) {
+    const inviteResult = await executeWithFeedback(() => inviteMember(inviteEmail), {
+      successMessage: `Invitation sent to ${targetEmail}`,
+      errorMessage: 'Failed to send invitation',
+      isSuccess: (result) => result.emailSent,
+      getErrorDescription: (result) =>
+        !result.added ? workspaceError ?? undefined : 'Member was added but email delivery failed.',
+    });
+    if (inviteResult.added) {
       setInviteEmail('');
     }
     setInviting(false);
   };
 
+  const handleResendInvite = async (memberId: string, memberEmail: string) => {
+    setResendingMemberId(memberId);
+    await executeWithFeedback(() => resendInvite(memberId), {
+      successMessage: `Invitation resent to ${memberEmail.toLowerCase()}`,
+      errorMessage: 'Failed to resend invitation',
+      isSuccess: (result) => result,
+      getErrorDescription: () => workspaceError ?? undefined,
+    });
+    setResendingMemberId(null);
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     setRemovingMemberId(memberId);
-    await removeMember(memberId);
+    await executeWithFeedback(() => removeMember(memberId), {
+      successMessage: 'Member removed',
+      errorMessage: 'Failed to remove member',
+      isSuccess: (result) => result,
+      getErrorDescription: () => workspaceError ?? undefined,
+    });
     setRemovingMemberId(null);
+  };
+
+  const handleRenameWorkspace = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!workspaceName.trim() || !currentWorkspace) return;
+    if (workspaceName.trim() === currentWorkspace.name) return;
+
+    setRenamingWorkspace(true);
+    await executeWithFeedback(() => renameWorkspace(workspaceName), {
+      successMessage: 'Workspace renamed',
+      errorMessage: 'Failed to rename workspace',
+      isSuccess: (result) => result,
+      getErrorDescription: () => workspaceError ?? undefined,
+    });
+    setRenamingWorkspace(false);
   };
 
   return (
@@ -246,10 +297,38 @@ export function ProposalSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Workspace:</span>{' '}
-              {currentWorkspace?.name ?? 'Loading workspace...'}
-            </div>
+            <form
+              onSubmit={handleRenameWorkspace}
+              className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3 space-y-2"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="workspace-name" className="text-xs font-medium text-gray-700">
+                  Workspace name
+                </label>
+                <CharCounter value={workspaceName} max={LIMITS.workspaceName} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="workspace-name"
+                  value={workspaceName}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  maxLength={LIMITS.workspaceName}
+                  disabled={!isOwner || renamingWorkspace || !currentWorkspace}
+                  placeholder="My Workspace"
+                />
+                <Button
+                  type="submit"
+                  disabled={
+                    !isOwner ||
+                    renamingWorkspace ||
+                    !workspaceName.trim() ||
+                    workspaceName.trim() === (currentWorkspace?.name ?? '')
+                  }
+                >
+                  {renamingWorkspace ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            </form>
 
             {workspaceError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
@@ -307,17 +386,39 @@ export function ProposalSettings() {
                             {member.status}
                           </Badge>
                         </div>
+                        {isPending && (
+                          <p
+                            className="mt-1 text-[11px] text-gray-500"
+                            title={formatDateTime(member.invitedAt)}
+                          >
+                            Invite sent {formatRelativeTime(member.invitedAt)}
+                          </p>
+                        )}
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={!isOwner || isSelf || removingMemberId === member.id}
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="text-gray-500 hover:text-red-500"
-                      >
-                        {removingMemberId === member.id ? 'Removing...' : 'Remove'}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {isPending && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={!isOwner || resendingMemberId === member.id}
+                            onClick={() => handleResendInvite(member.id, member.email)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {resendingMemberId === member.id ? 'Resending...' : 'Resend'}
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isOwner || isSelf || removingMemberId === member.id}
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-gray-500 hover:text-red-500"
+                        >
+                          {removingMemberId === member.id ? 'Removing...' : 'Remove'}
+                        </Button>
+                      </div>
                     </div>
                   );
                 })
