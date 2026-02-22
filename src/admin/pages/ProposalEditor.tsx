@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import bcrypt from 'bcryptjs';
 import { useProposalStore } from '../../store/proposalStore';
+import { useWorkspaceStore } from '../../store/workspaceStore';
 import type { Proposal, SlideConfig, SlideType, TitleSlideContent } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
@@ -35,6 +36,7 @@ export function ProposalEditor() {
     updateProposal,
     importMarkdownToProposal,
   } = useProposalStore();
+  const workspaceCompanyName = useWorkspaceStore((state) => state.currentWorkspace?.companyName ?? '');
   const ingestor = useIngestorState();
 
   const editorValues = {
@@ -96,6 +98,10 @@ export function ProposalEditor() {
     async (updatedProposal: Proposal): Promise<boolean> => {
       setSaveState('saving');
       try {
+        const brandOverrides = {
+          ...updatedProposal.brandOverrides,
+          companyName: workspaceCompanyName || updatedProposal.brandOverrides?.companyName,
+        };
         await updateProposal(updatedProposal.id, {
           title: updatedProposal.title,
           partnerName: updatedProposal.partnerName,
@@ -106,7 +112,7 @@ export function ProposalEditor() {
           visibility: updatedProposal.visibility,
           accessPassword: updatedProposal.accessPassword,
           expiresAt: updatedProposal.expiresAt,
-          brandOverrides: updatedProposal.brandOverrides,
+          brandOverrides,
         });
         setSaveState('saved');
         setHasUnsavedChanges(false);
@@ -117,7 +123,7 @@ export function ProposalEditor() {
         return false;
       }
     },
-    [updateProposal]
+    [updateProposal, workspaceCompanyName]
   );
 
   useEffect(() => {
@@ -505,8 +511,21 @@ export function ProposalEditor() {
             {/* Preview panel */}
             {editorValues.preview.showPanel && <div className="relative overflow-hidden bg-admin">
               <div className="h-full w-full max-w-[66rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
-                <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center gap-3">
+                <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const iframe = previewIframeRef.current;
+                      if (iframe) {
+                        iframe.src = iframe.src;
+                      }
+                    }}
+                    className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    title="Refresh preview"
+                  >
+                    <AppIcon icon="ui.refresh" className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 {selectedSlide && selectedSlide.enabled ? (
                   <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
@@ -514,7 +533,10 @@ export function ProposalEditor() {
                       <iframe
                         ref={previewIframeRef}
                         src={`/p/${proposal.slug}#preview`}
-                        onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
+                        onLoad={() => {
+                          sendPreviewMessage(proposal, selectedSlideId);
+                          setTimeout(() => sendPreviewMessage(proposal, selectedSlideId), 300);
+                        }}
                         className="absolute inset-0 border-0 pointer-events-none"
                         style={{
                           width: `${PREVIEW_SCALE_INVERSE * 100}%`,

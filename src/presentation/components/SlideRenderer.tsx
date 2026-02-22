@@ -19,9 +19,10 @@ interface SlideRendererProps {
   index: number;
   proposalPartnerName?: string;
   proposalCompanyLogo?: string;
+  proposalCompanyName?: string;
 }
 
-export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo }: SlideRendererProps) {
+export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo, proposalCompanyName }: SlideRendererProps) {
   const { type, content } = slide;
 
   let slideBody: ReactNode;
@@ -32,6 +33,7 @@ export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo 
           content={content as TitleSlideContent}
           partnerName={proposalPartnerName}
           companyLogo={proposalCompanyLogo}
+          companyName={proposalCompanyName}
         />
       );
       break;
@@ -63,7 +65,7 @@ export function SlideRenderer({ slide, proposalPartnerName, proposalCompanyLogo 
       slideBody = <TableSlide content={content as TableSlideContent} />;
       break;
     case 'closing':
-      slideBody = <ClosingSlide content={content as ClosingSlideContent} />;
+      slideBody = <ClosingSlide content={content as ClosingSlideContent} companyName={proposalCompanyName} />;
       break;
     default:
       slideBody = (

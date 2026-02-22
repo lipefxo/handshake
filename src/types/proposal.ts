@@ -143,6 +143,7 @@ export interface BrandOverrides {
   primaryColor?: string;
   accentColor?: string;
   companyLogo?: string;
+  companyName?: string;
 }
 
 export interface Proposal {

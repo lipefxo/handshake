@@ -18,6 +18,7 @@ interface WorkspaceStore {
   resendInvite: (memberId: string) => Promise<boolean>;
   removeMember: (memberId: string) => Promise<boolean>;
   renameWorkspace: (name: string) => Promise<boolean>;
+  updateCompanyName: (companyName: string) => Promise<boolean>;
   refreshMembers: () => Promise<void>;
 }
 
@@ -29,6 +30,7 @@ function toWorkspace(row: Record<string, unknown>): Workspace {
   return {
     id: row.id as string,
     name: (row.name as string) || 'My Workspace',
+    companyName: (row.company_name as string) || '',
     createdBy: row.created_by as string | undefined,
     createdAt: row.created_at as string,
   };
@@ -67,6 +69,7 @@ async function fetchPrimaryWorkspaceForUser(userId: string): Promise<{
       workspaces!inner (
         id,
         name,
+        company_name,
         created_by,
         created_at
       )
@@ -426,6 +429,37 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       currentWorkspace: {
         ...workspace,
         name: cleanName,
+      },
+    });
+    return true;
+  },
+
+  updateCompanyName: async (companyName) => {
+    const workspace = get().currentWorkspace;
+    const role = get().currentUserRole;
+    if (!workspace || role !== 'owner') {
+      set({ error: 'Only workspace owners can update the company name.' });
+      return false;
+    }
+
+    const cleanName = sanitizeText(companyName);
+
+    set({ error: null });
+    const { error } = await supabase
+      .from('workspaces')
+      .update({ company_name: cleanName })
+      .eq('id', workspace.id);
+
+    if (error) {
+      logStructuredError('updateCompanyName failed', error);
+      set({ error: getWorkspaceError(error, 'Failed to update company name. Please try again.') });
+      return false;
+    }
+
+    set({
+      currentWorkspace: {
+        ...workspace,
+        companyName: cleanName,
       },
     });
     return true;

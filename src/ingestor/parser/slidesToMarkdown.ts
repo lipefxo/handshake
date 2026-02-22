@@ -18,7 +18,7 @@ import type { Proposal } from '../../types/proposal';
 // Per-type serializers
 // ---------------------------------------------------------------------------
 
-function serializeTitle(content: TitleSlideContent): string {
+function serializeTitle(content: TitleSlideContent, companyName?: string): string {
   const parts: string[] = ['<!-- type: title -->'];
   if (content.headline) parts.push(`# ${content.headline}`);
   if (content.subheadline) {
@@ -27,7 +27,7 @@ function serializeTitle(content: TitleSlideContent): string {
   }
   if (content.partnerName) {
     parts.push('');
-    parts.push(`${content.partnerName} × Acme Corp`);
+    parts.push(`${content.partnerName} × ${companyName || 'Company'}`);
   }
   if (content.partnerLogo) {
     parts.push(`![logo](${content.partnerLogo})`);
@@ -165,11 +165,11 @@ function serializeClosing(content: ClosingSlideContent): string {
 // Public API
 // ---------------------------------------------------------------------------
 
-export function slideToMarkdown(slide: SlideConfig): string {
+export function slideToMarkdown(slide: SlideConfig, companyName?: string): string {
   let markdown = '';
   switch (slide.type) {
     case 'title':
-      markdown = serializeTitle(slide.content as TitleSlideContent);
+      markdown = serializeTitle(slide.content as TitleSlideContent, companyName);
       break;
     case 'intro':
       markdown = serializeIntro(slide.content as IntroSlideContent);
@@ -219,7 +219,7 @@ export function slideToMarkdown(slide: SlideConfig): string {
 }
 
 export function slidesToMarkdown(
-  proposal: Pick<Proposal, 'title' | 'partnerName' | 'themeId' | 'slides'>,
+  proposal: Pick<Proposal, 'title' | 'partnerName' | 'themeId' | 'slides'> & { companyName?: string },
 ): string {
   const sections: string[] = [];
 
@@ -233,7 +233,7 @@ export function slidesToMarkdown(
   // Enabled slides only
   for (const slide of proposal.slides) {
     if (!slide.enabled) continue;
-    sections.push(slideToMarkdown(slide));
+    sections.push(slideToMarkdown(slide, proposal.companyName));
   }
 
   return sections.join('\n\n---\n\n');

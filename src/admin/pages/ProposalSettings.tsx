@@ -131,10 +131,11 @@ export function ProposalSettings() {
     resendInvite,
     removeMember,
     renameWorkspace,
+    updateCompanyName,
     refreshMembers,
     clearError,
   } = useWorkspaceStore();
-  const [companyName, setCompanyName] = useState('Acme Corp');
+  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [companyNameTouched, setCompanyNameTouched] = useState(false);
@@ -160,6 +161,22 @@ export function ProposalSettings() {
   useEffect(() => {
     setWorkspaceName(currentWorkspace?.name ?? '');
   }, [currentWorkspace?.name]);
+
+  useEffect(() => {
+    setCompanyName(currentWorkspace?.companyName ?? '');
+  }, [currentWorkspace?.companyName]);
+
+  const [savingCompanyName, setSavingCompanyName] = useState(false);
+  const companyNameDirty = companyName !== (currentWorkspace?.companyName ?? '');
+
+  useEffect(() => {
+    if (!companyNameDirty || !currentWorkspace || companyName.trim() === '' || companyName.length > LIMITS.companyName) return;
+    const timer = setTimeout(() => {
+      setSavingCompanyName(true);
+      void updateCompanyName(companyName).finally(() => setSavingCompanyName(false));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [companyName, companyNameDirty, currentWorkspace, updateCompanyName]);
 
   const companyNameError = companyNameTouched && companyName.trim() === ''
     ? 'Company name is required'
@@ -260,12 +277,18 @@ export function ProposalSettings() {
               <Input
                 className={cn(companyNameError && 'border-red-400 focus-visible:ring-red-200')}
                 value={companyName}
-                placeholder="Acme Corp"
+                placeholder="Your company name"
                 maxLength={LIMITS.companyName}
                 required
                 onChange={(e) => setCompanyName(e.target.value)}
                 onBlur={() => setCompanyNameTouched(true)}
               />
+              {savingCompanyName && (
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+                  Saving…
+                </p>
+              )}
               {companyNameError && (
                 <p className="text-xs text-red-500 mt-1">{companyNameError}</p>
               )}

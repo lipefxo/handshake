@@ -37,7 +37,8 @@ export function ProposalMarkdownEditorModal({
       setHasEdited(false);
       return;
     }
-    setEditorContent(slidesToMarkdown(proposalRef.current));
+    const p = proposalRef.current;
+    setEditorContent(slidesToMarkdown({ ...p, companyName: p.brandOverrides?.companyName }));
   }, [isOpen]);
 
   const { result, isLoading, slideCount, warningCount, errorCount, hasBlockingErrors } =

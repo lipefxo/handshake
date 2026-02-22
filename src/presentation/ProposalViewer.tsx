@@ -91,6 +91,11 @@ function ProposalViewerContent() {
   useEffect(() => {
     if (!slug) return;
 
+    // Embedded editor previews receive all data via postMessage — skip the
+    // network fetch entirely to avoid race conditions where the async load
+    // resets state that was already hydrated from the editor's postMessage.
+    if (isEmbeddedEditorPreview) return;
+
     let cancelled = false;
     const isPreviewMode = window.location.hash.includes('preview');
 
@@ -169,12 +174,6 @@ function ProposalViewerContent() {
         return;
       }
       setLoading(false);
-      // Embedded editor previews can hydrate from postMessage shortly after mount.
-      // Avoid showing a false "not found" state while waiting for the first live update.
-      if (isEmbeddedEditorPreview) {
-        setError('');
-        return;
-      }
       setError('This proposal was not found.');
     };
 
@@ -356,6 +355,7 @@ function ProposalViewerContent() {
                     index={originalIndex >= 0 ? originalIndex : index}
                     proposalPartnerName={proposal.partnerName}
                     proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
+                    proposalCompanyName={proposal.brandOverrides?.companyName}
                   />
                 </motion.section>
               );

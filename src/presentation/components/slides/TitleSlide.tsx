@@ -8,11 +8,13 @@ interface TitleSlideProps {
   content: TitleSlideContent;
   partnerName?: string;
   companyLogo?: string;
+  companyName?: string;
 }
 
-export function TitleSlide({ content, partnerName, companyLogo }: TitleSlideProps) {
+export function TitleSlide({ content, partnerName, companyLogo, companyName }: TitleSlideProps) {
   const effectivePartnerName = partnerName || content.partnerName || 'Partner';
   const effectiveCompanyLogo = companyLogo || content.secureBagsLogo;
+  const effectiveCompanyName = companyName || 'Company';
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden"
@@ -41,7 +43,7 @@ export function TitleSlide({ content, partnerName, companyLogo }: TitleSlideProp
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
               <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>
-                Acme Corp
+                {effectiveCompanyName}
               </span>
             </div>
           )}

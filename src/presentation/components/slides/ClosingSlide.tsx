@@ -7,9 +7,10 @@ import { sanitizeText, validateUrl } from '../../../shared/utils/validation';
 
 interface ClosingSlideProps {
   content: ClosingSlideContent;
+  companyName?: string;
 }
 
-export function ClosingSlide({ content }: ClosingSlideProps) {
+export function ClosingSlide({ content, companyName }: ClosingSlideProps) {
   const safeCtaText = sanitizeText(content.ctaText ?? '');
   const safeCtaUrl = content.ctaUrl ? validateUrl(content.ctaUrl) : { value: '', isValid: false };
   const showCtaButton = Boolean(safeCtaText) && safeCtaUrl.isValid;
@@ -133,7 +134,7 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
           className="text-xs tracking-widest uppercase"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          Acme Corp
+          {companyName || 'Company'}
         </span>
       </motion.div>
     </div>

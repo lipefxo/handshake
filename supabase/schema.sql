@@ -233,9 +233,12 @@ $$;
 CREATE TABLE IF NOT EXISTS workspaces (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL DEFAULT 'My Workspace',
+  company_name text NOT NULL DEFAULT '',
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz DEFAULT now()
 );
+
+ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS company_name text NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS workspace_members (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
