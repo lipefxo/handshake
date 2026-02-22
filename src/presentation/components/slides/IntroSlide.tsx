@@ -10,6 +10,10 @@ interface IntroSlideProps {
 export function IntroSlide({ content }: IntroSlideProps) {
   const hasImage = !!content.image;
   const imageRight = content.imagePosition === 'right' || !content.imagePosition;
+  const bodyParagraphs = (content.body || '')
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
   return (
     <div
@@ -41,13 +45,17 @@ export function IntroSlide({ content }: IntroSlideProps) {
           >
             {content.heading}
           </motion.h2>
-          <motion.p
+          <motion.div
             variants={fadeUpChild}
-            className="text-lg leading-relaxed"
+            className="text-lg leading-relaxed space-y-4"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', maxWidth: '52ch' }}
           >
-            {content.body}
-          </motion.p>
+            {(bodyParagraphs.length > 0 ? bodyParagraphs : [content.body || '']).map((paragraph, index) => (
+              <p key={index} className="whitespace-pre-line">
+                {paragraph}
+              </p>
+            ))}
+          </motion.div>
         </motion.div>
 
         {hasImage && (

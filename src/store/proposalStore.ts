@@ -86,6 +86,9 @@ function getSafeErrorMessage(error: unknown, fallback: string): string {
 function sanitizeUnknown(value: unknown, key = ''): unknown {
   if (typeof value === 'string') {
     const lowerKey = key.toLowerCase();
+    if (lowerKey === 'imageposition') {
+      return value === 'left' || value === 'right' ? value : '';
+    }
     if (lowerKey.includes('url') || lowerKey.includes('image') || lowerKey.includes('logo') || lowerKey === 'src') {
       const validated = validateUrl(value);
       return validated.isValid ? validated.value : '';
