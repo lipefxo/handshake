@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { AppIcon } from '../../shared/icons/AppIcon';
@@ -58,6 +58,11 @@ const MOCK_TIMELINE_MILESTONES = [
 
 const MOCK_BEFORE_ITEMS = ['Disconnected tools', 'Manual reporting', 'Slow decision cycles'];
 const MOCK_AFTER_ITEMS = ['Single source of truth', 'Automated insights', 'Faster execution'];
+const MOCK_TABLE_ROWS = [
+  ['Starter', '$499', 'Email'],
+  ['Growth', '$999', 'Priority email'],
+  ['Enterprise', 'Custom', 'Dedicated manager'],
+];
 
 function getMockItem<T>(items: T[], index: number): T {
   return items[index % items.length];
@@ -139,6 +144,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
       {slide.type === 'timeline' && <TimelineFields content={slide.content as TimelineSlideContent} onChange={updateContent} />}
       {slide.type === 'media' && <MediaFields content={slide.content as MediaSlideContent} onChange={updateContent} />}
       {slide.type === 'benefits' && <BenefitsFields content={slide.content as BenefitsSlideContent} onChange={updateContent} />}
+      {slide.type === 'table' && <TableFields content={slide.content as TableSlideContent} onChange={updateContent} />}
       {slide.type === 'closing' && <ClosingFields content={slide.content as ClosingSlideContent} onChange={updateContent} />}
     </div>
   );
@@ -711,6 +717,155 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
                 <div><label className="text-xs text-gray-400 mb-1 block">Title</label><Input value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
               </div>
               <div><label className="text-xs text-gray-400 mb-1 block">Description</label><Textarea style={{ minHeight: '56px' }} value={benefit.description} onChange={(e) => updateBenefit(i, 'description', e.target.value)} rows={2} /></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TableFields({ content, onChange }: { content: TableSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxColumns = content.columns.length >= FIELD_LIMITS.maxTableColumns;
+  const atMaxRows = content.rows.length >= FIELD_LIMITS.maxTableRows;
+
+  const updateColumn = (index: number, value: string) => {
+    const updatedColumns = content.columns.map((column, i) => (i === index ? value : column));
+    onChange({ columns: updatedColumns });
+  };
+
+  const updateCell = (rowIndex: number, colIndex: number, value: string) => {
+    const updatedRows = content.rows.map((row, rIndex) => {
+      if (rIndex !== rowIndex) return row;
+      return row.map((cell, cIndex) => (cIndex === colIndex ? value : cell));
+    });
+    onChange({ rows: updatedRows });
+  };
+
+  const addColumn = () => {
+    if (atMaxColumns) return;
+    const nextColumnNumber = content.columns.length + 1;
+    const updatedColumns = [...content.columns, `Column ${nextColumnNumber}`];
+    const updatedRows = content.rows.map((row) => [...row, '']);
+    onChange({ columns: updatedColumns, rows: updatedRows });
+  };
+
+  const removeColumn = (columnIndex: number) => {
+    if (content.columns.length <= 1) return;
+    const updatedColumns = content.columns.filter((_, index) => index !== columnIndex);
+    const updatedRows = content.rows.map((row) => row.filter((_, index) => index !== columnIndex));
+    onChange({ columns: updatedColumns, rows: updatedRows });
+  };
+
+  const addRow = () => {
+    if (atMaxRows) return;
+    const fallback = getMockItem(MOCK_TABLE_ROWS, content.rows.length);
+    const nextRow = content.columns.map((_, index) => fallback[index] ?? '');
+    onChange({ rows: [...content.rows, nextRow] });
+  };
+
+  const removeRow = (rowIndex: number) => {
+    onChange({ rows: content.rows.filter((_, index) => index !== rowIndex) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <FieldGroup label="Title">
+        <Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} />
+      </FieldGroup>
+
+      <FieldGroup label="Description">
+        <Textarea value={content.description || ''} onChange={(e) => onChange({ description: e.target.value })} rows={2} />
+      </FieldGroup>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Columns</label>
+            <ItemCounter count={content.columns.length} max={FIELD_LIMITS.maxTableColumns} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addColumn}
+            disabled={atMaxColumns}
+            title={atMaxColumns ? `Limit reached (${FIELD_LIMITS.maxTableColumns})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add column
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {content.columns.map((column, colIndex) => (
+            <div key={colIndex} className="flex items-center gap-2">
+              <Input
+                value={column}
+                onChange={(e) => updateColumn(colIndex, e.target.value)}
+                maxLength={FIELD_LIMITS.tableCellValue}
+                placeholder={`Column ${colIndex + 1}`}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeColumn(colIndex)}
+                disabled={content.columns.length <= 1}
+                className="h-9 px-2 text-xs text-red-500 hover:text-red-600 disabled:text-gray-300"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Rows</label>
+            <ItemCounter count={content.rows.length} max={FIELD_LIMITS.maxTableRows} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addRow}
+            disabled={atMaxRows}
+            title={atMaxRows ? `Limit reached (${FIELD_LIMITS.maxTableRows})` : undefined}
+            className="h-auto p-0 text-xs text-indigo-600"
+          >
+            + Add row
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {content.rows.map((row, rowIndex) => (
+            <div key={rowIndex} className="p-3 bg-gray-50 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-500">Row {rowIndex + 1}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeRow(rowIndex)}
+                  className="h-auto px-1 py-0 text-xs text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </Button>
+              </div>
+              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${content.columns.length}, minmax(0, 1fr))` }}>
+                {content.columns.map((column, colIndex) => (
+                  <div key={`${rowIndex}-${colIndex}`}>
+                    <label className="text-xs text-gray-400 mb-1 block">{column || `Column ${colIndex + 1}`}</label>
+                    <Input
+                      value={row[colIndex] ?? ''}
+                      onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
+                      maxLength={FIELD_LIMITS.tableCellValue}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

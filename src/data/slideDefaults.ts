@@ -20,6 +20,7 @@ export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: AppIconId
   timeline: { label: 'Timeline', icon: 'slide.type.timeline', description: 'Partnership roadmap & milestones' },
   media: { label: 'Media', icon: 'slide.type.media', description: 'Full-bleed image, GIF, or video' },
   benefits: { label: 'Benefits', icon: 'slide.type.benefits', description: 'What the partner gets' },
+  table: { label: 'Table', icon: 'slide.type.table', description: 'Structured data in rows & columns' },
   closing: { label: 'Closing & CTA', icon: 'slide.type.closing', description: 'Call to action & contact info' },
 };
 
@@ -94,6 +95,16 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
         { icon: 'slide.benefits.priority-production', title: 'Priority Production', description: 'Jump the queue with guaranteed lead times.' },
         { icon: 'slide.benefits.volume-pricing', title: 'Volume Pricing', description: 'Tiered discounts that grow with your order volume.' },
         { icon: 'slide.benefits.performance-reports', title: 'Performance Reports', description: 'Monthly analytics on packaging performance and ROI.' },
+      ],
+    },
+    table: {
+      heading: 'Plan Comparison',
+      description: 'A quick view of options and inclusions.',
+      columns: ['Plan', 'Monthly', 'Support'],
+      rows: [
+        ['Starter', '$499', 'Email'],
+        ['Growth', '$999', 'Priority email'],
+        ['Enterprise', 'Custom', 'Dedicated manager'],
       ],
     },
     closing: {
