@@ -27,23 +27,23 @@ export function StatsSlide({ content }: StatsSlideProps) {
         {content.heading && (
           <motion.p
             variants={fadeUpChild}
-            className="text-center text-sm tracking-widest uppercase mb-16"
+            className="text-center text-sm tracking-widest uppercase mb-8 md:mb-16"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
             {content.heading}
           </motion.p>
         )}
 
-        <div className={`grid gap-px ${content.stats.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+        <div className={`grid gap-px ${content.stats.length <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
           {content.stats.map((stat, i) => (
             <motion.div
               key={i}
               variants={fadeUpChild}
-              className="flex flex-col items-center justify-center p-10 text-center"
+              className="flex flex-col items-center justify-center p-4 md:p-10 text-center"
               style={{ background: 'var(--color-bg-secondary)' }}
             >
               <div
-                className="text-5xl md:text-6xl font-light mb-3 tabular-nums"
+                className="text-4xl md:text-6xl font-light mb-3 tabular-nums"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
               >
                 <AnimatedCounter

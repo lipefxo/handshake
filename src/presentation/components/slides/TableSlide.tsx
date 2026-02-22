@@ -44,8 +44,8 @@ export function TableSlide({ content }: TableSlideProps) {
           )}
         </motion.div>
 
-        <div className="w-full overflow-hidden rounded-2xl border" style={{ borderColor: 'var(--color-border-default)' }}>
-          <table className="w-full table-fixed border-collapse">
+        <div className="w-full overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--color-border-default)' }}>
+          <table className="w-full min-w-[600px] table-fixed border-collapse">
             <thead style={{ background: 'var(--color-bg-secondary)' }}>
               <tr>
                 {content.columns.map((column, index) => (
