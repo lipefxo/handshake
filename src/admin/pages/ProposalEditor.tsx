@@ -394,13 +394,10 @@ export function ProposalEditor() {
 
             <Button
               onClick={handlePublish}
-              className={`h-9 px-4 text-xs font-semibold transition-all ${
-                proposal.status === 'published'
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
-              }`}
+              variant={proposal.status === 'published' ? 'destructive' : 'default'}
+              className="h-9 px-4 text-xs font-semibold transition-all"
             >
-              {proposal.status === 'published' ? 'Published' : 'Publish'}
+              {proposal.status === 'published' ? 'Unpublish' : 'Publish'}
             </Button>
           </div>
         </div>
