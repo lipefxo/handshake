@@ -8,6 +8,10 @@
   :root {
     --font-brand-serif: "Libre Baskerville", Georgia, serif;
     --font-brand-sans: "DM Sans", system-ui, sans-serif;
+    --color-brand-wordmark: #1a1a1a;
+    --color-brand-wordmark-on-dark: #f0ede8;
+    --color-brand-logo: #1a1a1a;
+    --color-brand-logo-on-dark: #ffffff;
     --transition-fast: 150ms ease;
     --transition-normal: 300ms ease;
     --transition-slow: 600ms ease;

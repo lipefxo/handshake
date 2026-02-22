@@ -10,6 +10,7 @@ import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
 import { generateSafeSlug, sanitizeText, validateUrl } from '../shared/utils/validation';
 import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
 import type { WorkspaceBrandTheme } from '../types/workspace';
+import { isDemoProposal } from '../data/demoProposal';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -240,6 +241,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   updateProposal: async (id, updates) => {
+    if (isDemoProposal(id)) {
+      set({ error: 'The demo proposal is read-only and cannot be edited.' });
+      throw new Error('The demo proposal is read-only and cannot be edited.');
+    }
+
     const currentWorkspaceId = getCurrentWorkspaceId();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
     if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
@@ -295,6 +301,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   deleteProposal: async (id) => {
+    if (isDemoProposal(id)) {
+      set({ error: 'The demo proposal is read-only and cannot be deleted.' });
+      return false;
+    }
+
     const currentWorkspaceId = getCurrentWorkspaceId();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
     if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
@@ -315,6 +326,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   duplicateProposal: async (id) => {
+    if (isDemoProposal(id)) {
+      set({ error: 'The demo proposal cannot be duplicated.' });
+      return null;
+    }
+
     const existing = get().proposals.find((p) => p.id === id);
     if (!existing) return null;
     const currentWorkspaceId = getCurrentWorkspaceId();

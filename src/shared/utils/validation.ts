@@ -26,6 +26,8 @@ export const FIELD_LIMITS = {
   tableCellValue: 200,
 } as const;
 
+const RESERVED_SLUGS = new Set(['demo']);
+
 export function sanitizeText(input: string): string {
   return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }).trim();
 }
@@ -73,12 +75,18 @@ export function validateUrl(input: string): { value: string; isValid: boolean } 
 }
 
 export function generateSafeSlug(input: string): string {
-  return sanitizeText(input)
+  const safeSlug = sanitizeText(input)
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, FIELD_LIMITS.slug);
+
+  if (!safeSlug || RESERVED_SLUGS.has(safeSlug)) {
+    return '';
+  }
+
+  return safeSlug;
 }
 
 export function validateImageUpload(file: File): { valid: boolean; error?: string } {

@@ -16,6 +16,7 @@ import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 import { PasswordGate } from './components/PasswordGate';
 import { EmailGate } from './components/EmailGate';
 import { ExpiredPage } from './components/ExpiredPage';
+import { DEMO_PROPOSAL, DEMO_PROPOSAL_SLUG } from '../data/demoProposal';
 
 function getContentFingerprint(slide: SlideConfig): string {
   const c = slide.content as unknown as Record<string, unknown>;
@@ -106,6 +107,24 @@ function ProposalViewerContent() {
       setProposalMeta(null);
       setProposal(null);
       setAccessGranted(false);
+
+      if (slug === DEMO_PROPOSAL_SLUG) {
+        setProposalMeta({
+          id: DEMO_PROPOSAL.id,
+          slug: DEMO_PROPOSAL.slug,
+          shortCode: DEMO_PROPOSAL.shortCode,
+          title: DEMO_PROPOSAL.title,
+          partnerName: DEMO_PROPOSAL.partnerName,
+          status: DEMO_PROPOSAL.status,
+          visibility: DEMO_PROPOSAL.visibility,
+          expiresAt: DEMO_PROPOSAL.expiresAt,
+          themeId: DEMO_PROPOSAL.themeId,
+        });
+        setProposal(DEMO_PROPOSAL);
+        setAccessGranted(true);
+        setLoading(false);
+        return;
+      }
 
       const meta = await getProposalMetaBySlug(slug);
       if (cancelled) return;

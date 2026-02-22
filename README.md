@@ -33,7 +33,7 @@ npm install
 1. Create a project at [supabase.com](https://supabase.com)
 2. Run the SQL in `supabase/schema.sql` in the SQL editor
 3. Enable Email (magic link) auth in Authentication > Providers
-4. Set the redirect URL to `https://your-domain.com/auth/callback`
+4. Set the redirect URL to `https://www.handshake.design/auth/callback`
 5. (Optional) Restrict to `@securebags.com` emails in Auth > Settings
 
 ### 3. Configure environment variables
@@ -47,6 +47,7 @@ Fill in your Supabase credentials:
 ```
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_AGENTATION_ALLOWED_EMAIL=lipefxo@gmail.com
 ```
 
 ### 4. Start the dev server
@@ -132,7 +133,7 @@ src/
 1. Push to GitHub
 2. Connect repo in Vercel dashboard
 3. Add environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
-4. Set custom domain: `partners.securebags.com`
+4. Set custom domain: `www.handshake.design`
 5. Update Supabase auth redirect URLs to match the domain
 
 ---

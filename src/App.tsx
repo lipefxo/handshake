@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './auth/LoginPage';
@@ -13,6 +13,29 @@ import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ToastViewport } from './shared/components/ToastViewport';
 import { LandingPage } from './landing/LandingPage';
+import { useAuthStore } from './store/authStore';
+import { Agentation } from 'agentation';
+
+const AGENTATION_ALLOWED_EMAIL = (
+  import.meta.env.VITE_AGENTATION_ALLOWED_EMAIL ?? 'lipefxo@gmail.com'
+).trim().toLowerCase();
+
+function AgentationGate() {
+  const location = useLocation();
+  const userEmail = useAuthStore((state) => state.user?.email?.toLowerCase() ?? '');
+  const isAllowedUser = AGENTATION_ALLOWED_EMAIL.length > 0 && userEmail === AGENTATION_ALLOWED_EMAIL;
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isEmbeddedPresentationPreview =
+    location.pathname.startsWith('/p/') &&
+    location.hash.includes('preview') &&
+    window.self !== window.top;
+
+  if (!isAllowedUser || !isAdminRoute || isEmbeddedPresentationPreview) {
+    return null;
+  }
+
+  return <Agentation />;
+}
 
 export default function App() {
   return (
@@ -50,6 +73,7 @@ export default function App() {
             {/* Catch-all → admin */}
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
+          <AgentationGate />
           <ToastViewport />
         </AuthProvider>
       </BrowserRouter>

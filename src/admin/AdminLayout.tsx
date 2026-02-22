@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
+import { BrandLogo } from '../shared/components/BrandLogo';
+import { BrandWordmark } from '../shared/components/BrandWordmark';
 import { useWorkspaceStore } from '../store/workspaceStore';
 import { KeyboardCommandOverlay } from './components/KeyboardCommandOverlay';
 import { Button } from '@/components/ui/button';
@@ -40,15 +42,14 @@ export function AdminLayout() {
                 isSidebarExpanded ? 'w-7 h-7' : 'w-6 h-6'
               }`}
             >
-              <AppIcon icon="ui.home" className={`${isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-white`} />
+              <BrandLogo
+                variant="dark"
+                className={isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}
+                aria-label="Handshake logo"
+              />
             </div>
             {isSidebarExpanded && (
-              <span
-                className="text-sm text-[#1a1a1a]"
-                style={{ fontFamily: 'var(--font-brand-serif)', letterSpacing: '-0.01em' }}
-              >
-                Handshake
-              </span>
+              <BrandWordmark variant="light" className="h-3.5 w-auto" aria-label="Handshake" />
             )}
             <Button
               type="button"

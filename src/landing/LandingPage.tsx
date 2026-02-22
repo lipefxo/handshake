@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { motion, useInView, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabaseClient';
+import { DEMO_PROPOSAL_SLUG } from '../data/demoProposal';
+import { BrandWordmark } from '../shared/components/BrandWordmark';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -265,18 +267,14 @@ function NavBar() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           type="button"
           style={{
-            fontFamily: serif,
-            fontSize: 20,
-            fontWeight: 700,
-            color: C.textPrimary,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            letterSpacing: '-0.01em',
+            lineHeight: 0,
           }}
         >
-          Handshake
+          <BrandWordmark variant={scrolled ? 'light' : 'dark'} className="h-5 w-auto" aria-label="Handshake" />
         </button>
 
         {/* Desktop nav */}
@@ -1553,37 +1551,7 @@ function FeaturesSection() {
 // ─── Live example CTA ─────────────────────────────────────────────────────────
 function LiveExampleCTA() {
   const { ref, inView } = useReveal();
-  const [liveDemoHref, setLiveDemoHref] = useState('/admin');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadLiveDemoHref = async () => {
-      const { data, error } = await supabase
-        .from('proposals')
-        .select('slug')
-        .eq('status', 'published')
-        .eq('visibility', 'public')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      if (error || !data?.slug) {
-        setLiveDemoHref('/admin');
-        return;
-      }
-
-      setLiveDemoHref(`/p/${data.slug}`);
-    };
-
-    void loadLiveDemoHref();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const liveDemoHref = `/p/${DEMO_PROPOSAL_SLUG}`;
 
   return (
     <section
@@ -2850,17 +2818,7 @@ function Footer() {
           gap: 16,
         }}
       >
-        <div
-          style={{
-            fontFamily: serif,
-            fontSize: 16,
-            fontWeight: 700,
-            color: C.textOnDark,
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Handshake
-        </div>
+        <BrandWordmark variant="dark" className="h-4 w-auto" aria-label="Handshake" />
 
         <div
           style={{

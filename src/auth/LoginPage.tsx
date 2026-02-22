@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppIcon } from '../shared/icons/AppIcon';
+import { BrandLogo } from '../shared/components/BrandLogo';
+import { BrandWordmark } from '../shared/components/BrandWordmark';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -76,10 +78,10 @@ export function LoginPage() {
       >
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-[#1a1a1a] rounded-2xl shadow-lg shadow-black/10 border border-black/5 mb-4">
-            <AppIcon icon="ui.home" size={28} className="text-[#f0ede8]" />
+            <BrandLogo variant="dark" className="w-7 h-7" aria-label="Handshake logo" />
           </div>
-          <h1 className="text-3xl text-gray-900 mb-1.5" style={{ fontFamily: 'var(--font-brand-serif)', letterSpacing: '-0.01em' }}>
-            Handshake
+          <h1 className="mb-1.5 inline-flex items-center justify-center">
+            <BrandWordmark variant="light" className="h-8 w-auto" aria-label="Handshake" />
           </h1>
           <p className="text-sm text-[#6b6b6b]">Partnership Proposal Studio</p>
         </div>
