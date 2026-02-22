@@ -147,7 +147,7 @@ export interface BrandOverrides {
 
 export interface Proposal {
   id: string;
-  user_id: string;
+  workspace_id: string;
   slug: string;
   shortCode?: string;
   title: string;

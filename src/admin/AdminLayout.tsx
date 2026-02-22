@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
+import { useWorkspaceStore } from '../store/workspaceStore';
 import { KeyboardCommandOverlay } from './components/KeyboardCommandOverlay';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +13,7 @@ const navItems = [
 
 export function AdminLayout() {
   const location = useLocation();
+  const workspaceName = useWorkspaceStore((state) => state.currentWorkspace?.name);
   const isProposalEditorView = /^\/admin\/proposals\/[^/]+$/.test(location.pathname);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => !isProposalEditorView);
   const showTopProposalsLink = location.pathname !== '/admin';
@@ -60,7 +62,12 @@ export function AdminLayout() {
 
         {/* Navigation */}
         <nav className={`flex-1 py-4 ${isSidebarExpanded ? 'px-3' : 'px-2'}`}>
-          {isSidebarExpanded && <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-2 mb-2">Workspace</p>}
+          {isSidebarExpanded && (
+            <div className="px-2 mb-2">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Workspace</p>
+              <p className="text-xs text-gray-500 truncate mt-0.5">{workspaceName ?? 'Loading...'}</p>
+            </div>
+          )}
           {navItems.map((item) => (
             <NavLink
               key={item.to}

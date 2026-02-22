@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import type { Proposal, SlideConfig } from '../types/proposal';
 import { useProposalStore } from '../store/proposalStore';
 import { useAuthStore } from '../store/authStore';
+import { useWorkspaceStore } from '../store/workspaceStore';
 import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
@@ -29,6 +30,7 @@ function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
   const { getProposalBySlug, getOwnProposalBySlug } = useProposalStore();
   const user = useAuthStore((state) => state.user);
+  const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -162,7 +164,7 @@ function ProposalViewerContent() {
   const canReturnToEditor = Boolean(
     user &&
     proposal?.id &&
-    proposal.user_id === user.id
+    proposal.workspace_id === currentWorkspaceId
   );
   const backToEditorPath = canReturnToEditor && proposal?.id ? `/admin/proposals/${proposal.id}` : undefined;
 

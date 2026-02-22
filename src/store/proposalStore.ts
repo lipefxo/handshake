@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { BrandOverrides, Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateShortCode, generateSlug } from '../shared/utils/helpers';
-import { useAuthStore } from './authStore';
+import { useWorkspaceStore } from './workspaceStore';
 import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
 import type { ThemeId } from '../themes/themeTypes';
 import { normalizeSlidesIconIds } from '../shared/icons/iconMigration';
@@ -45,7 +45,7 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
 
   return {
     id: row.id as string,
-    user_id: row.user_id as string,
+    workspace_id: row.workspace_id as string,
     slug: row.slug as string,
     shortCode: row.short_code as string | undefined,
     title: row.title as string,
@@ -121,8 +121,8 @@ function sanitizeSlides(slides: SlideConfig[]): SlideConfig[] {
   }));
 }
 
-function getCurrentUserId(): string | null {
-  return useAuthStore.getState().user?.id ?? null;
+function getCurrentWorkspaceId(): string | null {
+  return useWorkspaceStore.getState().currentWorkspace?.id ?? null;
 }
 
 function normalizeShortCode(shortCode: string): string {
@@ -151,9 +151,9 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
   createProposal: async (proposal) => {
     set({ error: null });
-    const currentUserId = getCurrentUserId();
-    if (!currentUserId || currentUserId !== proposal.user_id) {
-      set({ error: 'Unauthorized: cannot create proposal for another user.' });
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    if (!currentWorkspaceId || currentWorkspaceId !== proposal.workspace_id) {
+      set({ error: 'Unauthorized: cannot create proposal for another workspace.' });
       return null;
     }
 
@@ -161,7 +161,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { count, error: rateLimitError } = await supabase
       .from('proposals')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', currentUserId)
+      .eq('workspace_id', currentWorkspaceId)
       .gte('created_at', oneHourAgo);
 
     if (rateLimitError) {
@@ -184,7 +184,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase
       .from('proposals')
       .insert({
-        user_id: proposal.user_id,
+        workspace_id: proposal.workspace_id,
         slug: safeSlug,
         short_code: safeShortCode,
         title: safeTitle,
@@ -206,11 +206,11 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   updateProposal: async (id, updates) => {
-    const currentUserId = getCurrentUserId();
+    const currentWorkspaceId = getCurrentWorkspaceId();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
-    if (!existingProposal || !currentUserId || existingProposal.user_id !== currentUserId) {
-      set({ error: 'Unauthorized: cannot update proposal you do not own.' });
-      throw new Error('Unauthorized: cannot update proposal you do not own.');
+    if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot update proposal outside your workspace.' });
+      throw new Error('Unauthorized: cannot update proposal outside your workspace.');
     }
 
     const sanitizedUpdates: Partial<Proposal> = {
@@ -252,10 +252,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   deleteProposal: async (id) => {
-    const currentUserId = getCurrentUserId();
+    const currentWorkspaceId = getCurrentWorkspaceId();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
-    if (!existingProposal || !currentUserId || existingProposal.user_id !== currentUserId) {
-      set({ error: 'Unauthorized: cannot delete proposal you do not own.' });
+    if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot delete proposal outside your workspace.' });
       return false;
     }
 
@@ -274,15 +274,15 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   duplicateProposal: async (id) => {
     const existing = get().proposals.find((p) => p.id === id);
     if (!existing) return null;
-    const currentUserId = getCurrentUserId();
-    if (!currentUserId || existing.user_id !== currentUserId) return null;
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    if (!currentWorkspaceId || existing.workspace_id !== currentWorkspaceId) return null;
 
     const newSlug = generateSafeSlug(generateSlug(`${existing.partnerName}-copy`));
     const newShortCode = normalizeShortCode(generateShortCode());
     const { data, error } = await supabase
       .from('proposals')
       .insert({
-        user_id: currentUserId,
+        workspace_id: currentWorkspaceId,
         slug: newSlug,
         short_code: newShortCode,
         title: `${existing.title} (Copy)`,
@@ -333,15 +333,15 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   getOwnProposalBySlug: async (slug) => {
-    const currentUserId = getCurrentUserId();
-    if (!currentUserId) return null;
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    if (!currentWorkspaceId) return null;
 
     const safeSlug = generateSafeSlug(slug);
     const { data, error } = await supabase
       .from('proposals')
       .select('*')
       .eq('slug', safeSlug)
-      .eq('user_id', currentUserId)
+      .eq('workspace_id', currentWorkspaceId)
       .single();
 
     if (error || !data) return null;
@@ -350,8 +350,8 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
   createFromMarkdown: async (_markdown, frontmatter, slides) => {
     set({ error: null });
-    const user = useAuthStore.getState().user;
-    if (!user) return null;
+    const workspaceId = getCurrentWorkspaceId();
+    if (!workspaceId) return null;
 
     const partnerName = sanitizeText(frontmatter.partner || 'Untitled Partner');
     const title = sanitizeText(frontmatter.title || `${partnerName} Proposal`);
@@ -360,7 +360,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(slides));
 
     const proposalBase: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
-      user_id: user.id,
+      workspace_id: workspaceId,
       slug: generateSafeSlug(generateSlug(partnerName)),
       shortCode: normalizeShortCode(generateShortCode()),
       title,
@@ -378,7 +378,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       const { data, error } = await supabase
         .from('proposals')
         .insert({
-          user_id: proposal.user_id,
+          workspace_id: proposal.workspace_id,
           slug: proposal.slug,
           short_code: proposal.shortCode,
           title: proposal.title,
@@ -421,10 +421,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   },
 
   importMarkdownToProposal: async (proposalId, newSlides, mode) => {
-    const currentUserId = getCurrentUserId();
+    const currentWorkspaceId = getCurrentWorkspaceId();
     const existing = get().proposals.find((p) => p.id === proposalId);
-    if (!existing || !currentUserId || existing.user_id !== currentUserId) {
-      set({ error: 'Unauthorized: cannot update proposal you do not own.' });
+    if (!existing || !currentWorkspaceId || existing.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot update proposal outside your workspace.' });
       return;
     }
 
