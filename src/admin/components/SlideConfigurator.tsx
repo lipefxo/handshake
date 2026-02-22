@@ -32,6 +32,37 @@ const BENEFIT_ICON_OPTIONS: IconOption[] = [
   { value: 'slide.benefits.performance-reports', label: 'Performance Reports' },
 ];
 
+const MOCK_STATS = [
+  { value: 24, suffix: '%', label: 'Faster Fulfillment', description: 'After launch quarter' },
+  { value: 3, suffix: 'x', label: 'Higher Engagement', description: 'On campaign assets' },
+  { value: 99.9, suffix: '%', label: 'On-time Delivery', description: 'Across all regions' },
+];
+
+const MOCK_FEATURES = [
+  { icon: 'slide.features.default' as AppIconId, title: 'Workflow Automation', description: 'Automate repetitive steps and reduce manual follow-up for every campaign.' },
+  { icon: 'slide.features.default' as AppIconId, title: 'Live Collaboration', description: 'Keep your team aligned with shared updates and quick in-context feedback.' },
+  { icon: 'slide.features.default' as AppIconId, title: 'Performance Insights', description: 'Track outcomes in real time with clear reporting and trend visibility.' },
+];
+
+const MOCK_BENEFITS = [
+  { icon: 'slide.benefits.default' as AppIconId, title: 'Faster Time to Value', description: 'Launch sooner with a guided rollout and proven implementation playbooks.' },
+  { icon: 'slide.benefits.default' as AppIconId, title: 'Reduced Operational Risk', description: 'Standardized processes and QA checks keep launches predictable and stable.' },
+  { icon: 'slide.benefits.default' as AppIconId, title: 'Scalable Foundation', description: 'Build once and reuse across teams, markets, and future campaign cycles.' },
+];
+
+const MOCK_TIMELINE_MILESTONES = [
+  { date: 'Phase 4', title: 'Pilot Expansion', description: 'Extend to a second region and validate operational readiness.' },
+  { date: 'Phase 5', title: 'Team Enablement', description: 'Run training sessions and publish rollout documentation.' },
+  { date: 'Phase 6', title: 'Optimization Sprint', description: 'Analyze results and prioritize improvements for the next cycle.' },
+];
+
+const MOCK_BEFORE_ITEMS = ['Disconnected tools', 'Manual reporting', 'Slow decision cycles'];
+const MOCK_AFTER_ITEMS = ['Single source of truth', 'Automated insights', 'Faster execution'];
+
+function getMockItem<T>(items: T[], index: number): T {
+  return items[index % items.length];
+}
+
 const selectClassName = 'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50';
 
 function Input({
@@ -275,7 +306,7 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
   };
   const addStat = () => {
     if (atMaxStats) return;
-    onChange({ stats: [...content.stats, { value: 0, label: 'New Metric' }] });
+    onChange({ stats: [...content.stats, getMockItem(MOCK_STATS, content.stats.length)] });
   };
   const removeStat = (index: number) => {
     onChange({ stats: content.stats.filter((_, i) => i !== index) });
@@ -350,7 +381,7 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
   };
   const addFeature = () => {
     if (atMaxFeatures) return;
-    onChange({ features: [...content.features, { icon: 'slide.features.default', title: 'New Feature', description: '' }] });
+    onChange({ features: [...content.features, getMockItem(MOCK_FEATURES, content.features.length)] });
   };
   const removeFeature = (index: number) => {
     onChange({ features: content.features.filter((_, i) => i !== index) });
@@ -474,7 +505,7 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
             size="sm"
             onClick={() => {
               if (atMaxBeforeItems) return;
-              onChange({ before: { ...content.before, items: [...content.before.items, ''] } });
+              onChange({ before: { ...content.before, items: [...content.before.items, getMockItem(MOCK_BEFORE_ITEMS, content.before.items.length)] } });
             }}
             disabled={atMaxBeforeItems}
             title={atMaxBeforeItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
@@ -498,7 +529,7 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
             size="sm"
             onClick={() => {
               if (atMaxAfterItems) return;
-              onChange({ after: { ...content.after, items: [...content.after.items, ''] } });
+              onChange({ after: { ...content.after, items: [...content.after.items, getMockItem(MOCK_AFTER_ITEMS, content.after.items.length)] } });
             }}
             disabled={atMaxAfterItems}
             title={atMaxAfterItems ? `Limit reached (${FIELD_LIMITS.maxComparisonItems})` : undefined}
@@ -521,7 +552,7 @@ function TimelineFields({ content, onChange }: { content: TimelineSlideContent; 
   };
   const addMilestone = () => {
     if (atMaxMilestones) return;
-    onChange({ milestones: [...content.milestones, { date: 'Phase X', title: 'New Milestone', description: '' }] });
+    onChange({ milestones: [...content.milestones, getMockItem(MOCK_TIMELINE_MILESTONES, content.milestones.length)] });
   };
   const removeMilestone = (index: number) => {
     onChange({ milestones: content.milestones.filter((_, i) => i !== index) });
@@ -606,7 +637,7 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
   };
   const addBenefit = () => {
     if (atMaxBenefits) return;
-    onChange({ benefits: [...content.benefits, { icon: 'slide.benefits.default', title: 'New Benefit', description: '' }] });
+    onChange({ benefits: [...content.benefits, getMockItem(MOCK_BENEFITS, content.benefits.length)] });
   };
   const removeBenefit = (index: number) => {
     onChange({ benefits: content.benefits.filter((_, i) => i !== index) });

@@ -12,7 +12,7 @@ create table proposals (
   partner_name text not null,
   status text default 'draft' check (status in ('draft', 'published')),
   slides jsonb not null default '[]'::jsonb,
-  theme jsonb,
+  theme_id text default 'dark-minimal',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -47,6 +47,29 @@ $$ language plpgsql;
 create trigger proposals_updated_at
   before update on proposals
   for each row execute function update_updated_at();
+
+-- ============================================================
+-- Migrate legacy "theme" JSONB → "theme_id" text column
+-- Safe to re-run: every statement is idempotent.
+-- ============================================================
+
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS theme_id text DEFAULT 'dark-minimal';
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'proposals' AND column_name = 'theme'
+  ) THEN
+    UPDATE proposals
+      SET theme_id = theme->>'id'
+      WHERE theme IS NOT NULL
+        AND theme->>'id' IS NOT NULL
+        AND (theme_id IS NULL OR theme_id = 'dark-minimal');
+
+    ALTER TABLE proposals DROP COLUMN theme;
+  END IF;
+END $$;
 
 -- ============================================================
 -- Sharing controls on proposals
