@@ -74,6 +74,19 @@ Your subheadline here.
 
 ---`,
 
+  table: `# Plan Comparison
+<!-- type: table -->
+
+A quick side-by-side view.
+
+| Plan | Monthly | Support |
+| --- | --- | --- |
+| Starter | $499 | Email |
+| Growth | $999 | Priority email |
+| Enterprise | Custom | Dedicated manager |
+
+---`,
+
   intro: `# Section Heading
 <!-- type: intro -->
 
@@ -107,5 +120,6 @@ export const SNIPPET_LABELS: Record<SlideType, string> = {
   comparison: 'Comparison',
   timeline: 'Timeline',
   media: 'Media',
+  table: 'Table',
   closing: 'Closing',
 };

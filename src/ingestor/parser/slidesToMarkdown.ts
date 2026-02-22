@@ -9,6 +9,7 @@ import type {
   TimelineSlideContent,
   MediaSlideContent,
   BenefitsSlideContent,
+  TableSlideContent,
   ClosingSlideContent,
 } from '../../types/proposal';
 import type { Proposal } from '../../types/proposal';
@@ -125,6 +126,22 @@ function serializeBenefits(content: BenefitsSlideContent): string {
   return lines.join('\n');
 }
 
+function serializeTable(content: TableSlideContent): string {
+  const lines: string[] = ['<!-- type: table -->'];
+  if (content.heading) lines.push(`# ${content.heading}`);
+  if (content.description) lines.push(content.description);
+  if (content.columns.length > 0) {
+    lines.push('');
+    lines.push(`| ${content.columns.join(' | ')} |`);
+    lines.push(`| ${content.columns.map(() => '---').join(' | ')} |`);
+    for (const row of content.rows) {
+      const normalized = content.columns.map((_, index) => row[index] ?? '');
+      lines.push(`| ${normalized.join(' | ')} |`);
+    }
+  }
+  return lines.join('\n');
+}
+
 function serializeClosing(content: ClosingSlideContent): string {
   const lines: string[] = ['<!-- type: closing -->'];
   if (content.heading) lines.push(`# ${content.heading}`);
@@ -176,8 +193,9 @@ export function slideToMarkdown(slide: SlideConfig): string {
       markdown = serializeMedia(slide.content as MediaSlideContent);
       break;
     case 'benefits':
-      markdown = serializeBenefits(slide.content as BenefitsSlideContent);
-      break;
+      return serializeBenefits(slide.content as BenefitsSlideContent);
+    case 'table':
+      return serializeTable(slide.content as TableSlideContent);
     case 'closing':
       markdown = serializeClosing(slide.content as ClosingSlideContent);
       break;

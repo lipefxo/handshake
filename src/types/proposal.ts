@@ -11,6 +11,7 @@ export type SlideType =
   | 'timeline'
   | 'media'
   | 'benefits'
+  | 'table'
   | 'closing';
 
 export interface SlideLink {
@@ -107,6 +108,13 @@ export interface BenefitsSlideContent {
   }>;
 }
 
+export interface TableSlideContent {
+  heading: string;
+  description?: string;
+  columns: string[];
+  rows: string[][];
+}
+
 export interface ClosingSlideContent {
   heading: string;
   subheading?: string;
@@ -127,6 +135,7 @@ export type SlideContent =
   | TimelineSlideContent
   | MediaSlideContent
   | BenefitsSlideContent
+  | TableSlideContent
   | ClosingSlideContent;
 
 export interface BrandOverrides {

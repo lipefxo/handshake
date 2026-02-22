@@ -10,6 +10,7 @@ import type {
   TimelineSlideContent,
   MediaSlideContent,
   BenefitsSlideContent,
+  TableSlideContent,
   ClosingSlideContent,
 } from '../../types/proposal';
 import type { TypedSection } from './slideTypeInferrer';
@@ -332,6 +333,36 @@ function extractClosing(section: TypedSection): ClosingSlideContent {
   };
 }
 
+function extractTable(section: TypedSection): TableSlideContent {
+  const clean = stripDirectiveComments(section.raw);
+  const heading = sanitizeText(extractH1(clean) ?? '');
+  const paragraphs = extractParagraphs(clean);
+  const tableLines = clean
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.includes('|') && !line.startsWith('#'));
+
+  const parsedRows = tableLines
+    .map((line) => {
+      const stripped = line.replace(/^\|/, '').replace(/\|$/, '');
+      return stripped.split('|').map((cell) => sanitizeText(cell.trim()));
+    })
+    .filter((row) => row.length > 0 && row.some(Boolean))
+    .filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)));
+
+  const columns = parsedRows[0] ?? [];
+  const rows = parsedRows.slice(1).map((row) =>
+    columns.map((_, index) => row[index] ?? ''),
+  );
+
+  return {
+    heading,
+    description: sanitizeText(paragraphs[0] ?? ''),
+    columns,
+    rows,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
@@ -347,6 +378,7 @@ export function extractContent(section: TypedSection): SlideContent {
     case 'comparison':  return extractComparison(section);
     case 'timeline':    return extractTimeline(section);
     case 'media':       return extractMedia(section);
+    case 'table':       return extractTable(section);
     case 'closing':     return extractClosing(section);
   }
 }

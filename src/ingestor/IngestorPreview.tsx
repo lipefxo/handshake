@@ -15,6 +15,7 @@ const SLIDE_TYPE_ICONS: Record<SlideType, string> = {
   comparison: '⊞',
   timeline: '◎',
   media: '▣',
+  table: '▦',
   closing: '◉',
 };
 
@@ -28,6 +29,7 @@ const SLIDE_TYPE_LABELS: Record<SlideType, string> = {
   comparison: 'Comparison',
   timeline: 'Timeline',
   media: 'Media',
+  table: 'Table',
   closing: 'Closing',
 };
 
@@ -57,6 +59,14 @@ function getSlidePreviewText(slide: { type: SlideType; content: unknown }): stri
       return (c['heading'] as string) ?? (ms ? `${ms.length} milestones` : '');
     }
     case 'media':   return (c['caption'] as string) ?? (c['url'] as string) ?? '';
+    case 'table': {
+      const columns = c['columns'] as unknown[] | undefined;
+      const rows = c['rows'] as unknown[] | undefined;
+      if (columns && rows) {
+        return `${rows.length} row${rows.length !== 1 ? 's' : ''} × ${columns.length} column${columns.length !== 1 ? 's' : ''}`;
+      }
+      return (c['heading'] as string) ?? '';
+    }
     case 'closing': return (c['heading'] as string) ?? '';
     default:        return '';
   }

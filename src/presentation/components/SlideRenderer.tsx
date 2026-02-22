@@ -1,5 +1,4 @@
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, ClosingSlideContent } from '../../types/proposal';
-import type { ReactNode } from 'react';
+import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { TitleSlide } from './slides/TitleSlide';
 import { IntroSlide } from './slides/IntroSlide';
 import { StatsSlide } from './slides/StatsSlide';
@@ -9,6 +8,7 @@ import { ComparisonSlide } from './slides/ComparisonSlide';
 import { TimelineSlide } from './slides/TimelineSlide';
 import { MediaSlide } from './slides/MediaSlide';
 import { BenefitsSlide } from './slides/BenefitsSlide';
+import { TableSlide } from './slides/TableSlide';
 import { ClosingSlide } from './slides/ClosingSlide';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { sanitizeText, validateUrl } from '../../shared/utils/validation';
@@ -49,8 +49,9 @@ export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps
       slideBody = <MediaSlide content={content as MediaSlideContent} />;
       break;
     case 'benefits':
-      slideBody = <BenefitsSlide content={content as BenefitsSlideContent} />;
-      break;
+      return <BenefitsSlide content={content as BenefitsSlideContent} />;
+    case 'table':
+      return <TableSlide content={content as TableSlideContent} />;
     case 'closing':
       slideBody = <ClosingSlide content={content as ClosingSlideContent} />;
       break;

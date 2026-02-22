@@ -9,7 +9,7 @@ export interface TypedSection extends RawSection {
 
 const VALID_TYPES: Set<SlideType> = new Set([
   'title', 'intro', 'stats', 'features', 'testimonial',
-  'comparison', 'timeline', 'media', 'benefits', 'closing',
+  'comparison', 'timeline', 'media', 'benefits', 'table', 'closing',
 ]);
 
 function parseDirectives(raw: string): Record<string, string> {
