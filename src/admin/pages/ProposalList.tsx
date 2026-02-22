@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
+import { useWorkspaceStore } from '../../store/workspaceStore';
 import type { Proposal, SlideConfig } from '../../types/proposal';
 import { generateSlug, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
 import { createDefaultProposalSlides } from '../../data/slideDefaults';
@@ -27,6 +28,7 @@ export function ProposalList() {
     clearError,
   } = useProposalStore();
   const { user } = useAuthStore();
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export function ProposalList() {
   };
 
   const handleCreateFromDialog = async (values: NewProposalFormValues) => {
-    if (!user) return;
+    if (!user || !workspaceId) return;
 
     const proposalTitle = values.title.trim();
     const partnerName = values.partnerName.trim();
@@ -70,7 +72,7 @@ export function ProposalList() {
     setCreating(true);
     try {
       const createdProposal = await createProposal({
-        user_id: user.id,
+        workspace_id: workspaceId,
         slug: generateSlug(partnerName),
         title: proposalTitle,
         partnerName,

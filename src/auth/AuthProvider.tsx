@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuthStore } from '../store/authStore';
+import { useWorkspaceStore } from '../store/workspaceStore';
 import { IdleTimeout } from './IdleTimeout';
 import type { AppUser } from '../types/auth';
 
@@ -32,47 +33,57 @@ function getDevBypassUser(): AppUser | null {
 export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
   const { setUser, setLoading, setInitialized } = useAuthStore();
+  const { initializeWorkspace, clearWorkspaceState } = useWorkspaceStore();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          displayName: session.user.user_metadata?.full_name,
-          avatarUrl: session.user.user_metadata?.avatar_url,
-        });
-      } else {
-        setUser(getDevBypassUser());
-      }
-      setLoading(false);
-      setInitialized(true);
+    const mapSessionUser = (sessionUser: NonNullable<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']>['user']): AppUser => ({
+      id: sessionUser.id,
+      email: sessionUser.email ?? '',
+      displayName: sessionUser.user_metadata?.full_name,
+      avatarUrl: sessionUser.user_metadata?.avatar_url,
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (session?.user) {
         sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          displayName: session.user.user_metadata?.full_name,
-          avatarUrl: session.user.user_metadata?.avatar_url,
-        });
+        const appUser = mapSessionUser(session.user);
+        setUser(appUser);
+        await initializeWorkspace(appUser);
+      } else {
+        setUser(getDevBypassUser());
+        clearWorkspaceState();
+      }
+
+      setLoading(false);
+      setInitialized(true);
+    };
+
+    void initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
+        sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
+        const appUser = mapSessionUser(session.user);
+        setUser(appUser);
+        void initializeWorkspace(appUser);
       } else if (event === 'SIGNED_OUT') {
         sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
         setUser(null);
+        clearWorkspaceState();
         sessionStorage.setItem('authMessage', 'Your session expired. Please sign in again.');
         navigate('/login', { replace: true });
       } else {
         setUser(getDevBypassUser());
+        clearWorkspaceState();
       }
 
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [setUser, setLoading, setInitialized, navigate]);
+  }, [setUser, setLoading, setInitialized, navigate, initializeWorkspace, clearWorkspaceState]);
 
   return <IdleTimeout>{children}</IdleTimeout>;
 }
