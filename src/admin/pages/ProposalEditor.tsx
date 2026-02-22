@@ -15,6 +15,7 @@ import { defaultThemeId, themes } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -50,6 +51,7 @@ export function ProposalEditor() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
 
@@ -201,11 +203,21 @@ export function ProposalEditor() {
 
   const handlePublish = async () => {
     if (!proposal) return;
-    const newStatus = proposal.status === 'published' ? 'draft' : 'published';
+    if (proposal.status === 'published') {
+      setShowUnpublishConfirm(true);
+      return;
+    }
+    const newStatus: Proposal['status'] = 'published';
     updateLocal({ status: newStatus });
     if (newStatus === 'published') {
       setShowPublishSuccess(true);
     }
+  };
+
+  const handleConfirmUnpublish = () => {
+    if (!proposal) return;
+    updateLocal({ status: 'draft' });
+    setShowUnpublishConfirm(false);
   };
 
   const handlePartnerNameChange = (value: string) => {
@@ -565,6 +577,33 @@ export function ProposalEditor() {
         onClose={() => setShowPublishSuccess(false)}
       />
     )}
+
+    <Dialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Unpublish proposal?</DialogTitle>
+          <DialogDescription>
+            If this proposal is unpublished, it will no longer be available to anyone who currently has access to it.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowUnpublishConfirm(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirmUnpublish}
+          >
+            Unpublish
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
