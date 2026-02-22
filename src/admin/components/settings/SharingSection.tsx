@@ -13,16 +13,20 @@ interface SharingSectionProps {
 }
 
 export function SharingSection({ proposal, onChange, onImmediateSave }: SharingSectionProps) {
-  const [copied, setCopied] = useState<'url' | 'embed' | null>(null);
+  const [copied, setCopied] = useState<'url' | 'direct' | 'embed' | null>(null);
   const [passwordInput, setPasswordInput] = useState('');
   const [hashingPassword, setHashingPassword] = useState(false);
   const [expirationEnabled, setExpirationEnabled] = useState(!!proposal.expiresAt);
 
-  const proposalUrl = `${window.location.origin}/p/${proposal.slug}`;
+  const directUrl = `${window.location.origin}/p/${proposal.slug}`;
+  const proposalUrl = proposal.shortCode
+    ? `${window.location.origin}/s/${proposal.shortCode}`
+    : directUrl;
   const embedCode = `<iframe src="${proposalUrl}" width="960" height="540" frameborder="0" allowfullscreen></iframe>`;
 
-  const handleCopy = async (type: 'url' | 'embed') => {
-    await copyToClipboard(type === 'url' ? proposalUrl : embedCode);
+  const handleCopy = async (type: 'url' | 'direct' | 'embed') => {
+    const textToCopy = type === 'url' ? proposalUrl : type === 'direct' ? directUrl : embedCode;
+    await copyToClipboard(textToCopy);
     setCopied(type);
     setTimeout(() => setCopied(null), 2000);
   };
@@ -93,6 +97,31 @@ export function SharingSection({ proposal, onChange, onImmediateSave }: SharingS
               className="flex-shrink-0 gap-1.5 text-xs"
             >
               {copied === 'url' ? (
+                <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
+              ) : (
+                <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy</>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Direct URL */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Direct URL</label>
+          <div className="flex items-center gap-2">
+            <Input
+              readOnly
+              value={directUrl}
+              className="text-xs font-mono text-gray-500 bg-gray-50"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleCopy('direct')}
+              className="flex-shrink-0 gap-1.5 text-xs"
+            >
+              {copied === 'direct' ? (
                 <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
               ) : (
                 <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy</>

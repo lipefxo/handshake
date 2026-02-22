@@ -82,6 +82,22 @@ ALTER TABLE proposals
   ADD COLUMN IF NOT EXISTS expires_at timestamptz,
   ADD COLUMN IF NOT EXISTS brand_overrides jsonb DEFAULT '{}'::jsonb;
 
+-- ============================================================
+-- Short share links
+-- ============================================================
+
+ALTER TABLE proposals
+  ADD COLUMN IF NOT EXISTS short_code text UNIQUE;
+
+CREATE INDEX IF NOT EXISTS idx_proposals_short_code ON proposals(short_code);
+
+UPDATE proposals
+SET short_code = substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)
+WHERE short_code IS NULL;
+
+ALTER TABLE proposals
+  ALTER COLUMN short_code SET NOT NULL;
+
 -- Lead capture for email-gated proposals
 CREATE TABLE IF NOT EXISTS proposal_leads (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,

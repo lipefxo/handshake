@@ -15,6 +15,7 @@ import {
 interface PublishSuccessModalProps {
   isOpen: boolean;
   proposalUrl: string;
+  shortCode?: string;
   partnerName: string;
   proposalTitle: string;
   onClose: () => void;
@@ -23,6 +24,7 @@ interface PublishSuccessModalProps {
 export function PublishSuccessModal({
   isOpen,
   proposalUrl,
+  shortCode,
   partnerName,
   proposalTitle,
   onClose,
@@ -30,22 +32,23 @@ export function PublishSuccessModal({
   const [copied, setCopied] = useState(false);
   const [emailTo, setEmailTo] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  const sharedUrl = shortCode ? `${window.location.origin}/s/${shortCode}` : proposalUrl;
 
   const handleCopyLink = async () => {
-    await copyToClipboard(proposalUrl);
+    await copyToClipboard(sharedUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   const handleOpenInNewTab = () => {
-    window.open(proposalUrl, '_blank', 'noopener,noreferrer');
+    window.open(sharedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleSendEmail = () => {
     if (!emailTo.trim()) return;
     const subject = encodeURIComponent(`${proposalTitle} — Partnership Proposal`);
     const body = encodeURIComponent(
-      `Hi,\n\nI'd like to share a partnership proposal with you: "${proposalTitle}".\n\nYou can view the full presentation here:\n${proposalUrl}\n\nLooking forward to your feedback!\n\nBest regards`
+      `Hi,\n\nI'd like to share a partnership proposal with you: "${proposalTitle}".\n\nYou can view the full presentation here:\n${sharedUrl}\n\nLooking forward to your feedback!\n\nBest regards`
     );
     window.open(`mailto:${emailTo.trim()}?subject=${subject}&body=${body}`, '_self');
     setEmailSent(true);
@@ -92,7 +95,7 @@ export function PublishSuccessModal({
             <div className="flex items-center gap-2">
               <Input
                 readOnly
-                value={proposalUrl}
+                value={sharedUrl}
                 className="text-xs font-mono text-gray-600 bg-gray-50"
                 onFocus={(e) => e.target.select()}
               />
@@ -110,6 +113,16 @@ export function PublishSuccessModal({
                 )}
               </Button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Direct link</label>
+            <Input
+              readOnly
+              value={proposalUrl}
+              className="text-xs font-mono text-gray-500 bg-gray-50"
+              onFocus={(e) => e.target.select()}
+            />
           </div>
 
           {/* Quick actions */}

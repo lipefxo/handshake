@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { BrandOverrides, Proposal, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
-import { generateSlug } from '../shared/utils/helpers';
+import { generateShortCode, generateSlug } from '../shared/utils/helpers';
 import { useAuthStore } from './authStore';
 import { defaultThemeId, isValidThemeId } from '../themes/themeDefinitions';
 import type { ThemeId } from '../themes/themeTypes';
@@ -20,6 +20,7 @@ interface ProposalStore {
   deleteProposal: (id: string) => Promise<boolean>;
   duplicateProposal: (id: string) => Promise<Proposal | null>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
+  getProposalByShortCode: (shortCode: string) => Promise<Proposal | null>;
   getOwnProposalBySlug: (slug: string) => Promise<Proposal | null>;
   createFromMarkdown: (
     markdown: string,
@@ -46,6 +47,7 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     id: row.id as string,
     user_id: row.user_id as string,
     slug: row.slug as string,
+    shortCode: row.short_code as string | undefined,
     title: row.title as string,
     partnerName: row.partner_name as string,
     createdAt: row.created_at as string,
@@ -123,6 +125,10 @@ function getCurrentUserId(): string | null {
   return useAuthStore.getState().user?.id ?? null;
 }
 
+function normalizeShortCode(shortCode: string): string {
+  return shortCode.trim().replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+}
+
 export const useProposalStore = create<ProposalStore>((set, get) => ({
   proposals: [],
   loading: false,
@@ -173,12 +179,14 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const safeTitle = sanitizeText(proposal.title);
     const safePartnerName = sanitizeText(proposal.partnerName);
     const safeSlug = generateSafeSlug(proposal.slug);
+    const safeShortCode = normalizeShortCode(proposal.shortCode ?? generateShortCode());
 
     const { data, error } = await supabase
       .from('proposals')
       .insert({
         user_id: proposal.user_id,
         slug: safeSlug,
+        short_code: safeShortCode,
         title: safeTitle,
         partner_name: safePartnerName,
         status: proposal.status,
@@ -270,11 +278,13 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (!currentUserId || existing.user_id !== currentUserId) return null;
 
     const newSlug = generateSafeSlug(generateSlug(`${existing.partnerName}-copy`));
+    const newShortCode = normalizeShortCode(generateShortCode());
     const { data, error } = await supabase
       .from('proposals')
       .insert({
         user_id: currentUserId,
         slug: newSlug,
+        short_code: newShortCode,
         title: `${existing.title} (Copy)`,
         partner_name: existing.partnerName,
         status: 'draft',
@@ -302,6 +312,20 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .from('proposals')
       .select('*')
       .eq('slug', safeSlug)
+      .eq('status', 'published')
+      .single();
+    if (error || !data) return null;
+    return dbRowToProposal(data);
+  },
+
+  getProposalByShortCode: async (shortCode) => {
+    const safeShortCode = normalizeShortCode(shortCode);
+    if (!safeShortCode) return null;
+
+    const { data, error } = await supabase
+      .from('proposals')
+      .select('*')
+      .eq('short_code', safeShortCode)
       .eq('status', 'published')
       .single();
     if (error || !data) return null;
@@ -338,6 +362,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const proposalBase: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
       user_id: user.id,
       slug: generateSafeSlug(generateSlug(partnerName)),
+      shortCode: normalizeShortCode(generateShortCode()),
       title,
       partnerName,
       status: 'draft',
@@ -355,6 +380,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         .insert({
           user_id: proposal.user_id,
           slug: proposal.slug,
+          short_code: proposal.shortCode,
           title: proposal.title,
           partner_name: proposal.partnerName,
           status: proposal.status,
@@ -375,6 +401,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         proposal = {
           ...proposal,
           slug: generateSafeSlug(generateSlug(`${partnerName}-${Math.random().toString(36).slice(2, 4)}`)),
+          shortCode: normalizeShortCode(generateShortCode()),
         };
         continue;
       }

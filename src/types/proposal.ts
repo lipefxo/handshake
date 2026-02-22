@@ -149,6 +149,7 @@ export interface Proposal {
   id: string;
   user_id: string;
   slug: string;
+  shortCode?: string;
   title: string;
   partnerName: string;
   createdAt: string;

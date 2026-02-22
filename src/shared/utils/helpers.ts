@@ -13,6 +13,19 @@ export function generateSlug(partnerName: string): string {
   return `${base}-${suffix}`;
 }
 
+export function generateShortCode(length = 8): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const values = new Uint32Array(length);
+  crypto.getRandomValues(values);
+
+  let code = '';
+  for (let i = 0; i < length; i += 1) {
+    code += alphabet[values[i] % alphabet.length];
+  }
+
+  return code;
+}
+
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',

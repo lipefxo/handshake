@@ -242,7 +242,10 @@ export function ProposalEditor() {
 
   const handleCopyLink = async () => {
     if (!proposal) return;
-    await copyToClipboard(`${window.location.origin}/p/${proposal.slug}`);
+    const shareUrl = proposal.shortCode
+      ? `${window.location.origin}/s/${proposal.shortCode}`
+      : `${window.location.origin}/p/${proposal.slug}`;
+    await copyToClipboard(shareUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -559,6 +562,7 @@ export function ProposalEditor() {
       <PublishSuccessModal
         isOpen={showPublishSuccess}
         proposalUrl={`${window.location.origin}/p/${proposal.slug}`}
+        shortCode={proposal.shortCode}
         partnerName={proposal.partnerName}
         proposalTitle={proposal.title}
         onClose={() => setShowPublishSuccess(false)}

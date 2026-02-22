@@ -95,7 +95,9 @@ export function ProposalList() {
   };
 
   const handleCopyLink = async (proposal: Proposal) => {
-    const url = `${window.location.origin}/p/${proposal.slug}`;
+    const url = proposal.shortCode
+      ? `${window.location.origin}/s/${proposal.shortCode}`
+      : `${window.location.origin}/p/${proposal.slug}`;
     await copyToClipboard(url);
     setCopiedId(proposal.id);
     setTimeout(() => setCopiedId(null), 2000);

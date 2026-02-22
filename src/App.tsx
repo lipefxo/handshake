@@ -9,6 +9,7 @@ import { ProposalEditor } from './admin/pages/ProposalEditor';
 import { ProposalSettings } from './admin/pages/ProposalSettings';
 import { ProposalSettingsPage } from './admin/pages/ProposalSettingsPage';
 import { ProposalViewer } from './presentation/ProposalViewer';
+import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { LandingPage } from './landing/LandingPage';
 
@@ -43,6 +44,7 @@ export default function App() {
 
             {/* Public proposal viewer */}
             <Route path="/p/:slug" element={<ProposalViewer />} />
+            <Route path="/s/:code" element={<ShortCodeRedirect />} />
 
             {/* Catch-all → admin */}
             <Route path="*" element={<Navigate to="/admin" replace />} />
