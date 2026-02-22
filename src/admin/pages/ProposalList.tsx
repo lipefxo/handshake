@@ -149,17 +149,6 @@ export function ProposalList() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => {
-              clearError();
-              ingestor.open('new');
-            }}
-            variant="outline"
-            className="gap-2"
-          >
-            <AppIcon icon="ui.file" className="w-4 h-4" />
-            From Markdown
-          </Button>
-          <Button
             onClick={handleOpenCreateDialog}
             className="gap-2"
           >
@@ -310,6 +299,11 @@ export function ProposalList() {
           setShowNewProposalDialog(false);
         }}
         onCreate={handleCreateFromDialog}
+        onCreateFromMarkdown={() => {
+          clearError();
+          setShowNewProposalDialog(false);
+          ingestor.open('new');
+        }}
       />
 
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
 import { KeyboardCommandOverlay } from './components/KeyboardCommandOverlay';
@@ -12,6 +12,8 @@ const navItems = [
 
 export function AdminLayout() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const location = useLocation();
+  const showTopProposalsLink = location.pathname !== '/admin';
 
   return (
     <div className="flex h-screen bg-admin overflow-hidden">
@@ -97,7 +99,18 @@ export function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 border-b border-light bg-white flex items-center justify-end px-6 flex-shrink-0">
+        <header className="h-14 border-b border-light bg-white flex items-center justify-between px-6 flex-shrink-0">
+          <div>
+            {showTopProposalsLink && (
+              <Link
+                to="/admin"
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
+              >
+                <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
+                Proposals
+              </Link>
+            )}
+          </div>
           <UserMenu />
         </header>
 

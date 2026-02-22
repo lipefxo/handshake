@@ -6,7 +6,7 @@ import type { Proposal, SlideConfig, SlideType } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
 import { createDefaultSlide } from '../../data/slideDefaults';
-import { generateSlug, copyToClipboard } from '../../shared/utils/helpers';
+import { copyToClipboard } from '../../shared/utils/helpers';
 import { useDialKit } from 'dialkit';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
@@ -261,36 +261,30 @@ export function ProposalEditor() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
-        <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2">
-          <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
-          Proposals
-        </Link>
-
         {id && (
-          <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 gap-0.5 flex-shrink-0">
-            <span className="px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-gray-800">Slides</span>
+          <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
+            <motion.div
+              aria-hidden="true"
+              className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-white shadow-sm"
+              animate={{ x: '0%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
+            />
+            <span className="relative z-10 px-3 py-1 text-xs font-medium text-gray-800 text-center">Slides</span>
             <Link
               to={`/admin/proposals/${id}/settings`}
-              className="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150"
+              className="relative z-10 px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
             >
               Settings
             </Link>
           </div>
         )}
 
-        <div className="flex-1 flex items-center gap-3">
+        <div className="flex-1 min-w-0 flex items-center justify-center">
           <Input
-            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 flex-1 max-w-xs"
+            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
-          />
-          <Input
-            className="h-8 w-auto border-0 bg-transparent px-2 py-1 text-sm text-gray-400 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0"
-            value={proposal.partnerName}
-            onChange={(e) => updateLocal({ partnerName: e.target.value })}
-            onBlur={(e) => updateLocal({ slug: generateSlug(e.target.value) })}
-            placeholder="Partner name..."
           />
         </div>
 
@@ -327,17 +321,6 @@ export function ProposalEditor() {
             Markdown
           </Button>
 
-          <Button
-            onClick={() => ingestor.open('import')}
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            title="Import slides from Markdown"
-          >
-            <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
-            Import MD
-          </Button>
-
           {proposal.status === 'published' && (
             <Button
               onClick={handleCopyLink}
@@ -367,7 +350,12 @@ export function ProposalEditor() {
       </div>
 
       {/* Main editor area */}
-      <div className="flex-1 flex overflow-hidden">
+      <motion.div
+        className="flex-1 flex overflow-hidden"
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.24, ease: 'easeOut' }}
+      >
         {/* Slide list — left panel */}
         <div className="w-[19.5rem] min-h-0 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
           <div className="px-3 pt-3 pb-1 flex items-center justify-between gap-2">
@@ -466,7 +454,7 @@ export function ProposalEditor() {
             )}
             </div>
         </div>
-      </div>
+      </motion.div>
     </div>
     </div>
 

@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AppIcon } from '../../shared/icons/AppIcon';
 
 export interface NewProposalFormValues {
   title: string;
@@ -29,6 +30,7 @@ interface NewProposalDialogProps {
   createError: string | null;
   onClose: () => void;
   onCreate: (values: NewProposalFormValues) => Promise<void>;
+  onCreateFromMarkdown?: () => void;
 }
 
 function getTodayDateValue(): string {
@@ -48,7 +50,14 @@ function getInitialFormValues(): NewProposalFormValues {
   };
 }
 
-export function NewProposalDialog({ isOpen, isCreating, createError, onClose, onCreate }: NewProposalDialogProps) {
+export function NewProposalDialog({
+  isOpen,
+  isCreating,
+  createError,
+  onClose,
+  onCreate,
+  onCreateFromMarkdown,
+}: NewProposalDialogProps) {
   const [values, setValues] = useState<NewProposalFormValues>(getInitialFormValues);
 
   useEffect(() => {
@@ -169,6 +178,16 @@ export function NewProposalDialog({ isOpen, isCreating, createError, onClose, on
               disabled={isCreating}
             >
               Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCreateFromMarkdown}
+              disabled={isCreating}
+              className="inline-flex items-center gap-2"
+            >
+              <AppIcon icon="ui.file" className="h-3.5 w-3.5" />
+              From Markdown
             </Button>
             <Button
               type="submit"

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
@@ -9,6 +9,7 @@ import { MetadataSection } from '../components/settings/MetadataSection';
 import { ThemeSection } from '../components/settings/ThemeSection';
 import { SharingSection } from '../components/settings/SharingSection';
 import { DangerZoneSection } from '../components/settings/DangerZoneSection';
+import { Input } from '@/components/ui/input';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -21,14 +22,30 @@ export function ProposalSettingsPage() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const hydratedProposalIdRef = useRef<string | null>(null);
 
-  // Sync from store on mount / store changes
+  // Hydrate local editable state once per proposal id to avoid clobbering edits on store refresh.
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
-    if (p && !hasUnsavedChanges) {
+    if (p && hydratedProposalIdRef.current !== p.id) {
       setProposal({ ...p });
+      hydratedProposalIdRef.current = p.id;
+      setHasUnsavedChanges(false);
     }
-  }, [id, proposals, hasUnsavedChanges]);
+    if (!p && id !== hydratedProposalIdRef.current) {
+      hydratedProposalIdRef.current = id ?? null;
+      setProposal(null);
+      setHasUnsavedChanges(false);
+    }
+  }, [id, proposals]);
+
+  useEffect(() => {
+    if (id && hydratedProposalIdRef.current !== id) {
+      hydratedProposalIdRef.current = null;
+      setProposal(null);
+      setHasUnsavedChanges(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (proposals.length > 0) return;
@@ -112,33 +129,36 @@ export function ProposalSettingsPage() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
-        <Link
-          to="/admin"
-          className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2"
-        >
-          <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
-          Proposals
-        </Link>
-
         {/* Tab strip */}
-        <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 gap-0.5 flex-shrink-0">
+        <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
+          <motion.div
+            aria-hidden="true"
+            className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-white shadow-sm"
+            animate={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.6 }}
+          />
           <Link
             to={`/admin/proposals/${id}`}
-            className="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150"
+            className="relative z-10 px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
           >
             Slides
           </Link>
-          <span className="px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-gray-800">
+          <span className="relative z-10 px-3 py-1 text-xs font-medium text-gray-800 text-center">
             Settings
           </span>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">{proposal.title}</p>
+        <div className="flex-1 min-w-0 flex items-center justify-center">
+          <Input
+            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
+            value={proposal.title}
+            onChange={(e) => updateLocal({ title: e.target.value })}
+            placeholder="Proposal title..."
+          />
         </div>
 
-        {/* Save state */}
-        <div className="flex-shrink-0 flex items-center gap-1.5">
+        {/* Keep Slides-tab right-side footprint so title alignment stays stable */}
+        <div className="flex-shrink-0 flex items-center justify-end gap-2 min-w-[17rem]">
           <AnimatePresence mode="wait">
             {saveState === 'saving' && (
               <motion.span
@@ -176,13 +196,19 @@ export function ProposalSettingsPage() {
               </motion.span>
             )}
           </AnimatePresence>
+          <div className="h-8 w-[11.5rem]" aria-hidden="true" />
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-auto admin-scroll">
+      <motion.div
+        className="flex-1 overflow-auto admin-scroll"
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.24, ease: 'easeOut' }}
+      >
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-8 items-start">
             {/* Left nav */}
             <SettingsNav />
 
@@ -203,7 +229,7 @@ export function ProposalSettingsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function SettingsNav() {
   return (
     <>
       {/* Desktop: sticky left sidebar */}
-      <nav className="hidden md:flex flex-col gap-0.5 sticky top-6">
+      <nav className="hidden md:flex flex-col gap-0.5 sticky top-6 self-start h-fit">
         {sections.map((s) => (
           <a
             key={s.id}
