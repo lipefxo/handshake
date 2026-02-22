@@ -60,24 +60,35 @@ function parsePipeItems(text: string): string[][] {
     .map((l) => l.replace(/^[-*]\s+/, '').split('|').map((s) => s.trim()));
 }
 
+function extractPlainBullets(text: string): string[][] {
+  const lines = text.split('\n');
+  return lines
+    .map((l) => l.trim())
+    .filter((l) => /^[-*]\s+.+/.test(l) && !l.includes('|'))
+    .map((l) => [l.replace(/^[-*]\s+/, '').trim()]);
+}
+
 // ---------------------------------------------------------------------------
 // Per-type extractors
 // ---------------------------------------------------------------------------
 
 function extractTitle(section: TypedSection): TitleSlideContent {
   const clean = stripDirectiveComments(section.raw);
-  const headline = sanitizeText(extractH1(clean) ?? '');
+  const rawHeading = sanitizeText(extractH1(clean) ?? '');
+  const headingParts = rawHeading.split(/\s[-|]\s/, 2);
+  const headline = sanitizeText(headingParts[0] ?? '');
   const paragraphs = extractParagraphs(clean);
   const image = extractImage(clean);
 
   // Look for "Partner × SecureBags" style line
   const crossLine = clean.match(/^([^#\n!>-][^\n]*(×|x)[^\n]*)$/im);
   const partnerName = sanitizeText(crossLine?.[1]?.split(/×|x/i)?.[0]?.trim() ?? '');
+  const headingSubheadline = sanitizeText(headingParts[1] ?? '');
 
   return {
     partnerName,
     headline,
-    subheadline: sanitizeText(paragraphs[0] ?? ''),
+    subheadline: sanitizeText(paragraphs[0] ?? '') || headingSubheadline,
     partnerLogo: image?.url || undefined,
   };
 }
@@ -166,11 +177,12 @@ function extractFeatures(section: TypedSection): FeaturesSlideContent {
   const heading = sanitizeText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
   const items = parsePipeItems(clean);
+  const normalizedItems = items.length > 0 ? items : extractPlainBullets(clean);
 
   return {
     heading,
     subheading: sanitizeText(paragraphs[0] ?? ''),
-    features: items.map((item) => parseIconItem(item, 'slide.features.default')),
+    features: normalizedItems.map((item) => parseIconItem(item, 'slide.features.default')),
   };
 }
 
@@ -178,10 +190,11 @@ function extractBenefits(section: TypedSection): BenefitsSlideContent {
   const clean = stripDirectiveComments(section.raw);
   const heading = sanitizeText(extractH1(clean) ?? '');
   const items = parsePipeItems(clean);
+  const normalizedItems = items.length > 0 ? items : extractPlainBullets(clean);
 
   return {
     heading,
-    benefits: items.map((item) => parseIconItem(item, 'slide.benefits.default')),
+    benefits: normalizedItems.map((item) => parseIconItem(item, 'slide.benefits.default')),
   };
 }
 
