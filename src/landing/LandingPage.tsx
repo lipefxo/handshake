@@ -277,6 +277,7 @@ function NavBar() {
             { label: 'How it Works', id: 'how-it-works' },
             { label: 'Features', id: 'features' },
             { label: 'Pricing', id: 'pricing' },
+            { label: 'FAQ', id: 'faq' },
           ].map(({ label, id }) => (
             <button
               key={id}
@@ -395,6 +396,7 @@ function NavBar() {
                 { label: 'How it Works', id: 'how-it-works' },
                 { label: 'Features', id: 'features' },
                 { label: 'Pricing', id: 'pricing' },
+                { label: 'FAQ', id: 'faq' },
               ].map(({ label, id }) => (
                 <button
                   key={id}
@@ -2008,49 +2010,12 @@ function PricingSection() {
           }}
         >
           <div
-            className="landing-billing-toggle"
+            className="landing-billing-shell"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#fff',
-              border: `1px solid ${C.border}`,
-              borderRadius: 999,
-              padding: 6,
+              position: 'relative',
+              width: 'min(320px, 100%)',
             }}
           >
-            <button
-              onClick={() => setAnnualBilling(false)}
-              style={{
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 999,
-                padding: '9px 18px',
-                fontFamily: sans,
-                fontSize: 13,
-                fontWeight: 500,
-                color: annualBilling ? C.textSecondary : C.textPrimary,
-                background: annualBilling ? 'transparent' : C.bgSecondary,
-              }}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setAnnualBilling(true)}
-              style={{
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 999,
-                padding: '9px 18px',
-                fontFamily: sans,
-                fontSize: 13,
-                fontWeight: 500,
-                color: annualBilling ? C.textPrimary : C.textSecondary,
-                background: annualBilling ? C.bgSecondary : 'transparent',
-              }}
-            >
-              Annual
-            </button>
             <span
               style={{
                 fontFamily: sans,
@@ -2061,10 +2026,80 @@ function PricingSection() {
                 borderRadius: 999,
                 padding: '4px 10px',
                 letterSpacing: '0.02em',
+                position: 'absolute',
+                top: -10,
+                right: 14,
+                zIndex: 2,
+                boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
               }}
             >
               Save 16%
             </span>
+            <div
+              className="landing-billing-toggle"
+              style={{
+                position: 'relative',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                width: '100%',
+                background: '#fff',
+                border: `1px solid ${C.border}`,
+                borderRadius: 999,
+                padding: 4,
+              }}
+            >
+              <motion.div
+                animate={{ left: annualBilling ? 'calc(50% + 2px)' : '4px' }}
+                transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  bottom: 4,
+                  width: 'calc(50% - 6px)',
+                  borderRadius: 999,
+                  background: C.bgSecondary,
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.02)',
+                }}
+              />
+              <button
+                onClick={() => setAnnualBilling(false)}
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: 999,
+                  padding: '9px 18px',
+                  fontFamily: sans,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: annualBilling ? C.textSecondary : C.textPrimary,
+                  background: 'transparent',
+                  transition: 'color 0.2s ease',
+                }}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnualBilling(true)}
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: 999,
+                  padding: '9px 18px',
+                  fontFamily: sans,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: annualBilling ? C.textPrimary : C.textSecondary,
+                  background: 'transparent',
+                  transition: 'color 0.2s ease',
+                }}
+              >
+                Annual
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2330,6 +2365,190 @@ function PricingSection() {
           })}
         </div>
         <FeatureComparisonTable />
+      </div>
+    </section>
+  );
+}
+
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+function FAQSection() {
+  const { ref, inView } = useReveal();
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      question: 'What is Handshake and who is it for?',
+      answer:
+        'Handshake is a proposal builder for partnership, BD, and sales teams. It turns your content into animated, shareable proposal pages that are easier to read than PDF decks.',
+    },
+    {
+      question: 'Can I update a proposal after I send it?',
+      answer:
+        'Yes. Every proposal is live at a unique URL, so you can edit content anytime and recipients always see the latest version without a resend.',
+    },
+    {
+      question: 'How does access control work?',
+      answer:
+        'You can share proposals publicly, protect them with passwords, or gate access by email capture (Team tier). You can also set expiration dates for time-limited access.',
+    },
+    {
+      question: 'Does Handshake support team collaboration?',
+      answer:
+        'Yes. Team tier includes shared workspaces, team comments, reusable templates and slide blocks, shared assets, and workflow tools like search, filters, and bulk actions.',
+    },
+    {
+      question: 'What is included in the Free plan?',
+      answer:
+        'Free includes 3 active proposals, Dark Minimal theme, all slide types, markdown ingestor, drag-and-drop editing, live updates, and shareable links.',
+    },
+    {
+      question: 'Can I switch between monthly and annual billing?',
+      answer:
+        'Yes. Pro and Team support monthly or annual billing. Annual pricing gives a 16% discount compared with monthly pricing.',
+    },
+    {
+      question: 'Do I need design skills to create polished proposals?',
+      answer:
+        'No. Handshake is designed for non-designers with built-in themes, animated slide layouts, and structured editors to help you ship professional proposals quickly.',
+    },
+  ];
+
+  return (
+    <section id="faq" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
+      <div ref={ref} style={{ maxWidth: 900, margin: '0 auto' }}>
+        <motion.div
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0}
+          variants={fadeUp}
+          style={{
+            fontFamily: sans,
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: C.accent,
+            marginBottom: 16,
+          }}
+        >
+          FAQ
+        </motion.div>
+        <motion.h2
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.08}
+          variants={fadeUp}
+          style={{
+            fontFamily: serif,
+            fontSize: 'clamp(30px, 3.5vw, 44px)',
+            fontWeight: 700,
+            color: C.textPrimary,
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
+            marginBottom: 18,
+          }}
+        >
+          Common questions, answered.
+        </motion.h2>
+        <motion.p
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.14}
+          variants={fadeUp}
+          style={{
+            fontFamily: sans,
+            fontSize: 16,
+            color: C.textSecondary,
+            lineHeight: 1.65,
+            marginBottom: 32,
+            maxWidth: 680,
+          }}
+        >
+          Everything teams usually ask before switching from static decks to live proposals.
+        </motion.p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {faqs.map((item, index) => {
+            const isOpen = openIndex === index;
+            return (
+              <motion.div
+                key={item.question}
+                initial={{ opacity: 0, y: 12 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.05 + index * 0.05 }}
+                style={{
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 12,
+                  background: '#fff',
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '18px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 16,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: sans,
+                      fontSize: 16,
+                      fontWeight: 500,
+                      color: C.textPrimary,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {item.question}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: sans,
+                      fontSize: 20,
+                      color: C.accent,
+                      lineHeight: 1,
+                      transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  >
+                    +
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.24, ease: 'easeOut' }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div
+                        style={{
+                          padding: '0 20px 20px',
+                          fontFamily: sans,
+                          fontSize: 15,
+                          color: C.textSecondary,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {item.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -2738,6 +2957,7 @@ export function LandingPage() {
         <FeaturesSection />
         <LiveExampleCTA />
         <PricingSection />
+        <FAQSection />
         <WaitlistSection />
         <Footer />
       </div>

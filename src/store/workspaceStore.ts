@@ -462,6 +462,16 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         companyName: cleanName,
       },
     });
+
+    // Propagate to all proposals in this workspace via DB function
+    const { error: rpcError } = await supabase.rpc('update_workspace_company_name', {
+      target_workspace_id: workspace.id,
+      new_company_name: cleanName,
+    });
+    if (rpcError) {
+      logStructuredError('propagate company name to proposals failed', rpcError);
+    }
+
     return true;
   },
 }));
