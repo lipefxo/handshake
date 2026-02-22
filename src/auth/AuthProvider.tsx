@@ -36,6 +36,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { initializeWorkspace, clearWorkspaceState } = useWorkspaceStore();
 
   useEffect(() => {
+    let initializedFromListener = false;
+
     const mapSessionUser = (sessionUser: NonNullable<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']>['user']): AppUser => ({
       id: sessionUser.id,
       email: sessionUser.email ?? '',
@@ -43,46 +45,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
       avatarUrl: sessionUser.user_metadata?.avatar_url,
     });
 
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
-        const appUser = mapSessionUser(session.user);
-        setUser(appUser);
-        await initializeWorkspace(appUser);
-      } else {
-        setUser(getDevBypassUser());
-        clearWorkspaceState();
-      }
-
+    const handleSignedIn = async (sessionUser: NonNullable<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']>['user']) => {
+      sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
+      const appUser = mapSessionUser(sessionUser);
+      setUser(appUser);
+      await initializeWorkspace(appUser);
       setLoading(false);
       setInitialized(true);
     };
 
-    void initializeAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
-        const appUser = mapSessionUser(session.user);
-        setUser(appUser);
-        void initializeWorkspace(appUser);
+      if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+        initializedFromListener = true;
+        void handleSignedIn(session.user);
       } else if (event === 'SIGNED_OUT') {
         sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
         setUser(null);
         clearWorkspaceState();
+        setLoading(false);
+        setInitialized(true);
         sessionStorage.setItem('authMessage', 'Your session expired. Please sign in again.');
         navigate('/login', { replace: true });
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        initializedFromListener = true;
+        setUser(getDevBypassUser());
+        clearWorkspaceState();
+        setLoading(false);
+        setInitialized(true);
+      }
+    });
+
+    // Fallback: if onAuthStateChange hasn't fired after a short delay
+    // (e.g. older Supabase client), initialize from getSession directly.
+    const fallbackTimeout = window.setTimeout(async () => {
+      if (initializedFromListener) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await handleSignedIn(session.user);
       } else {
         setUser(getDevBypassUser());
         clearWorkspaceState();
+        setLoading(false);
+        setInitialized(true);
       }
+    }, 1000);
 
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.clearTimeout(fallbackTimeout);
+    };
   }, [setUser, setLoading, setInitialized, navigate, initializeWorkspace, clearWorkspaceState]);
 
   return <IdleTimeout>{children}</IdleTimeout>;

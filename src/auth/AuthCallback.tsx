@@ -1,18 +1,45 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 export function AuthCallback() {
   const navigate = useNavigate();
+  const handled = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/admin', { replace: true });
-      } else {
+    if (handled.current) return;
+    handled.current = true;
+
+    const hasHashTokens = window.location.hash.includes('access_token');
+
+    if (hasHashTokens) {
+      // Magic link tokens are in the URL hash — the Supabase client will
+      // pick them up and fire an auth state change. Listen for it rather
+      // than calling getSession() before the exchange completes.
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          subscription.unsubscribe();
+          navigate('/admin', { replace: true });
+        }
+      });
+
+      const timeout = window.setTimeout(() => {
+        subscription.unsubscribe();
         navigate('/login', { replace: true });
-      }
+      }, 10_000);
+
+      return () => {
+        subscription.unsubscribe();
+        window.clearTimeout(timeout);
+      };
+    }
+
+    // No hash tokens — check for an existing session directly.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      navigate(session ? '/admin' : '/login', { replace: true });
     });
+
+    return undefined;
   }, [navigate]);
 
   return (

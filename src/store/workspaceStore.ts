@@ -274,7 +274,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
     set({ loading: true, error: null });
     const run = async () => {
-      try {
+      const attempt = async () => {
         await activatePendingInvitesForUser(user);
         await ensureWorkspaceForUser(user);
         const primary = await fetchPrimaryWorkspaceForUser(user.id);
@@ -288,10 +288,30 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         });
         await get().refreshMembers();
         set({ loading: false });
-      } catch (error) {
-        logStructuredError('initializeWorkspace failed', error);
+      };
+
+      try {
+        await attempt();
+      } catch (firstError) {
+        const code = (firstError as { code?: string } | null)?.code;
+        if (code === '42501') {
+          logStructuredError('initializeWorkspace first attempt failed (42501), retrying', firstError);
+          await new Promise((r) => setTimeout(r, 1500));
+          try {
+            await attempt();
+            return;
+          } catch (retryError) {
+            logStructuredError('initializeWorkspace retry failed', retryError);
+            set({
+              error: getWorkspaceError(retryError, GENERIC_WORKSPACE_ERROR),
+              loading: false,
+            });
+            return;
+          }
+        }
+        logStructuredError('initializeWorkspace failed', firstError);
         set({
-          error: getWorkspaceError(error, GENERIC_WORKSPACE_ERROR),
+          error: getWorkspaceError(firstError, GENERIC_WORKSPACE_ERROR),
           loading: false,
         });
       } finally {
