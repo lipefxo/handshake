@@ -58,18 +58,17 @@ export function validateUrl(input: string): { value: string; isValid: boolean } 
     return { value: '', isValid: false };
   }
 
-  if (!trimmed.startsWith('https://')) {
-    return { value: trimmed, isValid: false };
-  }
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed);
+  const normalized = hasScheme ? trimmed : `https://${trimmed}`;
 
   try {
-    const url = new URL(trimmed);
+    const url = new URL(normalized);
     if (url.protocol === 'javascript:' || url.protocol === 'data:' || url.protocol !== 'https:') {
-      return { value: trimmed, isValid: false };
+      return { value: normalized, isValid: false };
     }
     return { value: url.toString(), isValid: true };
   } catch {
-    return { value: trimmed, isValid: false };
+    return { value: normalized, isValid: false };
   }
 }
 

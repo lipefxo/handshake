@@ -50,9 +50,11 @@ export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps
       slideBody = <MediaSlide content={content as MediaSlideContent} />;
       break;
     case 'benefits':
-      return <BenefitsSlide content={content as BenefitsSlideContent} />;
+      slideBody = <BenefitsSlide content={content as BenefitsSlideContent} />;
+      break;
     case 'table':
-      return <TableSlide content={content as TableSlideContent} />;
+      slideBody = <TableSlide content={content as TableSlideContent} />;
+      break;
     case 'closing':
       slideBody = <ClosingSlide content={content as ClosingSlideContent} />;
       break;
