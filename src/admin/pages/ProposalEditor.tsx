@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import bcrypt from 'bcryptjs';
 import { useProposalStore } from '../../store/proposalStore';
 import type { Proposal, SlideConfig, SlideType, TitleSlideContent } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
@@ -51,7 +52,11 @@ export function ProposalEditor() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
+  const [publishVisibility, setPublishVisibility] = useState<Proposal['visibility']>('public');
+  const [publishPasswordInput, setPublishPasswordInput] = useState('');
+  const [publishing, setPublishing] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
 
@@ -207,17 +212,36 @@ export function ProposalEditor() {
       setShowUnpublishConfirm(true);
       return;
     }
-    const newStatus: Proposal['status'] = 'published';
-    updateLocal({ status: newStatus });
-    if (newStatus === 'published') {
-      setShowPublishSuccess(true);
-    }
+    setPublishVisibility(proposal.visibility ?? 'public');
+    setPublishPasswordInput('');
+    setShowPublishConfirm(true);
   };
 
   const handleConfirmUnpublish = () => {
     if (!proposal) return;
     updateLocal({ status: 'draft' });
     setShowUnpublishConfirm(false);
+  };
+
+  const handleConfirmPublish = async () => {
+    if (!proposal) return;
+    setPublishing(true);
+    try {
+      const updates: Partial<Proposal> = {
+        status: 'published',
+        visibility: publishVisibility,
+      };
+      if (publishVisibility === 'password' && publishPasswordInput.trim()) {
+        const hash = await bcrypt.hash(publishPasswordInput.trim(), 10);
+        updates.accessPassword = hash;
+      }
+      updateLocal(updates);
+      setShowPublishConfirm(false);
+      setShowPublishSuccess(true);
+      setPublishPasswordInput('');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const handlePartnerNameChange = (value: string) => {
@@ -577,6 +601,86 @@ export function ProposalEditor() {
         onClose={() => setShowPublishSuccess(false)}
       />
     )}
+
+    <Dialog
+      open={showPublishConfirm}
+      onOpenChange={(open) => {
+        if (publishing) return;
+        setShowPublishConfirm(open);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Publish proposal?</DialogTitle>
+          <DialogDescription>
+            Choose how people can access this proposal once it is published.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="space-y-2">
+            {([
+              { value: 'public', label: 'Public', desc: 'Anyone with the link can view.' },
+              { value: 'password', label: 'Private (password protected)', desc: 'Viewers must enter a password.' },
+              { value: 'email_gated', label: 'Email gate', desc: 'Viewers submit their email to access.' },
+            ] as const).map((opt) => (
+              <label key={opt.value} className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="publish-visibility"
+                  value={opt.value}
+                  checked={publishVisibility === opt.value}
+                  onChange={() => setPublishVisibility(opt.value)}
+                  className="mt-0.5 accent-gray-900"
+                />
+                <div>
+                  <span className="text-sm text-gray-800">{opt.label}</span>
+                  <p className="text-xs text-gray-400">{opt.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {publishVisibility === 'password' && (
+            <div className="pl-6">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                {proposal.accessPassword ? 'Update password (optional)' : 'Set password'}
+              </label>
+              <Input
+                type="password"
+                value={publishPasswordInput}
+                onChange={(e) => setPublishPasswordInput(e.target.value)}
+                placeholder={proposal.accessPassword ? 'Leave blank to keep current password' : 'Enter password'}
+                className="text-sm"
+              />
+              {proposal.accessPassword && (
+                <p className="mt-1 text-xs text-gray-400">A password is already set for this proposal.</p>
+              )}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowPublishConfirm(false)}
+            disabled={publishing}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirmPublish}
+            disabled={publishing || (publishVisibility === 'password' && !proposal.accessPassword && !publishPasswordInput.trim())}
+            className="inline-flex items-center gap-2"
+          >
+            {publishing ? (
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : null}
+            Publish
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <Dialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
       <DialogContent>

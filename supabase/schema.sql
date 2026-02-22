@@ -152,17 +152,43 @@ CREATE INDEX IF NOT EXISTS idx_workspace_members_email ON workspace_members(lowe
 ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.is_workspace_member(target_workspace_id uuid, target_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.workspace_members wm
+    WHERE wm.workspace_id = target_workspace_id
+      AND wm.user_id = target_user_id
+      AND wm.status = 'active'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_workspace_owner(target_workspace_id uuid, target_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.workspace_members wm
+    WHERE wm.workspace_id = target_workspace_id
+      AND wm.user_id = target_user_id
+      AND wm.role = 'owner'
+      AND wm.status = 'active'
+  );
+$$;
+
 DROP POLICY IF EXISTS "Members can read their workspaces" ON workspaces;
 CREATE POLICY "Members can read their workspaces"
   ON workspaces FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members wm
-      WHERE wm.workspace_id = workspaces.id
-        AND wm.user_id = auth.uid()
-        AND wm.status = 'active'
-    )
-  );
+  USING (public.is_workspace_member(id));
 
 DROP POLICY IF EXISTS "Users can create their own workspaces" ON workspaces;
 CREATE POLICY "Users can create their own workspaces"
@@ -175,48 +201,19 @@ CREATE POLICY "Users can create their own workspaces"
 DROP POLICY IF EXISTS "Owners can update their workspaces" ON workspaces;
 CREATE POLICY "Owners can update their workspaces"
   ON workspaces FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members wm
-      WHERE wm.workspace_id = workspaces.id
-        AND wm.user_id = auth.uid()
-        AND wm.role = 'owner'
-        AND wm.status = 'active'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM workspace_members wm
-      WHERE wm.workspace_id = workspaces.id
-        AND wm.user_id = auth.uid()
-        AND wm.role = 'owner'
-        AND wm.status = 'active'
-    )
-  );
+  USING (public.is_workspace_owner(id))
+  WITH CHECK (public.is_workspace_owner(id));
 
 DROP POLICY IF EXISTS "Members can read workspace members" ON workspace_members;
 CREATE POLICY "Members can read workspace members"
   ON workspace_members FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members own
-      WHERE own.workspace_id = workspace_members.workspace_id
-        AND own.user_id = auth.uid()
-        AND own.status = 'active'
-    )
-  );
+  USING (public.is_workspace_member(workspace_id));
 
 DROP POLICY IF EXISTS "Owners can invite workspace members" ON workspace_members;
 CREATE POLICY "Owners can invite workspace members"
   ON workspace_members FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM workspace_members own
-      WHERE own.workspace_id = workspace_members.workspace_id
-        AND own.user_id = auth.uid()
-        AND own.role = 'owner'
-        AND own.status = 'active'
-    )
+    public.is_workspace_owner(workspace_id)
     OR (
       role = 'owner'
       AND status = 'active'
@@ -233,37 +230,13 @@ CREATE POLICY "Owners can invite workspace members"
 DROP POLICY IF EXISTS "Owners can remove workspace members" ON workspace_members;
 CREATE POLICY "Owners can remove workspace members"
   ON workspace_members FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members own
-      WHERE own.workspace_id = workspace_members.workspace_id
-        AND own.user_id = auth.uid()
-        AND own.role = 'owner'
-        AND own.status = 'active'
-    )
-  );
+  USING (public.is_workspace_owner(workspace_id));
 
 DROP POLICY IF EXISTS "Owners can manage workspace members" ON workspace_members;
 CREATE POLICY "Owners can manage workspace members"
   ON workspace_members FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members own
-      WHERE own.workspace_id = workspace_members.workspace_id
-        AND own.user_id = auth.uid()
-        AND own.role = 'owner'
-        AND own.status = 'active'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM workspace_members own
-      WHERE own.workspace_id = workspace_members.workspace_id
-        AND own.user_id = auth.uid()
-        AND own.role = 'owner'
-        AND own.status = 'active'
-    )
-  );
+  USING (public.is_workspace_owner(workspace_id))
+  WITH CHECK (public.is_workspace_owner(workspace_id));
 
 DROP POLICY IF EXISTS "Invited users can accept invitations" ON workspace_members;
 CREATE POLICY "Invited users can accept invitations"
@@ -329,22 +302,8 @@ END $$;
 DROP POLICY IF EXISTS "Users can manage their own proposals" ON proposals;
 CREATE POLICY "Workspace members can manage workspace proposals"
   ON proposals FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM workspace_members wm
-      WHERE wm.workspace_id = proposals.workspace_id
-        AND wm.user_id = auth.uid()
-        AND wm.status = 'active'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM workspace_members wm
-      WHERE wm.workspace_id = proposals.workspace_id
-        AND wm.user_id = auth.uid()
-        AND wm.status = 'active'
-    )
-  );
+  USING (public.is_workspace_member(workspace_id))
+  WITH CHECK (public.is_workspace_member(workspace_id));
 
 -- ============================================================
 -- Waitlist (landing page email capture)

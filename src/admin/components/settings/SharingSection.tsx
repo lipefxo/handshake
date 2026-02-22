@@ -136,7 +136,7 @@ export function SharingSection({ proposal, onChange, onImmediateSave }: SharingS
           <div className="space-y-2">
             {([
               { value: 'public', label: 'Public', desc: 'Anyone with the link can view.' },
-              { value: 'password', label: 'Password protected', desc: 'Viewers must enter a password.' },
+              { value: 'password', label: 'Private (password protected)', desc: 'Viewers must enter a password.' },
               { value: 'email_gated', label: 'Email gate', desc: 'Viewers submit their email to access.' },
             ] as const).map((opt) => (
               <label key={opt.value} className="flex items-start gap-3 cursor-pointer">
