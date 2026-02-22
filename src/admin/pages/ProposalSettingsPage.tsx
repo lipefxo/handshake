@@ -128,7 +128,7 @@ export function ProposalSettingsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-6 py-3.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {/* Tab strip */}
         <div className="relative grid grid-cols-2 w-44 items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
           <motion.div
@@ -140,18 +140,18 @@ export function ProposalSettingsPage() {
           />
           <Link
             to={`/admin/proposals/${id}`}
-            className="relative z-10 px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
+            className="relative z-10 px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 transition-colors duration-150 text-center"
           >
             Slides
           </Link>
-          <span className="relative z-10 px-3 py-1 text-xs font-medium text-gray-800 text-center">
+          <span className="relative z-10 px-3 py-1.5 text-xs font-medium text-gray-800 text-center">
             Settings
           </span>
         </div>
 
-        <div className="min-w-0 flex items-center justify-center">
+        <div className="min-w-0 flex flex-col items-center justify-center gap-0.5">
           <Input
-            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
+            className="h-7 border-0 bg-transparent px-2 py-0.5 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
