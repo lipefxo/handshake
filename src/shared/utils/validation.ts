@@ -21,6 +21,9 @@ export const FIELD_LIMITS = {
   maxBenefits: 6,
   maxMilestones: 6,
   maxComparisonItems: 6,
+  maxTableColumns: 6,
+  maxTableRows: 10,
+  tableCellValue: 200,
 } as const;
 
 export function sanitizeText(input: string): string {

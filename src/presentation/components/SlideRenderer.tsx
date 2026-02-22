@@ -1,4 +1,4 @@
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { TitleSlide } from './slides/TitleSlide';
 import { IntroSlide } from './slides/IntroSlide';
 import { StatsSlide } from './slides/StatsSlide';
@@ -8,6 +8,7 @@ import { ComparisonSlide } from './slides/ComparisonSlide';
 import { TimelineSlide } from './slides/TimelineSlide';
 import { MediaSlide } from './slides/MediaSlide';
 import { BenefitsSlide } from './slides/BenefitsSlide';
+import { TableSlide } from './slides/TableSlide';
 import { ClosingSlide } from './slides/ClosingSlide';
 
 interface SlideRendererProps {
@@ -38,6 +39,8 @@ export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps
       return <MediaSlide content={content as MediaSlideContent} />;
     case 'benefits':
       return <BenefitsSlide content={content as BenefitsSlideContent} />;
+    case 'table':
+      return <TableSlide content={content as TableSlideContent} />;
     case 'closing':
       return <ClosingSlide content={content as ClosingSlideContent} />;
     default:

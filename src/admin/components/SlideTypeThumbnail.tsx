@@ -86,6 +86,16 @@ export function SlideTypeThumbnail({ type, isSelected = false, className = '' }:
         <div className={`absolute left-5 right-2 top-5 h-1.5 rounded ${softFill}`} />
       </>
     ),
+    // Header row + grid lines
+    table: (
+      <>
+        <div className={`absolute left-2 right-2 top-2 h-2 rounded-sm ${fill}`} />
+        <div className={`absolute left-2 right-2 top-4.5 h-px ${softFill}`} />
+        <div className={`absolute left-2 right-2 top-6.5 h-px ${softFill}`} />
+        <div className={`absolute left-[36%] top-2 bottom-2 w-px ${softFill}`} />
+        <div className={`absolute left-[66%] top-2 bottom-2 w-px ${softFill}`} />
+      </>
+    ),
     // Headline + sub + wide CTA button
     closing: (
       <>
