@@ -16,7 +16,7 @@ import { EmailGate } from './components/EmailGate';
 import { ExpiredPage } from './components/ExpiredPage';
 
 function getContentFingerprint(slide: SlideConfig): string {
-  const c = slide.content as Record<string, unknown>;
+  const c = slide.content as unknown as Record<string, unknown>;
   const parts: number[] = [];
   for (const val of Object.values(c)) {
     if (Array.isArray(val)) parts.push(val.length);
