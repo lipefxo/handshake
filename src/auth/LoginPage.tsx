@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppIcon } from '../shared/icons/AppIcon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuthStore } from '../store/authStore';
 
 export function LoginPage() {
+  const DEV_AUTH_BYPASS_KEY = 'devAuthBypassUser';
+  const navigate = useNavigate();
+  const { setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -43,6 +48,17 @@ export function LoginPage() {
       setSent(true);
       setLoading(false);
     }
+  };
+
+  const handleDevBypassLogin = () => {
+    const bypassUser = {
+      id: 'dev-local-user',
+      email: 'dev@local.test',
+      displayName: 'Local Tester',
+    };
+    sessionStorage.setItem(DEV_AUTH_BYPASS_KEY, JSON.stringify(bypassUser));
+    setUser(bypassUser);
+    navigate('/admin', { replace: true });
   };
 
   return (
@@ -117,6 +133,21 @@ export function LoginPage() {
                       'Send magic link'
                     )}
                   </Button>
+                  {import.meta.env.DEV && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleDevBypassLogin}
+                      className="w-full"
+                    >
+                      Dev bypass login
+                    </Button>
+                  )}
+                  {import.meta.env.DEV && (
+                    <p className="text-[11px] text-gray-500 text-center">
+                      Local development shortcut (disabled in production)
+                    </p>
+                  )}
                 </form>
               </CardContent>
             </>

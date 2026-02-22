@@ -123,7 +123,6 @@ export function MarkdownIngestorModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-            onClick={handleClose}
           />
 
           {/* Modal */}

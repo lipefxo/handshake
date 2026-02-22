@@ -216,6 +216,10 @@ function NavBar() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setMobileOpen(false);
   };
+  const goToAdmin = () => {
+    setMobileOpen(false);
+    window.location.href = '/admin';
+  };
 
   return (
     <header
@@ -294,6 +298,25 @@ function NavBar() {
               {label}
             </button>
           ))}
+          <button
+            onClick={goToAdmin}
+            style={{
+              fontFamily: sans,
+              fontSize: 14,
+              fontWeight: 500,
+              color: C.textPrimary,
+              background: 'transparent',
+              border: `1px solid ${C.border}`,
+              cursor: 'pointer',
+              padding: '8px 16px',
+              borderRadius: 8,
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.background = C.bgSecondary)}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.background = 'transparent')}
+          >
+            Login
+          </button>
           <button
             onClick={() => scrollTo('waitlist')}
             style={{
@@ -390,6 +413,23 @@ function NavBar() {
                   {label}
                 </button>
               ))}
+              <button
+                onClick={goToAdmin}
+                style={{
+                  fontFamily: sans,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: C.textPrimary,
+                  background: 'transparent',
+                  border: `1px solid ${C.border}`,
+                  cursor: 'pointer',
+                  padding: '10px 20px',
+                  borderRadius: 8,
+                  textAlign: 'center',
+                }}
+              >
+                Login
+              </button>
               <button
                 onClick={() => scrollTo('waitlist')}
                 style={{

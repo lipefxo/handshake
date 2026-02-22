@@ -17,6 +17,7 @@ export type SlideType =
 export interface SlideLink {
   text: string;
   url: string;
+  variant?: 'primary' | 'secondary';
 }
 
 export interface SlideConfig {

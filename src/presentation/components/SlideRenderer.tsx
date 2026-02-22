@@ -84,6 +84,7 @@ export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps
           {validLinks.map((link, index) => {
             const text = sanitizeText(link.text ?? '');
             const urlValidation = validateUrl(link.url ?? '');
+            const variant = link.variant ?? 'primary';
             if (!text || !urlValidation.isValid) return null;
 
             return (
@@ -94,8 +95,10 @@ export function SlideRenderer({ slide, proposalPartnerName }: SlideRendererProps
                 rel="noopener noreferrer"
                 className="pointer-events-auto inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105"
                 style={{
-                  background: 'var(--color-text-primary)',
-                  color: 'var(--color-bg-primary)',
+                  background: variant === 'secondary' ? 'transparent' : 'var(--color-text-primary)',
+                  color: variant === 'secondary' ? 'var(--color-text-primary)' : 'var(--color-bg-primary)',
+                  border: variant === 'secondary' ? '1px solid var(--color-border)' : '1px solid transparent',
+                  backdropFilter: variant === 'secondary' ? 'blur(6px)' : undefined,
                   fontFamily: 'var(--font-body)',
                 }}
               >

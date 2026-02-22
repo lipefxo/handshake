@@ -17,9 +17,6 @@ import { AppIcon } from '../../shared/icons/AppIcon';
 
 export interface NewProposalFormValues {
   title: string;
-  partnerName: string;
-  contactName: string;
-  contactEmail: string;
   proposalDate: string;
   themeId: ThemeId;
 }
@@ -42,9 +39,6 @@ function getTodayDateValue(): string {
 function getInitialFormValues(): NewProposalFormValues {
   return {
     title: '',
-    partnerName: '',
-    contactName: '',
-    contactEmail: '',
     proposalDate: getTodayDateValue(),
     themeId: defaultThemeId,
   };
@@ -52,9 +46,6 @@ function getInitialFormValues(): NewProposalFormValues {
 
 const INPUT_LIMITS = {
   title: 45,
-  partnerName: 45,
-  contactName: 45,
-  contactEmail: 45,
 } as const;
 
 type FormErrors = Partial<Record<keyof NewProposalFormValues, string>>;
@@ -93,23 +84,12 @@ export function NewProposalDialog({
 
   const errors = useMemo<FormErrors>(() => {
     const next: FormErrors = {};
-    if (!values.partnerName.trim()) {
-      next.partnerName = 'Partner / client name is required.';
-    }
-
-    if (values.contactEmail.trim()) {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(values.contactEmail.trim())) {
-        next.contactEmail = 'Enter a valid email address.';
-      }
-    }
-
     if (!isValidDateValue(values.proposalDate)) {
       next.proposalDate = 'Select a valid proposal date.';
     }
 
     return next;
-  }, [values.contactEmail, values.partnerName, values.proposalDate]);
+  }, [values.proposalDate]);
 
   const canCreate = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
@@ -123,9 +103,6 @@ export function NewProposalDialog({
     await onCreate({
       ...values,
       title: values.title.trim(),
-      partnerName: values.partnerName.trim(),
-      contactName: values.contactName.trim(),
-      contactEmail: values.contactEmail.trim(),
     });
   };
 
@@ -141,89 +118,29 @@ export function NewProposalDialog({
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="grid gap-1.5">
-              <Label htmlFor="new-proposal-title-input">Proposal title</Label>
-              <Input
-                id="new-proposal-title-input"
-                type="text"
-                value={values.title}
-                onChange={(event) => updateField('title', event.target.value)}
-                placeholder="Q3 2026 Partnership Proposal"
-                maxLength={INPUT_LIMITS.title}
-              />
-              <p className="text-xs text-gray-500 text-right">
-                {values.title.length}/{INPUT_LIMITS.title}
-              </p>
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label htmlFor="new-proposal-partner-input">Partner / client name</Label>
-              <Input
-                id="new-proposal-partner-input"
-                type="text"
-                value={values.partnerName}
-                onChange={(event) => updateField('partnerName', event.target.value)}
-                placeholder="Acme Corp"
-                required
-                maxLength={INPUT_LIMITS.partnerName}
-                aria-invalid={Boolean(errors.partnerName)}
-              />
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <p className={errors.partnerName ? 'text-red-600' : 'text-transparent'}>{errors.partnerName ?? '.'}</p>
-                <p className="text-gray-500">
-                  {values.partnerName.length}/{INPUT_LIMITS.partnerName}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="new-proposal-contact-name-input">Contact name</Label>
+            <div className="grid gap-3 md:grid-cols-3 md:items-start">
+              <div className="grid gap-1.5 md:col-span-2">
+                <Label htmlFor="new-proposal-title-input">Proposal title</Label>
                 <Input
-                  id="new-proposal-contact-name-input"
+                  id="new-proposal-title-input"
                   type="text"
-                  value={values.contactName}
-                  onChange={(event) => updateField('contactName', event.target.value)}
-                  placeholder="Jane Doe"
-                  maxLength={INPUT_LIMITS.contactName}
+                  value={values.title}
+                  onChange={(event) => updateField('title', event.target.value)}
+                  placeholder="Q3 2026 Partnership Proposal"
+                  maxLength={INPUT_LIMITS.title}
                 />
-                <p className="text-xs text-gray-500 text-right">
-                  {values.contactName.length}/{INPUT_LIMITS.contactName}
-                </p>
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="new-proposal-contact-email-input">Contact email</Label>
+              <div className="grid gap-1.5 md:col-span-1">
+                <Label htmlFor="new-proposal-date-input">Proposal date</Label>
                 <Input
-                  id="new-proposal-contact-email-input"
-                  type="email"
-                  value={values.contactEmail}
-                  onChange={(event) => updateField('contactEmail', event.target.value)}
-                  placeholder="jane@acme.com"
-                  maxLength={INPUT_LIMITS.contactEmail}
-                  aria-invalid={Boolean(errors.contactEmail)}
+                  id="new-proposal-date-input"
+                  type="date"
+                  value={values.proposalDate}
+                  onChange={(event) => updateField('proposalDate', event.target.value)}
+                  required
+                  aria-invalid={Boolean(errors.proposalDate)}
                 />
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <p className={errors.contactEmail ? 'text-red-600' : 'text-transparent'}>{errors.contactEmail ?? '.'}</p>
-                  <p className="text-gray-500">
-                    {values.contactEmail.length}/{INPUT_LIMITS.contactEmail}
-                  </p>
-                </div>
               </div>
-            </div>
-
-            <div className="grid gap-1.5 md:max-w-[15rem]">
-              <Label htmlFor="new-proposal-date-input">Proposal date</Label>
-              <Input
-                id="new-proposal-date-input"
-                type="date"
-                value={values.proposalDate}
-                onChange={(event) => updateField('proposalDate', event.target.value)}
-                required
-                aria-invalid={Boolean(errors.proposalDate)}
-              />
-              {errors.proposalDate ? (
-                <p className="text-xs text-red-600">{errors.proposalDate}</p>
-              ) : null}
             </div>
 
             <div className="grid gap-1.5">
@@ -241,14 +158,6 @@ export function NewProposalDialog({
                 {createError}
               </p>
             ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isCreating}
-            >
-              Cancel
-            </Button>
             <Button
               type="button"
               variant="outline"

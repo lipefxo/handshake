@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { ClosingSlideContent, SlideConfig, SlideType, TitleSlideContent } from '../types/proposal';
 import type { AppIconId } from '../shared/icons/iconRegistry';
+import type { ThemeId } from '../themes/themeTypes';
+import { themes } from '../themes/themeDefinitions';
 
 export interface ProposalSeedData {
   title?: string;
@@ -8,6 +10,7 @@ export interface ProposalSeedData {
   contactName?: string;
   contactEmail?: string;
   proposalDate?: string;
+  themeId?: ThemeId;
 }
 
 export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: AppIconId; description: string }> = {
@@ -128,6 +131,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
 }
 
 export function createDefaultProposalSlides(seed: ProposalSeedData = {}): SlideConfig[] {
+  const themeTransition = seed.themeId ? themes[seed.themeId]?.style.slideTransitionDefault : undefined;
   const slides = [
     createDefaultSlide('title'),
     createDefaultSlide('stats'),
@@ -162,6 +166,6 @@ export function createDefaultProposalSlides(seed: ProposalSeedData = {}): SlideC
       };
     }
 
-    return slide;
+    return themeTransition ? { ...slide, transition: themeTransition } : slide;
   });
 }

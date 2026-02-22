@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useState, useRef, useCallback } from 'react';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { useAuthStore } from '../../store/authStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -119,10 +120,16 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
 }
 
 export function ProposalSettings() {
-  const [companyName, setCompanyName] = useState('SecureBags');
+  const user = useAuthStore((state) => state.user);
+  const [companyName, setCompanyName] = useState('ACME Corp');
   const [email, setEmail] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [companyNameTouched, setCompanyNameTouched] = useState(false);
+
+  useEffect(() => {
+    if (email || !user?.email) return;
+    setEmail(user.email);
+  }, [email, user?.email]);
 
   const companyNameError = companyNameTouched && companyName.trim() === ''
     ? 'Company name is required'
@@ -167,6 +174,7 @@ export function ProposalSettings() {
               <Input
                 className={cn(companyNameError && 'border-red-400 focus-visible:ring-red-200')}
                 value={companyName}
+                placeholder="ACME Corp"
                 maxLength={LIMITS.companyName}
                 required
                 onChange={(e) => setCompanyName(e.target.value)}
@@ -185,7 +193,7 @@ export function ProposalSettings() {
               </div>
               <Input
                 type="email"
-                placeholder="contact@securebags.com"
+                placeholder={user?.email ?? 'you@acmecorp.com'}
                 value={email}
                 maxLength={LIMITS.email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -209,19 +217,6 @@ export function ProposalSettings() {
           </CardContent>
         </Card>
 
-        {/* Supabase info */}
-        <Card className="rounded-2xl border-gray-100">
-          <CardHeader>
-            <CardTitle className="text-sm text-gray-900">Database</CardTitle>
-            <CardDescription className="text-xs">Connected to Supabase.</CardDescription>
-          </CardHeader>
-          <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400" />
-            <span className="text-xs text-gray-500">Connected</span>
-          </div>
-          </CardContent>
-        </Card>
       </motion.div>
     </div>
   );

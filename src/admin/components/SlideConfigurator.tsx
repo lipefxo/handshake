@@ -100,7 +100,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
   };
   const links = slide.links ?? [];
   const addLink = () => {
-    onChange({ links: [...links, { text: '', url: '' }] });
+    onChange({ links: [...links, { text: '', url: '', variant: 'primary' }] });
   };
   const updateLink = (index: number, updates: Partial<SlideLink>) => {
     const nextLinks = links.map((link, i) => (i === index ? { ...link, ...updates } : link));
@@ -198,6 +198,16 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
                     onChange={(e) => updateLink(index, { url: e.target.value })}
                     placeholder="https://..."
                   />
+                </FieldGroup>
+                <FieldGroup label="Variant">
+                  <select
+                    className={selectClassName}
+                    value={link.variant ?? 'primary'}
+                    onChange={(e) => updateLink(index, { variant: e.target.value as SlideLink['variant'] })}
+                  >
+                    <option value="primary">Primary</option>
+                    <option value="secondary">Secondary</option>
+                  </select>
                 </FieldGroup>
               </div>
             ))}

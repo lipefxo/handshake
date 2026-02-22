@@ -57,8 +57,8 @@ export function ProposalList() {
   const handleCreateFromDialog = async (values: NewProposalFormValues) => {
     if (!user) return;
 
-    const partnerName = values.partnerName.trim();
-    const proposalTitle = values.title.trim() || `${partnerName} Proposal`;
+    const proposalTitle = values.title.trim() || 'Untitled Proposal';
+    const partnerName = proposalTitle;
 
     setCreating(true);
     try {
@@ -71,9 +71,8 @@ export function ProposalList() {
         slides: createDefaultProposalSlides({
           title: proposalTitle,
           partnerName,
-          contactName: values.contactName,
-          contactEmail: values.contactEmail,
           proposalDate: values.proposalDate,
+          themeId: values.themeId,
         }),
         themeId: values.themeId,
       });
