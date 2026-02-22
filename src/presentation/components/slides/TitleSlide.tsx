@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { TitleSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { OptimizedImage } from '../OptimizedImage';
 
 interface TitleSlideProps {
   content: TitleSlideContent;
@@ -30,7 +31,7 @@ export function TitleSlide({ content }: TitleSlideProps) {
         {/* Logos row */}
         <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-6 mb-12">
           {content.secureBagsLogo ? (
-            <img src={content.secureBagsLogo} alt="SecureBags" className="h-8 object-contain opacity-90" />
+            <OptimizedImage src={content.secureBagsLogo} alt="SecureBags" className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-text-secondary)' }} />
@@ -47,7 +48,7 @@ export function TitleSlide({ content }: TitleSlideProps) {
           </div>
 
           {content.partnerLogo ? (
-            <img src={content.partnerLogo} alt={content.partnerName} className="h-8 object-contain opacity-90" />
+            <OptimizedImage src={content.partnerLogo} alt={content.partnerName} className="h-8 object-contain opacity-90" />
           ) : (
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)' }}>

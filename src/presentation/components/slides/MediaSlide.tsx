@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import type { MediaSlideContent } from '../../../types/proposal';
 import { useTheme } from '../../../themes/useTheme';
+import { OptimizedImage } from '../OptimizedImage';
 
 interface MediaSlideProps {
   content: MediaSlideContent;
@@ -25,16 +26,20 @@ export function MediaSlide({ content }: MediaSlideProps) {
               style={{ objectFit: content.fit === 'contain' ? 'contain' : 'cover' }}
             />
           ) : (
-            <motion.img
-              src={content.url}
-              alt={content.caption || ''}
-              className="absolute inset-0 w-full h-full"
-              style={{ objectFit: content.fit === 'contain' ? 'contain' : 'cover' }}
+            <motion.div
+              className="absolute inset-0"
               initial={{ scale: 1.05 }}
               whileInView={{ scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 8, ease: 'linear' }}
-            />
+            >
+              <OptimizedImage
+                src={content.url}
+                alt={content.caption || ''}
+                className="w-full h-full"
+                style={{ objectFit: content.fit === 'contain' ? 'contain' : 'cover' }}
+              />
+            </motion.div>
           )}
           {/* Overlay */}
           <div className="absolute inset-0" style={{ background: theme.colors.overlayBg, opacity: 0.2 }} />

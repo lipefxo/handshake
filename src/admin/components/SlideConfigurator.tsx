@@ -263,8 +263,8 @@ function TitleFields({ content, onChange }: { content: TitleSlideContent; onChan
       <FieldGroup label="Date">
         <Input value={content.date || ''} onChange={(e) => onChange({ date: e.target.value })} placeholder="January 2025" />
       </FieldGroup>
-      <ImageUploader label="Partner Logo" value={content.partnerLogo} onChange={(url) => onChange({ partnerLogo: url })} />
-      <ImageUploader label="SecureBags Logo" value={content.secureBagsLogo} onChange={(url) => onChange({ secureBagsLogo: url })} />
+      <ImageUploader label="Partner Logo" value={content.partnerLogo} onChange={(url) => onChange({ partnerLogo: url })} context="logo" />
+      <ImageUploader label="SecureBags Logo" value={content.secureBagsLogo} onChange={(url) => onChange({ secureBagsLogo: url })} context="logo" />
     </div>
   );
 }
@@ -292,7 +292,7 @@ function IntroFields({ content, onChange }: { content: IntroSlideContent; onChan
           <option value="right">Right</option>
         </select>
       </FieldGroup>
-      <ImageUploader label="Image (optional)" value={content.image} onChange={(url) => onChange({ image: url })} />
+      <ImageUploader label="Image (optional)" value={content.image} onChange={(url) => onChange({ image: url })} context="slide-image" />
     </div>
   );
 }
@@ -466,7 +466,7 @@ function TestimonialFields({ content, onChange }: { content: TestimonialSlideCon
       <FieldGroup label="Company">
         <Input value={content.company || ''} onChange={(e) => onChange({ company: e.target.value })} />
       </FieldGroup>
-      <ImageUploader label="Avatar (optional)" value={content.avatar} onChange={(url) => onChange({ avatar: url })} />
+      <ImageUploader label="Avatar (optional)" value={content.avatar} onChange={(url) => onChange({ avatar: url })} context="avatar" />
     </div>
   );
 }
@@ -614,6 +614,7 @@ function MediaFields({ content, onChange }: { content: MediaSlideContent; onChan
         value={content.url}
         onChange={(url) => onChange({ url })}
         accept={content.mediaType === 'video' ? 'video/*' : 'image/*'}
+        context="media"
       />
       <FieldGroup label="Caption">
         <Input value={content.caption || ''} onChange={(e) => onChange({ caption: e.target.value })} placeholder="Optional caption..." />

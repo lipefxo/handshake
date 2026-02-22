@@ -3,56 +3,101 @@ import { supabase } from '../../supabaseClient';
 import { useAuthStore } from '../../store/authStore';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { sanitizeSvg, validateImageUpload } from '../../shared/utils/validation';
+import { compressImage, type ImageContext } from '../../shared/utils/imageOptimization';
 
 interface ImageUploaderProps {
   value?: string;
   onChange: (url: string) => void;
   label?: string;
   accept?: string;
+  context?: ImageContext;
 }
 
-export function ImageUploader({ value, onChange, label = 'Image', accept = 'image/*' }: ImageUploaderProps) {
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/ogg': 'ogv',
+  'video/quicktime': 'mov',
+};
+
+function getFileExtension(file: File): string {
+  const extFromName = file.name.split('.').pop()?.toLowerCase();
+  if (extFromName) return extFromName;
+  return EXTENSION_BY_MIME_TYPE[file.type] ?? 'bin';
+}
+
+export function ImageUploader({
+  value,
+  onChange,
+  label = 'Image',
+  accept = 'image/*',
+  context = 'slide-image',
+}: ImageUploaderProps) {
   const { user } = useAuthStore();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File) => {
     if (!file || !user) return;
-    const validation = validateImageUpload(file);
-    if (!validation.valid) {
-      setUploadError(validation.error ?? 'Invalid file.');
-      return;
-    }
 
     setUploadError(null);
     setUploading(true);
+    setCompressionProgress(null);
 
-    const ext = file.name.split('.').pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const fileToUpload =
-      file.type === 'image/svg+xml'
-        ? new File([await sanitizeSvg(file)], file.name, { type: 'image/svg+xml' })
-        : file;
+    try {
+      const isImageFile = file.type.startsWith('image/');
+      if (isImageFile) {
+        const validation = validateImageUpload(file);
+        if (!validation.valid) {
+          setUploadError(validation.error ?? 'Invalid file.');
+          return;
+        }
+      }
 
-    const { data, error } = await supabase.storage
-      .from('proposal-assets')
-      .upload(path, fileToUpload, { upsert: true });
+      let fileToUpload = file;
 
-    if (error) {
-      console.error('Upload error:', error);
-      setUploadError('Failed to upload image. Please try again.');
+      if (file.type === 'image/svg+xml') {
+        fileToUpload = new File([await sanitizeSvg(file)], file.name, { type: 'image/svg+xml' });
+      } else if (isImageFile) {
+        setCompressionProgress(0);
+        fileToUpload = await compressImage(file, context, (progress) => {
+          setCompressionProgress(Math.max(0, Math.min(100, Math.round(progress))));
+        });
+      }
+
+      const ext = getFileExtension(fileToUpload);
+      const path = `${user.id}/${Date.now()}.${ext}`;
+
+      const { data, error } = await supabase.storage
+        .from('proposal-assets')
+        .upload(path, fileToUpload, { upsert: true });
+
+      if (error) {
+        console.error('Upload error:', error);
+        setUploadError('Failed to upload image. Please try again.');
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('proposal-assets')
+        .getPublicUrl(data.path);
+
+      onChange(publicUrl);
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      setUploadError('Failed to process image. Please try a different file.');
+    } finally {
+      setCompressionProgress(null);
       setUploading(false);
-      return;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('proposal-assets')
-      .getPublicUrl(data.path);
-
-    onChange(publicUrl);
-    setUploading(false);
   };
 
   const handleFile = (file: File) => {
@@ -121,7 +166,12 @@ export function ImageUploader({ value, onChange, label = 'Image', accept = 'imag
           aria-label={`Upload ${label}`}
         >
           {uploading ? (
-            <div className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+              {compressionProgress !== null && (
+                <span className="text-[10px] text-gray-400">Optimizing {compressionProgress}%</span>
+              )}
+            </div>
           ) : (
             <>
               <AppIcon icon="ui.image" className="w-5 h-5 text-gray-300" />
