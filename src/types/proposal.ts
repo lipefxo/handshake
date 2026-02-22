@@ -165,6 +165,23 @@ export interface Proposal {
   brandOverrides?: BrandOverrides;
 }
 
+export interface ProposalAccessMeta {
+  id: string;
+  slug: string;
+  shortCode?: string;
+  title: string;
+  partnerName: string;
+  status: 'draft' | 'published';
+  visibility?: 'public' | 'password' | 'email_gated';
+  expiresAt?: string;
+  themeId: ThemeId;
+}
+
+export interface ProposalAccessGrant {
+  token: string;
+  expiresAt: string;
+}
+
 export interface AppUser {
   id: string;
   email: string;

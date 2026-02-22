@@ -30,7 +30,7 @@ create policy "Users can manage their own proposals"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Anyone can read published proposals (public presentation URLs)
+-- Baseline policy; tightened after sharing columns are added
 create policy "Published proposals are publicly readable"
   on proposals for select
   using (status = 'published');
@@ -82,6 +82,16 @@ ALTER TABLE proposals
   ADD COLUMN IF NOT EXISTS expires_at timestamptz,
   ADD COLUMN IF NOT EXISTS brand_overrides jsonb DEFAULT '{}'::jsonb;
 
+DROP POLICY IF EXISTS "Published proposals are publicly readable" ON proposals;
+DROP POLICY IF EXISTS "Public published proposals are readable" ON proposals;
+CREATE POLICY "Public published proposals are readable"
+  ON proposals FOR SELECT
+  USING (
+    status = 'published'
+    AND visibility = 'public'
+    AND (expires_at IS NULL OR expires_at > now())
+  );
+
 -- ============================================================
 -- Short share links
 -- ============================================================
@@ -109,19 +119,112 @@ CREATE TABLE IF NOT EXISTS proposal_leads (
 
 ALTER TABLE proposal_leads ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read leads for their proposals"
+DROP POLICY IF EXISTS "Users can read leads for their proposals" ON proposal_leads;
+CREATE POLICY "Workspace members can read leads for their proposals"
   ON proposal_leads FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM proposals
       WHERE proposals.id = proposal_leads.proposal_id
-        AND proposals.user_id = auth.uid()
+        AND public.is_workspace_member(proposals.workspace_id)
     )
   );
 
 CREATE POLICY "Anyone can submit a lead"
   ON proposal_leads FOR INSERT
   WITH CHECK (true);
+
+-- Access sessions for gated proposals
+CREATE TABLE IF NOT EXISTS proposal_access_sessions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  proposal_id uuid REFERENCES proposals(id) ON DELETE CASCADE NOT NULL,
+  session_token text UNIQUE NOT NULL,
+  access_type text NOT NULL CHECK (access_type IN ('password', 'email')),
+  email text,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  last_accessed_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_access_sessions_proposal_id
+  ON proposal_access_sessions(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_access_sessions_session_token
+  ON proposal_access_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_proposal_access_sessions_expires_at
+  ON proposal_access_sessions(expires_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_proposal_access_sessions_email_unique
+  ON proposal_access_sessions(proposal_id, email)
+  WHERE access_type = 'email' AND email IS NOT NULL;
+
+ALTER TABLE proposal_access_sessions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Workspace members can read access sessions" ON proposal_access_sessions;
+CREATE POLICY "Workspace members can read access sessions"
+  ON proposal_access_sessions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_access_sessions.proposal_id
+        AND public.is_workspace_member(proposals.workspace_id)
+    )
+  );
+
+DROP POLICY IF EXISTS "Workspace members can delete access sessions" ON proposal_access_sessions;
+CREATE POLICY "Workspace members can delete access sessions"
+  ON proposal_access_sessions FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_access_sessions.proposal_id
+        AND public.is_workspace_member(proposals.workspace_id)
+    )
+  );
+
+-- Access attempts for rate limiting and audits
+CREATE TABLE IF NOT EXISTS proposal_access_attempts (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  proposal_id uuid REFERENCES proposals(id) ON DELETE CASCADE NOT NULL,
+  attempt_type text NOT NULL CHECK (attempt_type IN ('password', 'email')),
+  success boolean NOT NULL,
+  ip_address text,
+  email text,
+  user_agent text,
+  reason text,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_access_attempts_proposal_id
+  ON proposal_access_attempts(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_access_attempts_created_at
+  ON proposal_access_attempts(created_at);
+CREATE INDEX IF NOT EXISTS idx_proposal_access_attempts_ip_created_at
+  ON proposal_access_attempts(ip_address, created_at);
+
+ALTER TABLE proposal_access_attempts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Workspace members can read access attempts" ON proposal_access_attempts;
+CREATE POLICY "Workspace members can read access attempts"
+  ON proposal_access_attempts FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_access_attempts.proposal_id
+        AND public.is_workspace_member(proposals.workspace_id)
+    )
+  );
+
+CREATE OR REPLACE FUNCTION public.cleanup_expired_proposal_access_data()
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM proposal_access_sessions
+  WHERE expires_at < now() - interval '7 days';
+
+  DELETE FROM proposal_access_attempts
+  WHERE created_at < now() - interval '30 days';
+$$;
 
 -- ============================================================
 -- Workspaces and team access

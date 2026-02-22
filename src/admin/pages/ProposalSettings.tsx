@@ -14,7 +14,7 @@ import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
 const LIMITS = {
   companyName: 50,
   email: 100,
-  workspaceName: 80,
+  workspaceName: 30,
 };
 
 function CharCounter({ value, max }: { value: string; max: number }) {

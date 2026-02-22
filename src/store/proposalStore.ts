@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { BrandOverrides, Proposal, SlideConfig } from '../types/proposal';
+import type { BrandOverrides, Proposal, ProposalAccessGrant, ProposalAccessMeta, SlideConfig } from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateShortCode, generateSlug } from '../shared/utils/helpers';
 import { useAuthStore } from './authStore';
@@ -20,6 +20,11 @@ interface ProposalStore {
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
   deleteProposal: (id: string) => Promise<boolean>;
   duplicateProposal: (id: string) => Promise<Proposal | null>;
+  getProposalMetaBySlug: (slug: string) => Promise<ProposalAccessMeta | null>;
+  getProposalMetaByShortCode: (shortCode: string) => Promise<ProposalAccessMeta | null>;
+  getProposalContentBySlug: (slug: string, accessToken?: string) => Promise<Proposal | null>;
+  verifyProposalPassword: (proposalId: string, password: string) => Promise<ProposalAccessGrant | null>;
+  verifyProposalEmail: (proposalId: string, email: string) => Promise<ProposalAccessGrant | null>;
   getProposalBySlug: (slug: string) => Promise<Proposal | null>;
   getProposalByShortCode: (shortCode: string) => Promise<Proposal | null>;
   getOwnProposalBySlug: (slug: string) => Promise<Proposal | null>;
@@ -60,6 +65,20 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     accessPassword: row.access_password as string | undefined,
     expiresAt: row.expires_at as string | undefined,
     brandOverrides: (row.brand_overrides as BrandOverrides) || {},
+  };
+}
+
+function mapMetaRowToProposalAccessMeta(row: Record<string, unknown>): ProposalAccessMeta {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    shortCode: row.shortCode as string | undefined,
+    title: row.title as string,
+    partnerName: row.partnerName as string,
+    status: row.status as ProposalAccessMeta['status'],
+    visibility: (row.visibility as Proposal['visibility']) ?? 'public',
+    expiresAt: row.expiresAt as string | undefined,
+    themeId: isValidThemeId(row.themeId) ? row.themeId : defaultThemeId,
   };
 }
 
@@ -320,30 +339,76 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     return newProposal;
   },
 
-  getProposalBySlug: async (slug) => {
+  getProposalMetaBySlug: async (slug) => {
     const safeSlug = generateSafeSlug(slug);
-    const { data, error } = await supabase
-      .from('proposals')
-      .select('*')
-      .eq('slug', safeSlug)
-      .eq('status', 'published')
-      .single();
-    if (error || !data) return null;
-    return dbRowToProposal(data);
+    if (!safeSlug) return null;
+
+    const { data, error } = await supabase.functions.invoke('proposal-meta', {
+      body: { slug: safeSlug },
+    });
+    if (error || !data?.proposal) return null;
+    return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
   },
 
-  getProposalByShortCode: async (shortCode) => {
+  getProposalMetaByShortCode: async (shortCode) => {
     const safeShortCode = normalizeShortCode(shortCode);
     if (!safeShortCode) return null;
 
-    const { data, error } = await supabase
-      .from('proposals')
-      .select('*')
-      .eq('short_code', safeShortCode)
-      .eq('status', 'published')
-      .single();
-    if (error || !data) return null;
-    return dbRowToProposal(data);
+    const { data, error } = await supabase.functions.invoke('proposal-meta', {
+      body: { shortCode: safeShortCode },
+    });
+    if (error || !data?.proposal) return null;
+    return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
+  },
+
+  getProposalContentBySlug: async (slug, accessToken) => {
+    const safeSlug = generateSafeSlug(slug);
+    if (!safeSlug) return null;
+
+    const { data, error } = await supabase.functions.invoke('proposal-content', {
+      body: { slug: safeSlug, accessToken: accessToken?.trim() || undefined },
+    });
+    if (error || !data?.proposal) return null;
+    return dbRowToProposal(data.proposal as Record<string, unknown>);
+  },
+
+  verifyProposalPassword: async (proposalId, password) => {
+    const proposalIdValue = proposalId.trim();
+    if (!proposalIdValue || !password.trim()) return null;
+
+    const { data, error } = await supabase.functions.invoke('proposal-verify-password', {
+      body: { proposalId: proposalIdValue, password },
+    });
+    if (error || !data?.token || !data?.expiresAt) return null;
+    return {
+      token: data.token as string,
+      expiresAt: data.expiresAt as string,
+    };
+  },
+
+  verifyProposalEmail: async (proposalId, email) => {
+    const proposalIdValue = proposalId.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!proposalIdValue || !normalizedEmail) return null;
+
+    const { data, error } = await supabase.functions.invoke('proposal-verify-email', {
+      body: { proposalId: proposalIdValue, email: normalizedEmail },
+    });
+    if (error || !data?.token || !data?.expiresAt) return null;
+    return {
+      token: data.token as string,
+      expiresAt: data.expiresAt as string,
+    };
+  },
+
+  getProposalBySlug: async (slug) => {
+    return get().getProposalContentBySlug(slug);
+  },
+
+  getProposalByShortCode: async (shortCode) => {
+    const meta = await get().getProposalMetaByShortCode(shortCode);
+    if (!meta?.slug) return null;
+    return get().getProposalContentBySlug(meta.slug);
   },
 
   getOwnProposalBySlug: async (slug) => {
