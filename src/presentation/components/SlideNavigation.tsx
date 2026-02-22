@@ -35,11 +35,11 @@ export function SlideNavigation({ current, total, onNavigate, backToEditorPath }
         <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
           <Link
             to={backToEditorPath}
-            className="rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+            className="rounded-full border px-3 py-1.5 text-[11px] font-medium shadow-lg transition-colors focus-visible:outline-none focus-visible:ring-2"
             style={{
-              borderColor: theme.colors.border,
-              color: theme.colors.textPrimary,
-              backgroundColor: theme.colors.bgSecondary,
+              borderColor: theme.colors.textPrimary,
+              color: theme.colors.bgPrimary,
+              backgroundColor: theme.colors.textPrimary,
             }}
             aria-label="Back to proposal editor"
           >

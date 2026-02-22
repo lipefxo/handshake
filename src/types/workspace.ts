@@ -1,5 +1,3 @@
-import type { ThemeSlideTransition } from '../themes/themeTypes';
-
 export type WorkspaceRole = 'owner' | 'member';
 export type WorkspaceMemberStatus = 'active' | 'pending';
 
@@ -21,7 +19,6 @@ export interface WorkspaceBrandTheme {
   };
   style?: {
     borderRadius?: string;
-    slideTransitionDefault?: ThemeSlideTransition;
   };
 }
 

@@ -237,7 +237,7 @@ export function SharingSection({ proposal, onChange, onImmediateSave }: SharingS
               readOnly
               value={embedCode}
               rows={3}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-500 resize-none"
+              className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-500 transition-[border-color,box-shadow] hover:border-[#d4785c]/60 focus:border-[#d4785c] focus:ring-[3px] focus:ring-[#d4785c]/20 focus:outline-none"
             />
             <Button
               type="button"

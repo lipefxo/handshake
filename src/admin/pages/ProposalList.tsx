@@ -263,7 +263,7 @@ export function ProposalList() {
                   ? 'border-green-100 hover:border-green-200 bg-green-50/30'
                   : 'hover:border-gray-200'
               }`}>
-                <CardContent className="flex items-center gap-4 p-5">
+                <CardContent className="flex items-center gap-3 p-4">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                     proposal.status === 'published'
                       ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.4)]'
@@ -271,7 +271,7 @@ export function ProposalList() {
                   }`} />
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">{proposal.title}</h3>
                       <Badge
                         variant={proposal.status === 'published' ? 'secondary' : 'outline'}
@@ -280,13 +280,13 @@ export function ProposalList() {
                         {proposal.status === 'published' ? 'Live' : 'Draft'}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-1">
+                    <div className="mt-0 flex items-center gap-2.5">
                       <span className="text-xs text-gray-400">{proposal.partnerName}</span>
                       <span className="text-gray-200">·</span>
                       <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
                     </div>
                     <p
-                      className="text-xs text-gray-400 mt-1"
+                      className="mt-0.5 text-xs text-gray-400"
                       title={formatDateTime(proposal.updatedAt || proposal.createdAt)}
                     >
                       Last updated {formatRelativeTime(proposal.updatedAt || proposal.createdAt)}
@@ -323,7 +323,7 @@ export function ProposalList() {
 
                     <Button asChild variant="ghost" size="icon" title="Preview">
                       <Link to={`/p/${proposal.slug}`}>
-                        <AppIcon icon="ui.external-link" className="w-4 h-4" />
+                        <AppIcon icon="ui.link-square-01" className="w-4 h-4" />
                       </Link>
                     </Button>
 

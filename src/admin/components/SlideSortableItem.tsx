@@ -42,14 +42,14 @@ export function SlideSortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
+      className={`group relative flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
         !slide.enabled ? 'opacity-50' : ''
       } ${
         isMergeTarget
           ? 'border-[#d4785c] bg-[#d4785c]/10'
           : isSelected
             ? 'border-gray-300 bg-gray-50'
-            : 'border-gray-100 bg-white hover:border-gray-200'
+          : 'border-gray-100 bg-white hover:border-gray-200'
       }`}
       onClick={onSelect}
       role="button"
@@ -64,7 +64,7 @@ export function SlideSortableItem({
     >
       {isMergeTarget && (
         <div
-          className="absolute inset-x-0 bottom-0 h-0.5 rounded-b-xl bg-[#d4785c] transition-all duration-100 ease-linear"
+          className="absolute inset-x-0 bottom-0 h-0.5 rounded-b-lg bg-[#d4785c] transition-all duration-100 ease-linear"
           style={{ width: `${mergeProgress}%` }}
         />
       )}
@@ -75,7 +75,7 @@ export function SlideSortableItem({
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
-        className="flex-shrink-0 p-1 text-gray-300 cursor-grab active:cursor-grabbing"
+        className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-500 cursor-grab active:cursor-grabbing transition-colors"
         aria-label="Drag to reorder slide"
       >
         <AppIcon icon="ui.drag" className="w-3.5 h-3.5" />

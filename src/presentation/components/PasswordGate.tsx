@@ -69,11 +69,8 @@ export function PasswordGate({ proposalId, proposalTitle, onGranted }: PasswordG
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
             autoFocus
-            className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-colors"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] hover:border-[var(--color-accent)]/60 focus:border-[var(--color-accent)] focus:ring-[3px] focus:ring-[var(--color-accent)]/20"
             style={{
-              background: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-body)',
             }}
           />

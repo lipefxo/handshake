@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeProvider } from '@/themes/ThemeProvider';
 import { themes } from '@/themes/themeDefinitions';
-import type { ThemeSlideTransition } from '@/themes/themeTypes';
 import type { WorkspaceBrandTheme } from '@/types/workspace';
 
 const boldBrandDefaults = themes['bold-brand'];
@@ -16,8 +15,6 @@ const FONT_FAMILIES = [
   { label: 'Source Sans 3', value: "'Source Sans 3', system-ui, sans-serif", importParam: 'family=Source+Sans+3:wght@400;500;600;700' },
   { label: 'Fraunces', value: "'Fraunces', Georgia, serif", importParam: 'family=Fraunces:wght@400;500;600;700' },
 ];
-
-const TRANSITIONS: ThemeSlideTransition[] = ['fade', 'slide-up', 'slide-left', 'scale', 'blur'];
 
 function buildGoogleFontsImport(displayFont?: string, bodyFont?: string): string | undefined {
   const params = new Set<string>();
@@ -52,7 +49,7 @@ function ColorField({
       <label className="text-xs font-medium text-gray-600">{label}</label>
       <div className="flex items-center gap-2">
         <label
-          className="h-9 w-10 rounded-md border border-gray-200 cursor-pointer overflow-hidden bg-white"
+          className="h-9 w-9 rounded-full border border-gray-200 cursor-pointer overflow-hidden bg-white"
           title={`Choose ${label.toLowerCase()}`}
         >
           <input
@@ -89,23 +86,33 @@ export function BrandThemeConfigurator({
   const [draft, setDraft] = useState<WorkspaceBrandTheme>(value ?? {});
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    if (disabled) return;
-    const timer = setTimeout(() => {
-      setSaving(true);
-      void onSave(draft)
-        .then((ok) => setSaveMessage(ok ? 'Saved' : 'Save failed'))
-        .finally(() => setSaving(false));
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [draft, disabled, onSave]);
+    setDraft(value ?? {});
+    setHasChanges(false);
+  }, [value]);
 
   useEffect(() => {
     if (!saveMessage) return;
     const timer = setTimeout(() => setSaveMessage(''), 1500);
     return () => clearTimeout(timer);
   }, [saveMessage]);
+
+  const updateDraft = (updater: (prev: WorkspaceBrandTheme) => WorkspaceBrandTheme) => {
+    setDraft((prev) => updater(prev));
+    setHasChanges(true);
+    if (saveMessage) setSaveMessage('');
+  };
+
+  const handleSave = async () => {
+    if (disabled || saving || !hasChanges) return;
+    setSaving(true);
+    const ok = await onSave(draft);
+    setSaveMessage(ok ? 'Saved' : 'Save failed');
+    if (ok) setHasChanges(false);
+    setSaving(false);
+  };
 
   const previewTheme = useMemo(() => draft, [draft]);
 
@@ -123,7 +130,7 @@ export function BrandThemeConfigurator({
           size="sm"
           variant="outline"
           disabled={disabled || saving}
-          onClick={() => setDraft({})}
+          onClick={() => updateDraft(() => ({}))}
         >
           Reset to defaults
         </Button>
@@ -136,7 +143,7 @@ export function BrandThemeConfigurator({
           fallback={boldBrandDefaults.colors.bgPrimary}
           disabled={disabled}
           onChange={(next) =>
-            setDraft((prev) => ({
+            updateDraft((prev) => ({
               ...prev,
               colors: { ...prev.colors, bgPrimary: next },
             }))
@@ -148,7 +155,7 @@ export function BrandThemeConfigurator({
           fallback={boldBrandDefaults.colors.bgSecondary}
           disabled={disabled}
           onChange={(next) =>
-            setDraft((prev) => ({
+            updateDraft((prev) => ({
               ...prev,
               colors: { ...prev.colors, bgSecondary: next },
             }))
@@ -160,7 +167,7 @@ export function BrandThemeConfigurator({
           fallback={boldBrandDefaults.colors.accent}
           disabled={disabled}
           onChange={(next) =>
-            setDraft((prev) => ({
+            updateDraft((prev) => ({
               ...prev,
               colors: { ...prev.colors, accent: next, accentHover: next },
             }))
@@ -172,7 +179,7 @@ export function BrandThemeConfigurator({
           fallback={boldBrandDefaults.colors.textPrimary}
           disabled={disabled}
           onChange={(next) =>
-            setDraft((prev) => ({
+            updateDraft((prev) => ({
               ...prev,
               colors: { ...prev.colors, textPrimary: next },
             }))
@@ -188,7 +195,7 @@ export function BrandThemeConfigurator({
             disabled={disabled}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             onChange={(event) =>
-              setDraft((prev) => {
+              updateDraft((prev) => {
                 const display = event.target.value;
                 const body = prev.fonts?.body ?? boldBrandDefaults.fonts.body;
                 return {
@@ -215,7 +222,7 @@ export function BrandThemeConfigurator({
             disabled={disabled}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             onChange={(event) =>
-              setDraft((prev) => {
+              updateDraft((prev) => {
                 const body = event.target.value;
                 const display = prev.fonts?.display ?? boldBrandDefaults.fonts.display;
                 return {
@@ -242,7 +249,7 @@ export function BrandThemeConfigurator({
             disabled={disabled}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             onChange={(event) =>
-              setDraft((prev) => ({
+              updateDraft((prev) => ({
                 ...prev,
                 fonts: { ...prev.fonts, displayWeight: Number(event.target.value) },
               }))
@@ -261,7 +268,7 @@ export function BrandThemeConfigurator({
             disabled={disabled}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             onChange={(event) =>
-              setDraft((prev) => ({
+              updateDraft((prev) => ({
                 ...prev,
                 fonts: { ...prev.fonts, bodyWeight: Number(event.target.value) },
               }))
@@ -282,7 +289,7 @@ export function BrandThemeConfigurator({
             disabled={disabled}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             onChange={(event) =>
-              setDraft((prev) => ({
+              updateDraft((prev) => ({
                 ...prev,
                 style: { ...prev.style, borderRadius: event.target.value },
               }))
@@ -293,47 +300,58 @@ export function BrandThemeConfigurator({
             ))}
           </select>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-600">Default slide transition</label>
-          <select
-            value={draft.style?.slideTransitionDefault ?? boldBrandDefaults.style.slideTransitionDefault}
-            disabled={disabled}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            onChange={(event) =>
-              setDraft((prev) => ({
-                ...prev,
-                style: {
-                  ...prev.style,
-                  slideTransitionDefault: event.target.value as ThemeSlideTransition,
-                },
-              }))
-            }
-          >
-            {TRANSITIONS.map((transition) => (
-              <option key={transition} value={transition}>{transition}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       <div>
         <p className="text-xs font-medium text-gray-500 mb-2">Live preview</p>
         <ThemeProvider themeId="bold-brand" workspaceBrandTheme={previewTheme} className="rounded-xl overflow-hidden border border-gray-200">
-          <div className="aspect-video flex flex-col items-center justify-center gap-2 px-4" style={{ background: 'var(--color-bg-primary)' }}>
+          <div className="aspect-video flex flex-col items-center justify-center gap-3 px-4" style={{ background: 'var(--color-bg-primary)' }}>
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-              Brand Theme
+              Border Radius Preview
             </p>
-            <h4 className="text-xl text-center" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
-              Workspace Preview
-            </h4>
-            <div className="mt-1 rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'var(--color-accent)', color: 'var(--color-bg-primary)' }}>
-              Call to action
+            <div
+              className="w-full max-w-xs border px-4 py-3"
+              style={{
+                borderColor: 'var(--color-border)',
+                borderRadius: 'var(--radius)',
+                background: 'var(--color-bg-secondary)',
+              }}
+            >
+              <h4 className="text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+                Card Surface
+              </h4>
+              <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+                Cards and buttons now reflect this radius.
+              </p>
             </div>
+            <button
+              type="button"
+              className="px-3 py-1 text-xs font-medium"
+              style={{
+                borderRadius: 'var(--radius)',
+                background: 'var(--color-accent)',
+                color: 'var(--color-bg-primary)',
+              }}
+            >
+              Call to action
+            </button>
           </div>
         </ThemeProvider>
       </div>
 
-      <p className="text-xs text-gray-500 min-h-4">{saving ? 'Saving…' : saveMessage}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-h-4 text-xs text-gray-500">
+          {saving ? 'Saving…' : saveMessage || (hasChanges ? 'Unsaved changes' : '')}
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          disabled={disabled || saving || !hasChanges}
+          onClick={() => void handleSave()}
+        >
+          {saving ? 'Saving...' : 'Save changes'}
+        </Button>
+      </div>
     </div>
   );
 }

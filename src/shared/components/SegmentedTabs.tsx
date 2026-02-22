@@ -19,6 +19,7 @@ interface SegmentedTabsProps<T extends string> {
   onValueChange?: (value: T) => void;
   className?: string;
   tabClassName?: string;
+  indicatorLayoutId?: string;
 }
 
 const TAB_INDICATOR_TRANSITION = { type: 'spring', stiffness: 380, damping: 34, mass: 0.6 } as const;
@@ -29,9 +30,10 @@ export function SegmentedTabs<T extends string>({
   onValueChange,
   className,
   tabClassName,
+  indicatorLayoutId,
 }: SegmentedTabsProps<T>) {
   const id = useId();
-  const indicatorId = `segmented-tab-indicator-${id}`;
+  const indicatorId = indicatorLayoutId ?? `segmented-tab-indicator-${id}`;
 
   return (
     <div

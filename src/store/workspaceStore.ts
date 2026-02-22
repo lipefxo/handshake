@@ -75,7 +75,6 @@ function sanitizeWorkspaceBrandTheme(brandTheme: WorkspaceBrandTheme): Workspace
     },
     style: {
       borderRadius: sanitizeFontValue(brandTheme.style?.borderRadius),
-      slideTransitionDefault: brandTheme.style?.slideTransitionDefault,
     },
   };
 }

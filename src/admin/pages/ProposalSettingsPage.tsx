@@ -135,6 +135,7 @@ export function ProposalSettingsPage() {
           value="settings"
           className="w-44 flex-shrink-0"
           tabClassName="flex-1"
+          indicatorLayoutId="proposal-editor-mode-tabs"
           options={[
             { value: 'slides', label: 'Slides', href: `/admin/proposals/${id}` },
             { value: 'settings', label: 'Settings' },

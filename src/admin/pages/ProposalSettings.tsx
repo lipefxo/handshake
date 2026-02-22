@@ -18,6 +18,11 @@ const LIMITS = {
   workspaceName: 30,
 };
 
+const SETTINGS_SECTIONS = [
+  { id: 'brand', label: 'Brand' },
+  { id: 'team', label: 'Team' },
+] as const;
+
 function CharCounter({ value, max }: { value: string; max: number }) {
   const remaining = max - value.length;
   const isNearLimit = remaining <= Math.floor(max * 0.15);
@@ -99,17 +104,19 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       }}
       role="button"
       tabIndex={0}
-      className="w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 transition-colors duration-150 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
+      className="group w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
       style={{
         borderColor: dragging ? '#d4785c' : '#e5e3de',
         background: dragging ? 'rgba(212,120,92,0.06)' : '#fafaf7',
       }}
     >
-      <AppIcon icon="ui.image" className="mx-auto mb-1.5 w-6 h-6 text-gray-300" />
-      <p className="text-xs font-medium text-gray-600">
+      <AppIcon icon="ui.image" className="mx-auto mb-1.5 h-6 w-6 text-gray-300 transition-transform duration-200 group-hover:scale-105 group-hover:text-gray-400" />
+      <p className="text-xs font-medium text-gray-600 transition-colors duration-200 group-hover:text-gray-700">
         {dragging ? 'Drop to upload' : 'Click or drag to upload logo'}
       </p>
-      <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, SVG · Recommended 256×256</p>
+      <p className="mt-0.5 text-xs text-gray-400 transition-colors duration-200 group-hover:text-gray-500">
+        PNG, JPG, SVG · Recommended 256×256
+      </p>
       <input
         ref={inputRef}
         type="file"
@@ -147,6 +154,7 @@ export function ProposalSettings() {
   const [renamingWorkspace, setRenamingWorkspace] = useState(false);
   const [resendingMemberId, setResendingMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<(typeof SETTINGS_SECTIONS)[number]['id']>('brand');
   const isOwner = currentUserRole === 'owner';
   const { executeWithFeedback } = useActionFeedback();
 
@@ -185,6 +193,30 @@ export function ProposalSettings() {
     : companyName.length > LIMITS.companyName
     ? `Max ${LIMITS.companyName} characters`
     : null;
+
+  useEffect(() => {
+    const sectionEls = SETTINGS_SECTIONS
+      .map((section) => document.getElementById(section.id))
+      .filter(Boolean) as HTMLElement[];
+    if (sectionEls.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting);
+        if (visible.length === 0) return;
+        const firstVisible = visible.reduce((a, b) =>
+          a.boundingClientRect.top < b.boundingClientRect.top ? a : b,
+        );
+        if (firstVisible.target.id === 'brand' || firstVisible.target.id === 'team') {
+          setActiveSectionId(firstVisible.target.id);
+        }
+      },
+      { threshold: 0.35, rootMargin: '-15% 0px -55% 0px' },
+    );
+
+    sectionEls.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   const handleInviteMember = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -242,8 +274,13 @@ export function ProposalSettings() {
     setRenamingWorkspace(false);
   };
 
+  const handleSectionNavClick = (id: (typeof SETTINGS_SECTIONS)[number]['id']) => {
+    setActiveSectionId(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div className="max-w-2xl mx-auto px-8 py-8">
+    <div className="max-w-2xl mx-auto px-8 py-8 pb-28">
       <div className="mb-8">
         <h1 className="font-brand-serif text-2xl text-gray-900">Settings</h1>
         <p className="mt-1 text-sm text-[#6b6b6b]">Global settings for your proposal workspace.</p>
@@ -255,7 +292,7 @@ export function ProposalSettings() {
         className="space-y-6"
       >
         {/* Brand */}
-        <Card className="rounded-2xl border-gray-100">
+        <Card id="brand" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
             <CardTitle className="font-brand-serif text-base text-gray-900">Brand</CardTitle>
             <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
@@ -328,7 +365,7 @@ export function ProposalSettings() {
         </Card>
 
         {/* Team */}
-        <Card className="rounded-2xl border-gray-100">
+        <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
             <CardTitle className="font-brand-serif text-base text-gray-900">Team</CardTitle>
             <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
@@ -385,6 +422,9 @@ export function ProposalSettings() {
             )}
 
             <form onSubmit={handleInviteMember} className="flex items-center gap-2">
+              <div className="h-9 w-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500">
+                <AppIcon icon="ui.mail-send" className="h-3.5 w-3.5" />
+              </div>
               <Input
                 type="email"
                 value={inviteEmail}
@@ -467,6 +507,29 @@ export function ProposalSettings() {
         </Card>
 
       </motion.div>
+
+      <div className="fixed bottom-6 left-1/2 z-30 -translate-x-1/2">
+        <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-white/95 p-1 shadow-lg backdrop-blur">
+          {SETTINGS_SECTIONS.map((section) => {
+            const isActive = activeSectionId === section.id;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => handleSectionNavClick(section.id)}
+                className={cn(
+                  'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                  isActive
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                )}
+              >
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

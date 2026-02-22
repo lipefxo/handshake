@@ -2,10 +2,25 @@ import type { Proposal, BrandOverrides } from '../../../types/proposal';
 import { ThemePicker } from '../../../themes/ThemePicker';
 import { ThemeProvider } from '../../../themes/ThemeProvider';
 import type { ThemeId } from '../../../themes/themeTypes';
+import type { WorkspaceBrandTheme } from '../../../types/workspace';
+import { useWorkspaceStore } from '../../../store/workspaceStore';
 
-function MiniPreview({ themeId, brandOverrides }: { themeId: ThemeId; brandOverrides?: BrandOverrides }) {
+function MiniPreview({
+  themeId,
+  brandOverrides,
+  workspaceBrandTheme,
+}: {
+  themeId: ThemeId;
+  brandOverrides?: BrandOverrides;
+  workspaceBrandTheme?: WorkspaceBrandTheme;
+}) {
   return (
-    <ThemeProvider themeId={themeId} brandOverrides={brandOverrides} className="w-full rounded-xl overflow-hidden border border-gray-200">
+    <ThemeProvider
+      themeId={themeId}
+      brandOverrides={brandOverrides}
+      workspaceBrandTheme={workspaceBrandTheme}
+      className="w-full rounded-xl overflow-hidden border border-gray-200"
+    >
       <div
         className="w-full aspect-video flex flex-col items-center justify-center gap-3 p-6"
         style={{ background: 'var(--color-bg-primary)' }}
@@ -49,6 +64,8 @@ interface ThemeSectionProps {
 }
 
 export function ThemeSection({ proposal, onImmediateSave }: ThemeSectionProps) {
+  const workspaceBrandTheme = useWorkspaceStore((state) => state.currentWorkspace?.brandTheme);
+
   return (
     <section id="theme" className="scroll-mt-6">
       <div className="mb-5">
@@ -61,6 +78,7 @@ export function ThemeSection({ proposal, onImmediateSave }: ThemeSectionProps) {
         {/* Theme picker */}
         <ThemePicker
           activeThemeId={proposal.themeId}
+          workspaceBrandTheme={workspaceBrandTheme}
           onChange={(themeId) => {
             void onImmediateSave({ themeId });
           }}
@@ -69,7 +87,11 @@ export function ThemeSection({ proposal, onImmediateSave }: ThemeSectionProps) {
         {/* Live preview */}
         <div>
           <p className="text-xs font-medium text-gray-500 mb-2">Live preview</p>
-          <MiniPreview themeId={proposal.themeId} brandOverrides={proposal.brandOverrides} />
+          <MiniPreview
+            themeId={proposal.themeId}
+            brandOverrides={proposal.brandOverrides}
+            workspaceBrandTheme={workspaceBrandTheme}
+          />
         </div>
       </div>
     </section>

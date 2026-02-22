@@ -1,13 +1,15 @@
-import { themeIds, themes } from './themeDefinitions';
+import { resolveBrandTheme, themeIds, themes } from './themeDefinitions';
 import type { ThemeId } from './themeTypes';
 import { ThemePreviewThumbnail } from './ThemePreviewThumbnail';
+import type { WorkspaceBrandTheme } from '../types/workspace';
 
 interface ThemePickerProps {
   activeThemeId: ThemeId;
   onChange: (themeId: ThemeId) => void;
+  workspaceBrandTheme?: WorkspaceBrandTheme;
 }
 
-export function ThemePicker({ activeThemeId, onChange }: ThemePickerProps) {
+export function ThemePicker({ activeThemeId, onChange, workspaceBrandTheme }: ThemePickerProps) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3">
       <div className="mb-3">
@@ -19,7 +21,7 @@ export function ThemePicker({ activeThemeId, onChange }: ThemePickerProps) {
         {themeIds.map((themeId) => (
           <ThemePreviewThumbnail
             key={themeId}
-            theme={themes[themeId]}
+            theme={themeId === 'bold-brand' ? resolveBrandTheme(workspaceBrandTheme) : themes[themeId]}
             isActive={activeThemeId === themeId}
             onClick={() => onChange(themeId)}
           />
