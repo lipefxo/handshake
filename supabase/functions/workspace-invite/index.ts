@@ -32,6 +32,10 @@ function isValidOrigin(origin: string): boolean {
   }
 }
 
+function toDebugString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed.' }, 405);
@@ -85,10 +89,11 @@ Deno.serve(async (req) => {
       : isValidOrigin(fallbackOrigin)
       ? fallbackOrigin
       : undefined;
+    const redirectTo = inviteOrigin ? `${inviteOrigin}/auth/callback` : undefined;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(targetEmail, {
-      redirectTo: inviteOrigin ? `${inviteOrigin}/auth/callback` : undefined,
+      redirectTo,
       data: {
         workspace_id: workspaceId,
         workspace_name: workspaceName,
@@ -97,6 +102,21 @@ Deno.serve(async (req) => {
     });
 
     if (inviteError) {
+      console.error('workspace-invite dispatch failed', {
+        workspaceId,
+        workspaceName,
+        targetEmail,
+        inviteOrigin,
+        redirectTo,
+        hasSiteUrl: Boolean(Deno.env.get('SITE_URL')),
+        hasPublicSiteUrl: Boolean(Deno.env.get('PUBLIC_SITE_URL')),
+        inviteError: {
+          name: toDebugString((inviteError as { name?: unknown }).name),
+          message: toDebugString((inviteError as { message?: unknown }).message),
+          status: (inviteError as { status?: unknown }).status,
+          code: toDebugString((inviteError as { code?: unknown }).code),
+        },
+      });
       return jsonResponse({ error: inviteError.message }, 400);
     }
 

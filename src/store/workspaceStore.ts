@@ -158,6 +158,40 @@ function getWorkspaceError(error: unknown, fallback: string): string {
   return appendErrorDiagnostic(fallback, error);
 }
 
+function toNonEmptyString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function extractFunctionInvokeErrorMessage(error: unknown): Promise<string | null> {
+  const directMessage = toNonEmptyString((error as { message?: unknown } | null)?.message);
+  const maybeContext = (error as { context?: unknown } | null)?.context;
+  if (!(maybeContext instanceof Response)) return directMessage;
+
+  try {
+    const payload = (await maybeContext.clone().json()) as { error?: unknown; message?: unknown };
+    const payloadMessage = toNonEmptyString(payload.error) ?? toNonEmptyString(payload.message);
+    if (payloadMessage) return payloadMessage;
+  } catch {
+    // Fall through to plain-text body parsing.
+  }
+
+  try {
+    const payloadText = toNonEmptyString(await maybeContext.clone().text());
+    if (payloadText) return payloadText;
+  } catch {
+    // Ignore body parse errors and use direct message fallback.
+  }
+
+  return directMessage;
+}
+
+function formatInviteDispatchError(baseMessage: string, error: unknown, reason: string | null): string {
+  const diagnostic = appendErrorDiagnostic(baseMessage, error);
+  return reason ? `${diagnostic} Reason: ${reason}` : diagnostic;
+}
+
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   currentWorkspace: null,
   currentUserRole: null,
@@ -258,11 +292,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     });
 
     if (inviteEmailError) {
+      const inviteReason = await extractFunctionInvokeErrorMessage(inviteEmailError);
       logStructuredError('resendInvite email dispatch failed', inviteEmailError);
       set({
-        error: appendErrorDiagnostic(
+        error: formatInviteDispatchError(
           'Could not resend invitation email. Ask them to sign in manually.',
           inviteEmailError,
+          inviteReason,
         ),
       });
       return false;
@@ -321,11 +357,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     });
 
     if (inviteEmailError) {
+      const inviteReason = await extractFunctionInvokeErrorMessage(inviteEmailError);
       logStructuredError('inviteMember email dispatch failed', inviteEmailError);
       set({
-        error: appendErrorDiagnostic(
+        error: formatInviteDispatchError(
           'Member was added, but invitation email could not be sent. Ask them to sign in manually.',
           inviteEmailError,
+          inviteReason,
         ),
       });
       await get().refreshMembers();
