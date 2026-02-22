@@ -36,6 +36,10 @@ function toDebugString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
+function isInvalidJwtMessage(message: unknown): boolean {
+  return typeof message === 'string' && message.toLowerCase().includes('invalid jwt');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed.' }, 405);
@@ -43,9 +47,15 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
-      return jsonResponse({ error: 'Missing Supabase environment variables.' }, 500);
+      return jsonResponse(
+        {
+          error:
+            'Missing environment variables. Required: SUPABASE_URL, SUPABASE_ANON_KEY, and SERVICE_ROLE_KEY (or SUPABASE_SERVICE_ROLE_KEY).',
+        },
+        500,
+      );
     }
 
     const authHeader = req.headers.get('Authorization');
@@ -92,6 +102,38 @@ Deno.serve(async (req) => {
     const redirectTo = inviteOrigin ? `${inviteOrigin}/auth/callback` : undefined;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const { error: adminAuthError } = await adminClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    if (adminAuthError) {
+      console.error('workspace-invite service role validation failed', {
+        workspaceId,
+        workspaceName,
+        targetEmail,
+        hasServiceRoleKey: Boolean(serviceRoleKey),
+        adminAuthError: {
+          name: toDebugString((adminAuthError as { name?: unknown }).name),
+          message: toDebugString((adminAuthError as { message?: unknown }).message),
+          status: (adminAuthError as { status?: unknown }).status,
+          code: toDebugString((adminAuthError as { code?: unknown }).code),
+        },
+      });
+      if (isInvalidJwtMessage((adminAuthError as { message?: unknown }).message)) {
+        return jsonResponse(
+          {
+            error:
+              'Supabase service role key is invalid for this project. Update SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets and redeploy.',
+          },
+          500,
+        );
+      }
+      return jsonResponse(
+        { error: adminAuthError.message || 'Service role validation failed.' },
+        500,
+      );
+    }
+
     const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(targetEmail, {
       redirectTo,
       data: {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import type { Proposal, SlideConfig } from '../types/proposal';
+import type { Proposal, ProposalAccessMeta, SlideConfig } from '../types/proposal';
 import { useProposalStore } from '../store/proposalStore';
 import { useAuthStore } from '../store/authStore';
 import { useWorkspaceStore } from '../store/workspaceStore';
@@ -26,12 +26,45 @@ function getContentFingerprint(slide: SlideConfig): string {
   return parts.length > 0 ? parts.join('-') : '';
 }
 
+function getGateStorageKey(proposalId: string): string {
+  return `handshake:proposal-access:${proposalId}`;
+}
+
+function getStoredAccessToken(proposalId: string): string | null {
+  try {
+    return window.localStorage.getItem(getGateStorageKey(proposalId));
+  } catch {
+    return null;
+  }
+}
+
+function storeAccessToken(proposalId: string, token: string): void {
+  try {
+    window.localStorage.setItem(getGateStorageKey(proposalId), token);
+  } catch {
+    // no-op
+  }
+}
+
+function clearAccessToken(proposalId: string): void {
+  try {
+    window.localStorage.removeItem(getGateStorageKey(proposalId));
+  } catch {
+    // no-op
+  }
+}
+
 function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
-  const { getProposalBySlug, getOwnProposalBySlug } = useProposalStore();
+  const {
+    getProposalMetaBySlug,
+    getProposalContentBySlug,
+    getOwnProposalBySlug,
+  } = useProposalStore();
   const user = useAuthStore((state) => state.user);
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
   const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [proposalMeta, setProposalMeta] = useState<ProposalAccessMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
@@ -64,20 +97,43 @@ function ProposalViewerContent() {
     const loadProposal = async () => {
       setLoading(true);
       setError('');
+      setProposalMeta(null);
+      setProposal(null);
+      setAccessGranted(false);
 
-      const publishedProposal = await getProposalBySlug(slug);
+      const meta = await getProposalMetaBySlug(slug);
       if (cancelled) return;
 
-      if (publishedProposal) {
-        // In preview mode, prefer the most recent live editor payload over fetched data.
-        if (isPreviewMode && hasLivePreviewUpdateRef.current) {
+      if (meta) {
+        setProposalMeta(meta);
+        const initialContent = await getProposalContentBySlug(slug);
+        if (cancelled) return;
+
+        if (initialContent) {
+          if (isPreviewMode && hasLivePreviewUpdateRef.current) {
+            setLoading(false);
+            return;
+          }
+          setProposal(initialContent);
+          setAccessGranted(true);
           setLoading(false);
           return;
         }
-        setProposal(publishedProposal);
-        setAccessGranted((publishedProposal.visibility ?? 'public') === 'public');
-        setLoading(false);
-        return;
+
+        if (meta.visibility === 'password' || meta.visibility === 'email_gated') {
+          const storedToken = getStoredAccessToken(meta.id);
+          if (storedToken) {
+            const gatedContent = await getProposalContentBySlug(slug, storedToken);
+            if (cancelled) return;
+            if (gatedContent) {
+              setProposal(gatedContent);
+              setAccessGranted(true);
+              setLoading(false);
+              return;
+            }
+            clearAccessToken(meta.id);
+          }
+        }
       }
 
       if (isPreviewMode) {
@@ -88,6 +144,17 @@ function ProposalViewerContent() {
             setLoading(false);
             return;
           }
+          setProposalMeta({
+            id: ownProposal.id,
+            slug: ownProposal.slug,
+            shortCode: ownProposal.shortCode,
+            title: ownProposal.title,
+            partnerName: ownProposal.partnerName,
+            status: ownProposal.status,
+            visibility: ownProposal.visibility,
+            expiresAt: ownProposal.expiresAt,
+            themeId: ownProposal.themeId,
+          });
           setProposal(ownProposal);
           setAccessGranted(true);
           setLoading(false);
@@ -96,6 +163,11 @@ function ProposalViewerContent() {
       }
 
       setProposal(null);
+      if (meta) {
+        setAccessGranted(false);
+        setLoading(false);
+        return;
+      }
       setLoading(false);
       setError('This proposal was not found.');
     };
@@ -104,7 +176,7 @@ function ProposalViewerContent() {
     return () => {
       cancelled = true;
     };
-  }, [slug, getProposalBySlug, getOwnProposalBySlug]);
+  }, [slug, getProposalContentBySlug, getProposalMetaBySlug, getOwnProposalBySlug]);
 
   useEffect(() => {
     const isPreviewMode = window.location.hash.includes('preview');
@@ -160,7 +232,8 @@ function ProposalViewerContent() {
   };
 
   // Check expiration
-  const isExpired = proposal?.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
+  const effectiveExpiration = proposal?.expiresAt ?? proposalMeta?.expiresAt;
+  const isExpired = effectiveExpiration ? new Date(effectiveExpiration) < new Date() : false;
   const canReturnToEditor = Boolean(
     user &&
     proposal?.id &&
@@ -176,10 +249,42 @@ function ProposalViewerContent() {
         </div>
       ) : isExpired ? (
         <ExpiredPage />
-      ) : proposal && proposal.visibility === 'password' && !accessGranted ? (
-        <PasswordGate proposal={proposal} onGranted={() => setAccessGranted(true)} />
-      ) : proposal && proposal.visibility === 'email_gated' && !accessGranted ? (
-        <EmailGate proposal={proposal} onGranted={() => setAccessGranted(true)} />
+      ) : proposalMeta && proposalMeta.visibility === 'password' && !accessGranted ? (
+        <PasswordGate
+          proposalId={proposalMeta.id}
+          proposalTitle={proposalMeta.title}
+          onGranted={async (grant) => {
+            if (!slug) return;
+            storeAccessToken(proposalMeta.id, grant.token);
+            const content = await getProposalContentBySlug(slug, grant.token);
+            if (content) {
+              setProposal(content);
+              setAccessGranted(true);
+              setError('');
+              return;
+            }
+            clearAccessToken(proposalMeta.id);
+            setError('Unable to unlock this proposal. Please try again.');
+          }}
+        />
+      ) : proposalMeta && proposalMeta.visibility === 'email_gated' && !accessGranted ? (
+        <EmailGate
+          proposalId={proposalMeta.id}
+          proposalTitle={proposalMeta.title}
+          onGranted={async (grant) => {
+            if (!slug) return;
+            storeAccessToken(proposalMeta.id, grant.token);
+            const content = await getProposalContentBySlug(slug, grant.token);
+            if (content) {
+              setProposal(content);
+              setAccessGranted(true);
+              setError('');
+              return;
+            }
+            clearAccessToken(proposalMeta.id);
+            setError('Unable to unlock this proposal. Please try again.');
+          }}
+        />
       ) : error || !proposal ? (
         <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center"
           style={{ background: 'var(--color-bg-primary)' }}>

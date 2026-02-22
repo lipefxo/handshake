@@ -1,28 +1,30 @@
 import { useState } from 'react';
-import bcrypt from 'bcryptjs';
-import type { Proposal } from '../../types/proposal';
+import type { ProposalAccessGrant } from '../../types/proposal';
+import { useProposalStore } from '../../store/proposalStore';
 
 interface PasswordGateProps {
-  proposal: Proposal;
-  onGranted: () => void;
+  proposalId: string;
+  proposalTitle: string;
+  onGranted: (grant: ProposalAccessGrant) => void | Promise<void>;
 }
 
-export function PasswordGate({ proposal, onGranted }: PasswordGateProps) {
+export function PasswordGate({ proposalId, proposalTitle, onGranted }: PasswordGateProps) {
+  const verifyProposalPassword = useProposalStore((state) => state.verifyProposalPassword);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!proposal.accessPassword || !password) return;
+    if (!password.trim()) return;
 
     setChecking(true);
     setError('');
 
     try {
-      const match = await bcrypt.compare(password, proposal.accessPassword);
-      if (match) {
-        onGranted();
+      const grant = await verifyProposalPassword(proposalId, password.trim());
+      if (grant) {
+        await onGranted(grant);
       } else {
         setError('Incorrect password. Try again.');
       }
@@ -57,6 +59,7 @@ export function PasswordGate({ proposal, onGranted }: PasswordGateProps) {
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
           This proposal is password protected.
+          <span className="block mt-1 opacity-80">{proposalTitle}</span>
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
