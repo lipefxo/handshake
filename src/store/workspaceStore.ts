@@ -14,8 +14,10 @@ interface WorkspaceStore {
   clearWorkspaceState: () => void;
   clearError: () => void;
   initializeWorkspace: (user: AppUser | null) => Promise<void>;
-  inviteMember: (email: string) => Promise<boolean>;
+  inviteMember: (email: string) => Promise<{ added: boolean; emailSent: boolean }>;
+  resendInvite: (memberId: string) => Promise<boolean>;
   removeMember: (memberId: string) => Promise<boolean>;
+  renameWorkspace: (name: string) => Promise<boolean>;
   refreshMembers: () => Promise<void>;
 }
 
@@ -42,6 +44,16 @@ function toWorkspaceMember(row: Record<string, unknown>): WorkspaceMember {
     status: row.status as WorkspaceMember['status'],
     invitedAt: row.invited_at as string,
   };
+}
+
+function sortMembersWithOwnerFirst(members: WorkspaceMember[]): WorkspaceMember[] {
+  return [...members].sort((a, b) => {
+    if (a.role === 'owner' && b.role !== 'owner') return -1;
+    if (a.role !== 'owner' && b.role === 'owner') return 1;
+    if (a.invitedAt < b.invitedAt) return -1;
+    if (a.invitedAt > b.invitedAt) return 1;
+    return a.email.localeCompare(b.email);
+  });
 }
 
 async function fetchPrimaryWorkspaceForUser(userId: string): Promise<{
@@ -206,7 +218,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       .from('workspace_members')
       .select('*')
       .eq('workspace_id', workspaceId)
-      .order('role', { ascending: true })
       .order('invited_at', { ascending: true });
 
     if (error) {
@@ -215,7 +226,61 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       return;
     }
 
-    set({ members: (data ?? []).map((row) => toWorkspaceMember(row as Record<string, unknown>)) });
+    set({
+      members: sortMembersWithOwnerFirst(
+        (data ?? []).map((row) => toWorkspaceMember(row as Record<string, unknown>)),
+      ),
+    });
+  },
+
+  resendInvite: async (memberId) => {
+    const workspace = get().currentWorkspace;
+    const role = get().currentUserRole;
+    if (!workspace || role !== 'owner') {
+      set({ error: 'Only workspace owners can resend invites.' });
+      return false;
+    }
+
+    const pendingMember = get().members.find((member) => member.id === memberId && member.status === 'pending');
+    if (!pendingMember) {
+      set({ error: 'Only pending members can receive a resend invite.' });
+      return false;
+    }
+
+    set({ error: null });
+    const { error: inviteEmailError } = await supabase.functions.invoke('workspace-invite', {
+      body: {
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        email: pendingMember.email,
+        origin: window.location.origin,
+      },
+    });
+
+    if (inviteEmailError) {
+      logStructuredError('resendInvite email dispatch failed', inviteEmailError);
+      set({
+        error: appendErrorDiagnostic(
+          'Could not resend invitation email. Ask them to sign in manually.',
+          inviteEmailError,
+        ),
+      });
+      return false;
+    }
+
+    const { error: updateInviteTimeError } = await supabase
+      .from('workspace_members')
+      .update({ invited_at: new Date().toISOString() })
+      .eq('workspace_id', workspace.id)
+      .eq('id', pendingMember.id);
+
+    if (updateInviteTimeError) {
+      logStructuredError('resendInvite invited_at update failed', updateInviteTimeError);
+    }
+
+    await get().refreshMembers();
+
+    return true;
   },
 
   inviteMember: async (email) => {
@@ -223,13 +288,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     const role = get().currentUserRole;
     if (!workspace || role !== 'owner') {
       set({ error: 'Only workspace owners can invite members.' });
-      return false;
+      return { added: false, emailSent: false };
     }
 
     const cleanEmail = normalizeEmail(email);
     if (!cleanEmail || !cleanEmail.includes('@')) {
       set({ error: 'Enter a valid email address.' });
-      return false;
+      return { added: false, emailSent: false };
     }
 
     set({ error: null });
@@ -243,11 +308,32 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     if (error) {
       logStructuredError('inviteMember failed', error);
       set({ error: getWorkspaceError(error, 'Failed to invite member. Please try again.') });
-      return false;
+      return { added: false, emailSent: false };
+    }
+
+    const { error: inviteEmailError } = await supabase.functions.invoke('workspace-invite', {
+      body: {
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        email: cleanEmail,
+        origin: window.location.origin,
+      },
+    });
+
+    if (inviteEmailError) {
+      logStructuredError('inviteMember email dispatch failed', inviteEmailError);
+      set({
+        error: appendErrorDiagnostic(
+          'Member was added, but invitation email could not be sent. Ask them to sign in manually.',
+          inviteEmailError,
+        ),
+      });
+      await get().refreshMembers();
+      return { added: true, emailSent: false };
     }
 
     await get().refreshMembers();
-    return true;
+    return { added: true, emailSent: true };
   },
 
   removeMember: async (memberId) => {
@@ -272,6 +358,41 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     }
 
     await get().refreshMembers();
+    return true;
+  },
+
+  renameWorkspace: async (name) => {
+    const workspace = get().currentWorkspace;
+    const role = get().currentUserRole;
+    if (!workspace || role !== 'owner') {
+      set({ error: 'Only workspace owners can rename the workspace.' });
+      return false;
+    }
+
+    const cleanName = sanitizeText(name);
+    if (!cleanName) {
+      set({ error: 'Workspace name cannot be empty.' });
+      return false;
+    }
+
+    set({ error: null });
+    const { error } = await supabase
+      .from('workspaces')
+      .update({ name: cleanName })
+      .eq('id', workspace.id);
+
+    if (error) {
+      logStructuredError('renameWorkspace failed', error);
+      set({ error: getWorkspaceError(error, 'Failed to rename workspace. Please try again.') });
+      return false;
+    }
+
+    set({
+      currentWorkspace: {
+        ...workspace,
+        name: cleanName,
+      },
+    });
     return true;
   },
 }));

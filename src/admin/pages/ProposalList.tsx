@@ -5,7 +5,7 @@ import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import type { Proposal, SlideConfig } from '../../types/proposal';
-import { generateSlug, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
+import { generateSlug, formatDateTime, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
 import { createDefaultProposalSlides } from '../../data/slideDefaults';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
@@ -271,9 +271,15 @@ export function ProposalList() {
                       <span className="text-xs text-gray-400">{proposal.partnerName}</span>
                       <span className="text-gray-200">·</span>
                       <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
-                      <span className="text-gray-200">·</span>
-                      <span className="text-xs text-gray-400">{formatRelativeTime(proposal.updatedAt || proposal.createdAt)}</span>
                     </div>
+                    <p
+                      className="text-xs text-gray-400 mt-1"
+                      title={formatDateTime(proposal.updatedAt || proposal.createdAt)}
+                    >
+                      Last updated {formatRelativeTime(proposal.updatedAt || proposal.createdAt)}
+                      {' '}
+                      ({formatDateTime(proposal.updatedAt || proposal.createdAt)})
+                    </p>
                   </div>
 
                   <div
