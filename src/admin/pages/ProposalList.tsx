@@ -57,8 +57,8 @@ export function ProposalList() {
   const handleCreateFromDialog = async (values: NewProposalFormValues) => {
     if (!user) return;
 
-    const proposalTitle = values.title.trim() || 'Untitled Proposal';
-    const partnerName = proposalTitle;
+    const proposalTitle = values.title.trim();
+    const partnerName = values.partnerName.trim();
 
     setCreating(true);
     try {
@@ -80,6 +80,7 @@ export function ProposalList() {
       if (createdProposal) {
         clearError();
         setShowNewProposalDialog(false);
+        navigate(`/admin/proposals/${createdProposal.id}`);
       }
     } finally {
       setCreating(false);

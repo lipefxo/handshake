@@ -27,7 +27,7 @@ function serializeTitle(content: TitleSlideContent): string {
   }
   if (content.partnerName) {
     parts.push('');
-    parts.push(`${content.partnerName} × SecureBags`);
+    parts.push(`${content.partnerName} × Acme Corp`);
   }
   if (content.partnerLogo) {
     parts.push(`![logo](${content.partnerLogo})`);

@@ -6,7 +6,7 @@ date: February 2026
 
 # A Strategic Partnership
 <!-- type: title -->
-SecureBags × Acme Corp
+Partner × Acme Corp
 
 Transforming financial operations together.
 
@@ -15,7 +15,7 @@ Transforming financial operations together.
 # Who We Are
 <!-- type: intro, image_position: right -->
 
-SecureBags is the leading financial SaaS platform serving over
+Acme Corp is the leading financial SaaS platform serving over
 250 active customers with automated bookkeeping, tax preparation,
 and real-time financial insights.
 
@@ -46,7 +46,7 @@ and real-time financial insights.
 # What Our Partners Say
 <!-- type: testimonial -->
 
-> "SecureBags transformed how we manage our portfolio companies'
+> "Acme Corp transformed how we manage our portfolio companies'
 > finances. The automation alone saved us 20 hours per week."
 
 — Jane Smith, CFO at Acme Corp
@@ -56,12 +56,12 @@ and real-time financial insights.
 # Before & After
 <!-- type: comparison -->
 
-**Without SecureBags:**
+**Without Acme Corp:**
 - Manual data entry across 5 systems
 - Monthly reconciliation takes 2 weeks
 - No real-time visibility into cash flow
 
-**With SecureBags:**
+**With Acme Corp:**
 - Single unified platform
 - Automated daily reconciliation
 - Live dashboards with instant alerts
@@ -99,6 +99,6 @@ and real-time financial insights.
 Ready to transform financial operations for your portfolio?
 
 **Sarah Johnson** | Head of Partnerships
-sarah@securebags.com | (555) 123-4567
+sarah@acmecorp.com | (555) 123-4567
 
-[Schedule a Call](https://calendly.com/securebags/partnership)
+[Schedule a Call](https://calendly.com/acme-corp/partnership)

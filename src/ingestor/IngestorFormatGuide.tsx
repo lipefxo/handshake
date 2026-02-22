@@ -7,7 +7,7 @@ const GUIDE_SECTIONS = [
     label: 'Title',
     example: `# Your Headline
 <!-- type: title -->
-Partner × SecureBags
+Partner × Acme Corp
 
 Subheadline here.`,
   },

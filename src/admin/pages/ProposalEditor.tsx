@@ -321,15 +321,15 @@ export function ProposalEditor() {
           </div>
         )}
 
-        <div className="min-w-0 flex flex-col items-center justify-center gap-1.5">
+        <div className="min-w-0 flex flex-col items-center justify-center gap-0.5">
           <Input
-            className="h-8 border-0 bg-transparent px-2 py-1 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
+            className="h-7 border-0 bg-transparent px-2 py-0.5 text-sm font-semibold text-center text-gray-900 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-xl"
             value={proposal.title}
             onChange={(e) => updateLocal({ title: e.target.value })}
             placeholder="Proposal title..."
           />
           <Input
-            className="h-7 border-0 bg-transparent px-2 py-1 text-xs text-center text-gray-500 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-sm"
+            className="h-6 border-0 bg-transparent px-2 py-0 text-xs text-center text-gray-500 shadow-none focus-visible:bg-gray-50 focus-visible:ring-0 min-w-0 w-full max-w-sm"
             value={proposal.partnerName}
             onChange={(e) => handlePartnerNameChange(e.target.value)}
             placeholder="Partner name"

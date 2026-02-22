@@ -14,7 +14,6 @@ interface SlideConfiguratorProps {
   onChange: (updates: Partial<SlideConfig>) => void;
 }
 
-const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'scale', 'blur'] as const;
 type IconOption = { value: AppIconId; label: string };
 
 const FEATURE_ICON_OPTIONS: IconOption[] = [
@@ -123,29 +122,6 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
         </div>
       </div>
 
-      {/* Transition selector */}
-      <div>
-        <label className="block text-xs font-medium text-gray-600 mb-2">Transition</label>
-        <div className="flex gap-2 flex-wrap">
-          {TRANSITIONS.map((t) => (
-            <Button
-              key={t}
-              type="button"
-              onClick={() => onChange({ transition: t })}
-              variant={slide.transition === t ? 'secondary' : 'outline'}
-              size="sm"
-              className={`h-8 rounded-lg text-xs capitalize ${
-                slide.transition === t
-                  ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600'
-              }`}
-            >
-              {t}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       {/* Type-specific fields */}
       {slide.type === 'title' && <TitleFields content={slide.content as TitleSlideContent} onChange={updateContent} />}
       {slide.type === 'intro' && <IntroFields content={slide.content as IntroSlideContent} onChange={updateContent} />}
@@ -184,14 +160,14 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
                     Remove
                   </Button>
                 </div>
-                <FieldGroup label="Button Text">
+                <FieldGroup label="Button Text (required)">
                   <Input
                     value={link.text || ''}
                     onChange={(e) => updateLink(index, { text: e.target.value })}
                     placeholder="View demo"
                   />
                 </FieldGroup>
-                <FieldGroup label="URL">
+                <FieldGroup label="URL (required)">
                   <Input
                     maxLength={FIELD_LIMITS.url}
                     value={link.url || ''}
@@ -199,6 +175,11 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
                     placeholder="https://..."
                   />
                 </FieldGroup>
+                {Boolean(link.text?.trim()) !== Boolean(link.url?.trim()) && (
+                  <p className="text-[11px] text-amber-600">
+                    Button text and URL are both required for this button to appear in the presentation.
+                  </p>
+                )}
                 <FieldGroup label="Variant">
                   <select
                     className={selectClassName}
@@ -213,6 +194,9 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
             ))}
           </div>
         )}
+        <p className="mt-3 text-[11px] text-gray-400">
+          Links are shown in the presentation only when both Button Text and a valid URL are provided.
+        </p>
       </div>
     </div>
   );
@@ -334,8 +318,10 @@ function TitleFields({ content, onChange }: { content: TitleSlideContent; onChan
       <FieldGroup label="Date">
         <Input value={content.date || ''} onChange={(e) => onChange({ date: e.target.value })} placeholder="January 2025" />
       </FieldGroup>
-      <ImageUploader label="Partner Logo" value={content.partnerLogo} onChange={(url) => onChange({ partnerLogo: url })} context="logo" />
-      <ImageUploader label="SecureBags Logo" value={content.secureBagsLogo} onChange={(url) => onChange({ secureBagsLogo: url })} context="logo" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ImageUploader label="Partner Logo" value={content.partnerLogo} onChange={(url) => onChange({ partnerLogo: url })} context="logo" />
+        <ImageUploader label="Company Logo" value={content.secureBagsLogo} onChange={(url) => onChange({ secureBagsLogo: url })} context="logo" />
+      </div>
     </div>
   );
 }
@@ -406,7 +392,7 @@ function StatsFields({ content, onChange }: { content: StatsSlideContent; onChan
             + Add stat
           </Button>
         </div>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {content.stats.map((stat, i) => (
             <div key={i} className="p-3 bg-gray-50 rounded-xl space-y-2">
               <div className="flex items-center justify-between">
@@ -488,7 +474,7 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
                 <Button type="button" variant="ghost" size="sm" onClick={() => removeFeature(i)} className="h-auto px-1 py-0 text-xs text-red-500 hover:text-red-600">Remove</Button>
               </div>
               <div className="grid grid-cols-4 gap-2 items-start">
-                <div className="space-y-1.5 col-span-1">
+                <div className="col-span-1">
                   <label className="text-xs text-gray-400 block">Icon</label>
                   <IconSelect
                     options={FEATURE_ICON_OPTIONS}
@@ -957,8 +943,9 @@ function ClosingFields({ content, onChange }: { content: ClosingSlideContent; on
           <CharCounter value={content.subheading || ''} max={FIELD_LIMITS.closingSubheading} />
         </div>
       </FieldGroup>
-      <FieldGroup label="CTA Button Text"><Input value={content.ctaText || ''} onChange={(e) => onChange({ ctaText: e.target.value })} placeholder="Schedule a Call" /></FieldGroup>
-      <FieldGroup label="CTA URL"><Input maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
+      <FieldGroup label="CTA Button Text (required)"><Input value={content.ctaText || ''} onChange={(e) => onChange({ ctaText: e.target.value })} placeholder="Schedule a Call" /></FieldGroup>
+      <FieldGroup label="CTA URL (required)"><Input maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
+      <p className="text-[11px] text-gray-400 -mt-1">CTA button appears only when both Button Text and a valid URL are provided.</p>
       <div className="pt-2 border-t border-gray-100">
         <p className="text-xs font-medium text-gray-500 mb-3">Contact Info</p>
         <div className="space-y-3">

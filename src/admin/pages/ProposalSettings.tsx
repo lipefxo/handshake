@@ -121,7 +121,7 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
 
 export function ProposalSettings() {
   const user = useAuthStore((state) => state.user);
-  const [companyName, setCompanyName] = useState('ACME Corp');
+  const [companyName, setCompanyName] = useState('Acme Corp');
   const [email, setEmail] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [companyNameTouched, setCompanyNameTouched] = useState(false);
@@ -174,7 +174,7 @@ export function ProposalSettings() {
               <Input
                 className={cn(companyNameError && 'border-red-400 focus-visible:ring-red-200')}
                 value={companyName}
-                placeholder="ACME Corp"
+                placeholder="Acme Corp"
                 maxLength={LIMITS.companyName}
                 required
                 onChange={(e) => setCompanyName(e.target.value)}

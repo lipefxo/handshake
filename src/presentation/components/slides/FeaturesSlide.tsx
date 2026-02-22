@@ -64,7 +64,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
               transition={{ duration: 0.2 }}
             >
               {feature.icon && (
-                <div className="mb-4">
+                <div className="mb-4" style={{ color: 'var(--color-text-primary)' }}>
                   <AppIcon icon={feature.icon} size={22} />
                 </div>
               )}

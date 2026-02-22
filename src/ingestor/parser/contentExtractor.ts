@@ -118,7 +118,7 @@ function extractTitle(section: TypedSection): TitleSlideContent {
   const paragraphs = extractParagraphs(clean);
   const image = extractImage(clean);
 
-  // Look for "Partner × SecureBags" style line
+  // Look for "Partner × Acme Corp" style line
   const crossLine = clean.match(/^([^#\n!>-][^\n]*(×|x)[^\n]*)$/im);
   const partnerName = cleanText(crossLine?.[1]?.split(/×|x/i)?.[0]?.trim() ?? '');
   const headingSubheadline = cleanText(headingParts[1] ?? '');

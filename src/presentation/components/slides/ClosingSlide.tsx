@@ -12,6 +12,7 @@ interface ClosingSlideProps {
 export function ClosingSlide({ content }: ClosingSlideProps) {
   const safeCtaText = sanitizeText(content.ctaText ?? '');
   const safeCtaUrl = content.ctaUrl ? validateUrl(content.ctaUrl) : { value: '', isValid: false };
+  const showCtaButton = Boolean(safeCtaText) && safeCtaUrl.isValid;
   const safeContactEmail = sanitizeText(content.contactEmail ?? '');
   const safeContactPhone = sanitizeText(content.contactPhone ?? '').replace(/[^\d+\-().\s]/g, '');
 
@@ -59,35 +60,22 @@ export function ClosingSlide({ content }: ClosingSlideProps) {
           </motion.p>
         )}
 
-        {safeCtaText && (
+        {showCtaButton && (
           <motion.div variants={fadeUpChild}>
-            {safeCtaUrl.isValid ? (
-              <a
-                href={safeCtaUrl.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold transition-all"
-                style={{
-                  background: 'var(--color-text-primary)',
-                  color: 'var(--color-bg-primary)',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {safeCtaText}
-                <AppIcon icon="ui.chevron-right" className="w-4 h-4" />
-              </a>
-            ) : (
-              <span
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold"
-                style={{
-                  background: 'var(--color-text-primary)',
-                  color: 'var(--color-bg-primary)',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {safeCtaText}
-              </span>
-            )}
+            <a
+              href={safeCtaUrl.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold transition-all"
+              style={{
+                background: 'var(--color-text-primary)',
+                color: 'var(--color-bg-primary)',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {safeCtaText}
+              <AppIcon icon="ui.chevron-right" className="w-4 h-4" />
+            </a>
           </motion.div>
         )}
 

@@ -37,7 +37,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
     },
     intro: {
       heading: 'Who We Are',
-      body: 'SecureBags is a leading provider of premium protective packaging solutions. We partner with world-class brands to deliver exceptional quality and unmatched reliability.',
+      body: 'Acme Corp is a leading provider of premium protective packaging solutions. We partner with world-class brands to deliver exceptional quality and unmatched reliability.',
       imagePosition: 'right',
     },
     stats: {
@@ -60,19 +60,19 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       ],
     },
     testimonial: {
-      quote: 'Partnering with SecureBags transformed our unboxing experience. Our customers notice — and they love it.',
+      quote: 'Partnering with Acme Corp transformed our unboxing experience. Our customers notice — and they love it.',
       author: 'Sarah Chen',
       role: 'Head of Brand',
       company: 'Acme Corp',
     },
     comparison: {
-      heading: 'The SecureBags Difference',
+      heading: 'The Acme Corp Difference',
       before: {
         label: 'Before',
         items: ['Generic packaging', 'Long lead times', 'Limited customization', 'High damage rates'],
       },
       after: {
-        label: 'With SecureBags',
+        label: 'With Acme Corp',
         items: ['On-brand unboxing', '5-day production', 'Full customization', '<0.1% damage rate'],
       },
     },
@@ -114,9 +114,9 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       heading: "Let's Build Something Great",
       subheading: "We're ready when you are. Reach out to start the conversation.",
       ctaText: 'Schedule a Call',
-      ctaUrl: 'https://calendly.com/securebags',
+      ctaUrl: 'https://calendly.com/acme-corp',
       contactName: 'Alex Rivera',
-      contactEmail: 'alex@securebags.com',
+      contactEmail: 'alex@acmecorp.com',
       contactPhone: '+1 (555) 000-0000',
     },
   };

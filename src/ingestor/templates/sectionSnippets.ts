@@ -3,7 +3,7 @@ import type { SlideType } from '../../types/proposal';
 export const snippets: Record<SlideType, string> = {
   title: `# Your Headline Here
 <!-- type: title -->
-Partner × SecureBags
+Partner × Acme Corp
 
 Your subheadline here.
 

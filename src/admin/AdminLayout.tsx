@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
@@ -11,9 +11,16 @@ const navItems = [
 ];
 
 export function AdminLayout() {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const location = useLocation();
+  const isProposalEditorView = /^\/admin\/proposals\/[^/]+$/.test(location.pathname);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => !isProposalEditorView);
   const showTopProposalsLink = location.pathname !== '/admin';
+
+  useEffect(() => {
+    if (isProposalEditorView) {
+      setIsSidebarExpanded(false);
+    }
+  }, [isProposalEditorView]);
 
   return (
     <div className="flex h-screen bg-admin overflow-hidden">

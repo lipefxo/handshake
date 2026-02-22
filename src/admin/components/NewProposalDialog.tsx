@@ -17,6 +17,7 @@ import { AppIcon } from '../../shared/icons/AppIcon';
 
 export interface NewProposalFormValues {
   title: string;
+  partnerName: string;
   proposalDate: string;
   themeId: ThemeId;
 }
@@ -39,6 +40,7 @@ function getTodayDateValue(): string {
 function getInitialFormValues(): NewProposalFormValues {
   return {
     title: '',
+    partnerName: '',
     proposalDate: getTodayDateValue(),
     themeId: defaultThemeId,
   };
@@ -46,6 +48,7 @@ function getInitialFormValues(): NewProposalFormValues {
 
 const INPUT_LIMITS = {
   title: 45,
+  partnerName: 45,
 } as const;
 
 type FormErrors = Partial<Record<keyof NewProposalFormValues, string>>;
@@ -91,7 +94,12 @@ export function NewProposalDialog({
     return next;
   }, [values.proposalDate]);
 
-  const canCreate = useMemo(() => Object.keys(errors).length === 0, [errors]);
+  const hasProposalTitle = values.title.trim().length > 0;
+  const hasPartnerName = values.partnerName.trim().length > 0;
+  const canCreate = useMemo(
+    () => Object.keys(errors).length === 0 && hasProposalTitle && hasPartnerName,
+    [errors, hasProposalTitle, hasPartnerName],
+  );
 
   const updateField = <K extends keyof NewProposalFormValues>(key: K, value: NewProposalFormValues[K]) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -103,6 +111,7 @@ export function NewProposalDialog({
     await onCreate({
       ...values,
       title: values.title.trim(),
+      partnerName: values.partnerName.trim(),
     });
   };
 
@@ -128,6 +137,8 @@ export function NewProposalDialog({
                   onChange={(event) => updateField('title', event.target.value)}
                   placeholder="Q3 2026 Partnership Proposal"
                   maxLength={INPUT_LIMITS.title}
+                  required
+                  aria-invalid={!hasProposalTitle}
                 />
               </div>
               <div className="grid gap-1.5 md:col-span-1">
@@ -141,6 +152,20 @@ export function NewProposalDialog({
                   aria-invalid={Boolean(errors.proposalDate)}
                 />
               </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="new-proposal-partner-input">Partner / client name</Label>
+              <Input
+                id="new-proposal-partner-input"
+                type="text"
+                value={values.partnerName}
+                onChange={(event) => updateField('partnerName', event.target.value)}
+                placeholder="Acme Corp"
+                maxLength={INPUT_LIMITS.partnerName}
+                required
+                aria-invalid={!hasPartnerName}
+              />
             </div>
 
             <div className="grid gap-1.5">

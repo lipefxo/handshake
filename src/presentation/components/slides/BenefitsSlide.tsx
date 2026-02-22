@@ -46,7 +46,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
               transition={{ duration: 0.2 }}
             >
               {benefit.icon && (
-                <div className="flex-shrink-0 mt-0.5">
+                <div className="flex-shrink-0 mt-0.5" style={{ color: 'var(--color-text-primary)' }}>
                   <AppIcon icon={benefit.icon} size={22} />
                 </div>
               )}
