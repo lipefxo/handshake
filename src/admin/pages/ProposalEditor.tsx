@@ -531,61 +531,79 @@ export function ProposalEditor() {
                     <AppIcon icon="ui.refresh" className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                {selectedSlide && selectedSlide.enabled ? (
-                  <div className="flex-1 overflow-auto admin-scroll p-2.5 flex flex-col gap-2">
-                    <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
-                      <iframe
-                        ref={previewIframeRef}
-                        src={`/p/${proposal.slug}#preview`}
-                        onLoad={() => {
-                          sendPreviewMessage(proposal, selectedSlideId);
-                          setTimeout(() => sendPreviewMessage(proposal, selectedSlideId), 300);
-                        }}
-                        className="absolute inset-0 border-0 pointer-events-none"
-                        style={{
-                          width: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                          height: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                          transform: `scale(${PREVIEW_SCALE})`,
-                          transformOrigin: 'top left',
-                        }}
-                        title="Slide preview"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleGoToPrevSlide}
-                        disabled={!hasPrevSlide}
-                        variant="outline"
-                        size="sm"
-                        className="h-7 gap-1 text-[11px] text-gray-600"
+                <div className="relative flex-1 overflow-hidden">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {selectedSlide && selectedSlide.enabled ? (
+                      <motion.div
+                        key="preview-enabled"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: 'easeOut' }}
+                        className="absolute inset-0 overflow-auto admin-scroll p-2.5 flex flex-col gap-2"
                       >
-                        <AppIcon icon="ui.sidebar-toggle" className="h-3 w-3" />
-                        Previous
-                      </Button>
-                      <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
-                        <Link to={`/p/${proposal.slug}#preview`}>
-                          Open full preview
-                        </Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleGoToNextSlide}
-                        disabled={!hasNextSlide}
-                        variant="outline"
-                        size="sm"
-                        className="h-7 gap-1 text-[11px] text-gray-600"
+                        <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                          <iframe
+                            ref={previewIframeRef}
+                            src={`/p/${proposal.slug}#preview`}
+                            onLoad={() => {
+                              sendPreviewMessage(proposal, selectedSlideId);
+                              setTimeout(() => sendPreviewMessage(proposal, selectedSlideId), 300);
+                            }}
+                            className="absolute inset-0 border-0 pointer-events-none"
+                            style={{
+                              width: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                              height: `${PREVIEW_SCALE_INVERSE * 100}%`,
+                              transform: `scale(${PREVIEW_SCALE})`,
+                              transformOrigin: 'top left',
+                            }}
+                            title="Slide preview"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Button
+                            type="button"
+                            onClick={handleGoToPrevSlide}
+                            disabled={!hasPrevSlide}
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-[11px] text-gray-600"
+                          >
+                            <AppIcon icon="ui.sidebar-toggle" className="h-3 w-3" />
+                            Previous
+                          </Button>
+                          <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
+                            <Link to={`/p/${proposal.slug}#preview`}>
+                              Open full preview
+                            </Link>
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleGoToNextSlide}
+                            disabled={!hasNextSlide}
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-[11px] text-gray-600"
+                          >
+                            Next
+                            <AppIcon icon="ui.chevron-right" className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="preview-empty"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className="absolute inset-0 flex items-center justify-center"
                       >
-                        Next
-                        <AppIcon icon="ui.chevron-right" className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-xs text-gray-400">No preview available</p>
-                  </div>
-                )}
+                        <p className="text-xs text-gray-400">No preview available</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>}
 
