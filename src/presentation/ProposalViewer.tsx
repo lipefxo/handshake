@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { Proposal, SlideConfig } from '../types/proposal';
 import { useProposalStore } from '../store/proposalStore';
+import { useAuthStore } from '../store/authStore';
 import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
@@ -27,6 +28,7 @@ function getContentFingerprint(slide: SlideConfig): string {
 function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
   const { getProposalBySlug, getOwnProposalBySlug } = useProposalStore();
+  const user = useAuthStore((state) => state.user);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -150,6 +152,12 @@ function ProposalViewerContent() {
 
   // Check expiration
   const isExpired = proposal?.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
+  const canReturnToEditor = Boolean(
+    user &&
+    proposal?.id &&
+    (isPreviewMode || proposal.user_id === user.id)
+  );
+  const backToEditorPath = canReturnToEditor && proposal?.id ? `/admin/proposals/${proposal.id}` : undefined;
 
   return (
     <ThemeProvider themeId={proposal?.themeId ?? defaultThemeId} brandOverrides={proposal?.brandOverrides} className="contents">
@@ -188,7 +196,12 @@ function ProposalViewerContent() {
             <ProgressBar current={current} total={enabledSlides.length} />
           )}
           {settings.appearance.showNavDots && (
-            <SlideNavigation current={current} total={enabledSlides.length} onNavigate={goTo} />
+            <SlideNavigation
+              current={current}
+              total={enabledSlides.length}
+              onNavigate={goTo}
+              backToEditorPath={backToEditorPath}
+            />
           )}
 
           <div

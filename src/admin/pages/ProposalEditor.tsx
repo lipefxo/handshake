@@ -415,7 +415,6 @@ export function ProposalEditor() {
                       src={`/p/${proposal.slug}#preview`}
                       onLoad={() => sendPreviewMessage(proposal, selectedSlideId)}
                       className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                      style={{ transform: 'scale(0.675)', transformOrigin: 'top left', width: '148.15%', height: '148.15%' }}
                       title="Slide preview"
                     />
                   </div>

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../../themes/useTheme';
 
 interface SlideNavigationProps {
   current: number;
   total: number;
   onNavigate: (index: number) => void;
+  backToEditorPath?: string;
 }
 
-export function SlideNavigation({ current, total, onNavigate }: SlideNavigationProps) {
+export function SlideNavigation({ current, total, onNavigate, backToEditorPath }: SlideNavigationProps) {
   const { theme } = useTheme();
   const navDotStyle = theme.style.navDotStyle;
   const [hoveredDot, setHoveredDot] = useState<number | null>(null);
@@ -29,6 +31,20 @@ export function SlideNavigation({ current, total, onNavigate }: SlideNavigationP
 
   return (
     <div ref={containerRef} className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
+      {backToEditorPath && (
+        <Link
+          to={backToEditorPath}
+          className="mb-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          style={{
+            borderColor: theme.colors.border,
+            color: theme.colors.textPrimary,
+            backgroundColor: theme.colors.bgSecondary,
+          }}
+          aria-label="Back to proposal editor"
+        >
+          Back to editor
+        </Link>
+      )}
       {Array.from({ length: total }).map((_, i) => (
         <button
           key={i}
