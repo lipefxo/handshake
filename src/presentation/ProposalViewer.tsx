@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { Proposal, SlideConfig } from '../types/proposal';
@@ -32,7 +32,8 @@ function ProposalViewerContent() {
   const [error, setError] = useState('');
   const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState(false);
-  const isPreviewMode = useMemo(() => window.location.hash.includes('preview'), []);
+  const hasLivePreviewUpdateRef = useRef(false);
+  const isPreviewMode = window.location.hash.includes('preview');
 
   const settings = {
     appearance: {
@@ -63,6 +64,11 @@ function ProposalViewerContent() {
       if (cancelled) return;
 
       if (publishedProposal) {
+        // In preview mode, prefer the most recent live editor payload over fetched data.
+        if (isPreviewMode && hasLivePreviewUpdateRef.current) {
+          setLoading(false);
+          return;
+        }
         setProposal(publishedProposal);
         setAccessGranted((publishedProposal.visibility ?? 'public') === 'public');
         setLoading(false);
@@ -73,6 +79,10 @@ function ProposalViewerContent() {
         const ownProposal = await getOwnProposalBySlug(slug);
         if (cancelled) return;
         if (ownProposal) {
+          if (hasLivePreviewUpdateRef.current) {
+            setLoading(false);
+            return;
+          }
           setProposal(ownProposal);
           setAccessGranted(true);
           setLoading(false);
@@ -99,9 +109,11 @@ function ProposalViewerContent() {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== 'handshake-editor-preview-update') return;
       if (event.data?.proposal) {
+        hasLivePreviewUpdateRef.current = true;
         setProposal(event.data.proposal as Proposal);
         setLoading(false);
         setError('');
+        setAccessGranted(true);
       }
       setPreviewSelectedSlideId(event.data?.selectedSlideId ?? null);
     };
