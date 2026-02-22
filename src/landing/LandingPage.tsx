@@ -1399,7 +1399,7 @@ function FeaturesSection() {
       bodyColor: C.textMuted,
       label: 'Animated Presentations',
       title: 'Proposals that feel\nlike products.',
-      body: 'Full-screen slides with smooth transitions, animated counters, staggered reveals, and a cinematic scroll experience your partners won\'t forget.',
+      body: 'Build with all 11 slide types and present with five transition styles. Every deck supports keyboard, touch, and scroll navigation so partners can move through your story however they prefer.',
       visual: <AnimatedStatsMockup />,
       reverse: true,
     },
@@ -1419,7 +1419,7 @@ function FeaturesSection() {
       bodyColor: C.textMuted,
       label: 'Themes & Brand',
       title: 'Your brand.\nNot a template.',
-      body: 'Choose from a curated set of themes — dark, light, bold — each designed for presentations that feel intentional. Override accent colors to match your brand in seconds.',
+      body: 'Start with three polished themes — Dark Minimal, Light Corporate, and Bold Brand — then personalize with workspace logo, company name, brand colors, font pairing, and optional co-branding for partner-facing slides.',
       visual: <ThemesMockup />,
       reverse: true,
     },
@@ -1429,7 +1429,7 @@ function FeaturesSection() {
       bodyColor: C.textSecondary,
       label: 'Proposal Dashboard',
       title: 'Everything in\none place.',
-      body: 'Manage all your proposals from a single workspace. See which decks are live, track views, and jump straight back into editing — no hunting through folders or email threads.',
+      body: 'Run your proposal pipeline from one dashboard with drag-and-drop ordering, member invites, role-based collaboration, and sharing controls including short links, password protection, email gating, and expiration dates.',
       visual: <TeamMockup />,
       reverse: false,
     },
@@ -1624,40 +1624,328 @@ function LiveExampleCTA() {
   );
 }
 
+type PricingTier = 'free' | 'pro' | 'team';
+
+function FeatureComparisonTable() {
+  const sections: Array<{
+    category: string;
+    rows: Array<{ feature: string; free: boolean; pro: boolean; team: boolean }>;
+  }> = [
+    {
+      category: 'Editor',
+      rows: [
+        { feature: 'All 11 slide types', free: true, pro: true, team: true },
+        { feature: 'Markdown ingestor', free: true, pro: true, team: true },
+        { feature: 'Form editor with drag-and-drop ordering', free: true, pro: true, team: true },
+        { feature: 'Live editing, autosave, keyboard shortcuts, undo/redo', free: true, pro: true, team: true },
+        { feature: 'Duplicate proposal', free: false, pro: true, team: true },
+        { feature: 'Version history', free: false, pro: true, team: true },
+      ],
+    },
+    {
+      category: 'Themes & Branding',
+      rows: [
+        { feature: 'Dark Minimal theme', free: true, pro: true, team: true },
+        { feature: 'All 3 preset themes', free: false, pro: true, team: true },
+        { feature: 'Workspace branding (logo, colors, font pairing)', free: false, pro: true, team: true },
+        { feature: 'Co-branding (partner logo)', free: false, pro: true, team: true },
+      ],
+    },
+    {
+      category: 'Sharing & Access',
+      rows: [
+        { feature: 'Public shareable URLs', free: true, pro: true, team: true },
+        { feature: 'Short links', free: true, pro: true, team: true },
+        { feature: 'Password-protected proposals', free: false, pro: true, team: true },
+        { feature: 'Email-gated proposals (lead capture)', free: false, pro: false, team: true },
+        { feature: 'Proposal expiration dates', free: false, pro: true, team: true },
+        { feature: 'Embed snippets', free: false, pro: true, team: true },
+        { feature: 'Custom embed snippets', free: false, pro: false, team: true },
+      ],
+    },
+    {
+      category: 'Analytics & Tracking',
+      rows: [
+        { feature: 'Proposal status workflow', free: false, pro: true, team: true },
+        { feature: 'Proposal analytics (views, time/slide, depth, device, geo)', free: false, pro: true, team: true },
+        { feature: 'Lead capture', free: false, pro: false, team: true },
+      ],
+    },
+    {
+      category: 'Collaboration',
+      rows: [
+        { feature: 'Workspace with shared proposals', free: false, pro: false, team: true },
+        { feature: 'Team comments on slides', free: false, pro: false, team: true },
+        { feature: 'Template library', free: false, pro: false, team: true },
+        { feature: 'Slide block library', free: false, pro: false, team: true },
+        { feature: 'Asset library', free: false, pro: false, team: true },
+        { feature: 'Search, filters, and bulk operations', free: false, pro: false, team: true },
+      ],
+    },
+    {
+      category: 'Integrations',
+      rows: [
+        { feature: 'Email delivery', free: false, pro: true, team: true },
+        { feature: 'AI copy assistant', free: false, pro: false, team: true },
+        { feature: 'Slack notifications', free: false, pro: false, team: true },
+        { feature: 'Webhook events API', free: false, pro: false, team: true },
+      ],
+    },
+    {
+      category: 'Support',
+      rows: [
+        { feature: 'Community support', free: true, pro: true, team: true },
+        { feature: 'Priority email support', free: false, pro: true, team: true },
+        { feature: 'Dedicated onboarding call (5+ seats)', free: false, pro: false, team: true },
+      ],
+    },
+    {
+      category: 'Branding',
+      rows: [
+        { feature: 'Handshake badge on closing slide', free: true, pro: false, team: false },
+      ],
+    },
+  ];
+
+  const tiers: PricingTier[] = ['free', 'pro', 'team'];
+  const tierLabels: Record<PricingTier, string> = { free: 'Free', pro: 'Pro', team: 'Team' };
+
+  const renderCell = (included: boolean) => (
+    <span
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: '50%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: included ? `${C.accent}18` : 'transparent',
+        border: included ? `1px solid ${C.accent}44` : `1px solid ${C.border}`,
+        color: included ? C.accent : C.textMuted,
+        fontSize: 12,
+        fontWeight: 600,
+      }}
+    >
+      {included ? '✓' : '–'}
+    </span>
+  );
+
+  return (
+    <div style={{ marginTop: 56 }}>
+      <div
+        style={{
+          fontFamily: serif,
+          fontSize: 'clamp(26px, 3vw, 36px)',
+          fontWeight: 700,
+          color: C.textPrimary,
+          letterSpacing: '-0.02em',
+          marginBottom: 14,
+        }}
+      >
+        Compare features by tier.
+      </div>
+      <p
+        style={{
+          fontFamily: sans,
+          fontSize: 15,
+          color: C.textSecondary,
+          lineHeight: 1.6,
+          marginBottom: 22,
+        }}
+      >
+        Grouped by workflow so your team can quickly see what unlocks as you scale.
+      </p>
+
+      <div
+        className="landing-comparison-wrap"
+        style={{
+          background: '#fff',
+          border: `1px solid ${C.border}`,
+          borderRadius: 14,
+          overflow: 'hidden',
+          boxShadow: '0 10px 32px rgba(0,0,0,0.05)',
+        }}
+      >
+        <div className="landing-comparison-scroll" style={{ overflowX: 'auto' }}>
+          <table className="landing-comparison-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '16px 20px',
+                    fontFamily: sans,
+                    fontSize: 12,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: C.textSecondary,
+                    background: C.bgSecondary,
+                    borderBottom: `1px solid ${C.border}`,
+                    width: '46%',
+                  }}
+                >
+                  Feature
+                </th>
+                {tiers.map((tier) => (
+                  <th
+                    key={tier}
+                    style={{
+                      textAlign: 'center',
+                      padding: '16px 12px',
+                      fontFamily: sans,
+                      fontSize: 12,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: C.textSecondary,
+                      background: C.bgSecondary,
+                      borderBottom: `1px solid ${C.border}`,
+                    }}
+                  >
+                    {tierLabels[tier]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {sections.map((section) => (
+              <tbody key={section.category}>
+                <tr>
+                  <td
+                    colSpan={4}
+                    style={{
+                      padding: '12px 20px',
+                      fontFamily: sans,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: C.textSecondary,
+                      background: C.bgSecondary,
+                      borderTop: `1px solid ${C.border}`,
+                      borderBottom: `1px solid ${C.border}`,
+                    }}
+                  >
+                    {section.category}
+                  </td>
+                </tr>
+                {section.rows.map((row, rowIndex) => (
+                  <tr key={`${section.category}-${row.feature}`}>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        fontFamily: sans,
+                        fontSize: 14,
+                        color: C.textPrimary,
+                        borderBottom: `1px solid ${C.border}`,
+                        background: rowIndex % 2 === 0 ? '#fff' : C.bgPrimary,
+                      }}
+                    >
+                      {row.feature}
+                    </td>
+                    {tiers.map((tier) => (
+                      <td
+                        key={`${row.feature}-${tier}`}
+                        style={{
+                          textAlign: 'center',
+                          padding: '14px 12px',
+                          borderBottom: `1px solid ${C.border}`,
+                          background: rowIndex % 2 === 0 ? '#fff' : C.bgPrimary,
+                        }}
+                      >
+                        {renderCell(row[tier])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Pricing ──────────────────────────────────────────────────────────────────
 function PricingSection() {
   const { ref, inView } = useReveal();
+  const [annualBilling, setAnnualBilling] = useState(true);
 
   const plans = [
     {
       name: 'Free',
-      price: '$0',
-      period: 'forever',
-      features: ['3 proposals', '1 theme', 'Basic analytics', 'Public share links'],
-      cta: 'Start Free',
+      tier: 'free' as const,
       featured: false,
+      who: 'Solo users testing Handshake, freelancers with occasional proposal needs, and first-time senders.',
+      price: { annual: '$0', monthly: '$0' },
+      period: 'forever',
+      limits: [
+        '1 user (no workspace)',
+        '3 active proposals',
+        '1 theme (Dark Minimal only)',
+        'Public links only',
+      ],
+      included: [
+        'All 11 slide types with full animations',
+        'Markdown ingestor',
+        'Form editor with drag-and-drop',
+        'Live editing, autosave, keyboard shortcuts, undo/redo',
+        'Unique shareable URLs',
+        'Handshake badge on closing slide',
+      ],
+      cta: 'Get Early Access',
     },
     {
       name: 'Pro',
-      price: '$19',
-      period: '/mo',
-      features: ['Unlimited proposals', 'All themes', 'Full analytics', 'AI copy assistant', 'Custom domain'],
-      cta: 'Get Early Access',
+      tier: 'pro' as const,
       featured: true,
+      who: 'Individual BD/sales professionals and small teams sending proposals regularly.',
+      price: { annual: '$16', monthly: '$19' },
+      period: '/user/month',
+      billingNoteAnnual: '$192 per user billed annually (16% off monthly)',
+      billingNoteMonthly: '$19 per user monthly, no commitment',
+      included: [
+        'Everything in Free',
+        'Unlimited active proposals',
+        'All 3 preset themes',
+        'Workspace branding and co-branding',
+        'Proposal analytics',
+        'Status workflow and expiration dates',
+        'Password-protected proposals',
+        'Email delivery',
+        'Duplicate proposal and version history',
+        'No Handshake badge',
+        'Priority email support',
+      ],
+      cta: 'Get Early Access',
     },
     {
       name: 'Team',
-      price: '$39',
-      period: '/mo per user',
-      features: ['Everything in Pro', 'Shared workspace', 'Team comments', 'Asset library', 'Priority support'],
-      cta: 'Get Early Access',
+      tier: 'team' as const,
       featured: false,
+      who: 'Growing sales and BD teams that need collaboration, shared resources, and lead intelligence.',
+      price: { annual: '$29', monthly: '$35' },
+      period: '/user/month',
+      billingNoteAnnual: '$348 per user billed annually',
+      billingNoteMonthly: '$35 per user monthly',
+      included: [
+        'Everything in Pro',
+        'Shared workspaces with team-wide proposal access',
+        'Team comments and internal review',
+        'Email-gated proposals and lead capture',
+        'Template, slide block, and asset libraries',
+        'AI copy assistant',
+        'Search, filter, and bulk operations',
+        'Custom embed snippets',
+        'Slack notifications and webhook events API',
+        'Dedicated onboarding call (5+ seats)',
+      ],
+      cta: 'Get Early Access',
     },
   ];
 
   return (
     <section id="pricing" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1160, margin: '0 auto' }}>
         <div ref={ref}>
           <motion.div
             initial="hidden"
@@ -1688,11 +1976,96 @@ function PricingSection() {
               color: C.textPrimary,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
-              marginBottom: 60,
+              marginBottom: 16,
             }}
           >
-            Simple, transparent pricing.
+            Pick the plan that matches your stage.
           </motion.h2>
+          <motion.p
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            custom={0.16}
+            variants={fadeUp}
+            style={{
+              fontFamily: sans,
+              fontSize: 16,
+              color: C.textSecondary,
+              lineHeight: 1.65,
+              maxWidth: 760,
+              marginBottom: 28,
+            }}
+          >
+            Start free, upgrade as proposal volume grows, and keep every tier aligned to real
+            workflows instead of feature bloat.
+          </motion.p>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: 34,
+          }}
+        >
+          <div
+            className="landing-billing-toggle"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#fff',
+              border: `1px solid ${C.border}`,
+              borderRadius: 999,
+              padding: 6,
+            }}
+          >
+            <button
+              onClick={() => setAnnualBilling(false)}
+              style={{
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: 999,
+                padding: '9px 18px',
+                fontFamily: sans,
+                fontSize: 13,
+                fontWeight: 500,
+                color: annualBilling ? C.textSecondary : C.textPrimary,
+                background: annualBilling ? 'transparent' : C.bgSecondary,
+              }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setAnnualBilling(true)}
+              style={{
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: 999,
+                padding: '9px 18px',
+                fontFamily: sans,
+                fontSize: 13,
+                fontWeight: 500,
+                color: annualBilling ? C.textPrimary : C.textSecondary,
+                background: annualBilling ? C.bgSecondary : 'transparent',
+              }}
+            >
+              Annual
+            </button>
+            <span
+              style={{
+                fontFamily: sans,
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#fff',
+                background: C.accent,
+                borderRadius: 999,
+                padding: '4px 10px',
+                letterSpacing: '0.02em',
+              }}
+            >
+              Save 16%
+            </span>
+          </div>
         </div>
 
         <div
@@ -1703,29 +2076,30 @@ function PricingSection() {
           }}
           className="landing-pricing-grid"
         >
-          {plans.map(({ name, price, period, features, cta, featured }, i) => {
+          {plans.map((plan, i) => {
             const { ref: cardRef, inView: cardInView } = useReveal();
+            const price = plan.name === 'Free' ? plan.price.annual : annualBilling ? plan.price.annual : plan.price.monthly;
             return (
               <motion.div
-                key={name}
+                key={plan.tier}
                 ref={cardRef}
                 initial="hidden"
                 animate={cardInView ? 'visible' : 'hidden'}
                 custom={i * 0.1}
                 variants={fadeUp}
                 style={{
-                  background: featured ? C.bgDark : '#fff',
-                  border: featured ? `1.5px solid ${C.accent}` : `1px solid ${C.border}`,
+                  background: plan.featured ? C.bgDark : '#fff',
+                  border: plan.featured ? `1.5px solid ${C.accent}` : `1px solid ${C.border}`,
                   borderRadius: 14,
-                  padding: '36px 32px',
+                  padding: '36px 28px',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative',
                   transition: 'transform 0.2s',
                 }}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.015 }}
               >
-                {featured && (
+                {plan.featured && (
                   <div
                     style={{
                       position: 'absolute',
@@ -1743,7 +2117,7 @@ function PricingSection() {
                       borderRadius: 20,
                     }}
                   >
-                    Most Popular
+                    Primary Tier
                   </div>
                 )}
 
@@ -1751,22 +2125,34 @@ function PricingSection() {
                   style={{
                     fontFamily: sans,
                     fontSize: 13,
-                    fontWeight: 500,
-                    color: featured ? C.textMuted : C.textSecondary,
+                    fontWeight: 600,
+                    color: plan.featured ? C.textMuted : C.textSecondary,
                     letterSpacing: '0.04em',
-                    marginBottom: 16,
+                    marginBottom: 12,
+                    textTransform: 'uppercase',
                   }}
                 >
-                  {name}
+                  {plan.name}
                 </div>
+                <p
+                  style={{
+                    fontFamily: sans,
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    color: plan.featured ? `${C.textOnDark}ba` : C.textSecondary,
+                    marginBottom: 20,
+                  }}
+                >
+                  {plan.who}
+                </p>
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 10 }}>
                   <span
                     style={{
                       fontFamily: serif,
-                      fontSize: 40,
+                      fontSize: 42,
                       fontWeight: 700,
-                      color: featured ? C.textOnDark : C.textPrimary,
+                      color: plan.featured ? C.textOnDark : C.textPrimary,
                       letterSpacing: '-0.03em',
                     }}
                   >
@@ -1776,35 +2162,118 @@ function PricingSection() {
                     style={{
                       fontFamily: sans,
                       fontSize: 13,
-                      color: featured ? C.textMuted : C.textSecondary,
+                      color: plan.featured ? C.textMuted : C.textSecondary,
                     }}
                   >
-                    {period}
+                    {plan.period}
                   </span>
                 </div>
 
+                {plan.name !== 'Free' && (
+                  <div
+                    style={{
+                      fontFamily: sans,
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: plan.featured ? `${C.textMuted}e6` : C.textSecondary,
+                      marginBottom: 20,
+                    }}
+                  >
+                    {annualBilling ? plan.billingNoteAnnual : plan.billingNoteMonthly}
+                  </div>
+                )}
+
+                {plan.name === 'Free' && (
+                  <div
+                    style={{
+                      fontFamily: sans,
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: plan.featured ? `${C.textMuted}e6` : C.textSecondary,
+                      marginBottom: 20,
+                    }}
+                  >
+                    Built for growth: each free proposal markets Handshake.
+                  </div>
+                )}
+
+                {'limits' in plan && (
+                  <>
+                    <div
+                      style={{
+                        fontFamily: sans,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: plan.featured ? C.textMuted : C.textSecondary,
+                        marginBottom: 8,
+                      }}
+                    >
+                      Limits
+                    </div>
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: '0 0 18px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                      }}
+                    >
+                      {plan.limits.map((limit) => (
+                        <li
+                          key={limit}
+                          style={{
+                            fontFamily: sans,
+                            fontSize: 13,
+                            color: plan.featured ? `${C.textOnDark}cc` : C.textSecondary,
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          {limit}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                <div
+                  style={{
+                    fontFamily: sans,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: plan.featured ? C.textMuted : C.textSecondary,
+                    marginBottom: 8,
+                  }}
+                >
+                  Includes
+                </div>
                 <ul
                   style={{
                     listStyle: 'none',
                     padding: 0,
-                    margin: '0 0 32px',
+                    margin: '0 0 28px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 10,
                     flex: 1,
                   }}
                 >
-                  {features.map((f) => (
+                  {plan.included.map((item) => (
                     <li
-                      key={f}
+                      key={item}
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: 'flex-start',
                         gap: 10,
                         fontFamily: sans,
                         fontSize: 14,
-                        color: featured ? `${C.textOnDark}cc` : C.textSecondary,
-                        fontWeight: 300,
+                        color: plan.featured ? `${C.textOnDark}d4` : C.textSecondary,
+                        lineHeight: 1.5,
                       }}
                     >
                       <span
@@ -1812,18 +2281,19 @@ function PricingSection() {
                           width: 16,
                           height: 16,
                           borderRadius: '50%',
-                          background: featured ? `${C.accent}25` : `${C.accent}15`,
+                          background: plan.featured ? `${C.accent}25` : `${C.accent}15`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                           fontSize: 10,
                           color: C.accent,
+                          marginTop: 2,
                         }}
                       >
                         ✓
                       </span>
-                      {f}
+                      {item}
                     </li>
                   ))}
                 </ul>
@@ -1834,9 +2304,9 @@ function PricingSection() {
                     fontFamily: sans,
                     fontSize: 14,
                     fontWeight: 500,
-                    color: featured ? '#fff' : C.textPrimary,
-                    background: featured ? C.accent : 'transparent',
-                    border: featured ? 'none' : `1px solid ${C.border}`,
+                    color: plan.featured ? '#fff' : C.textPrimary,
+                    background: plan.featured ? C.accent : 'transparent',
+                    border: plan.featured ? 'none' : `1px solid ${C.border}`,
                     cursor: 'pointer',
                     padding: '11px 20px',
                     borderRadius: 8,
@@ -1844,20 +2314,21 @@ function PricingSection() {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    if (featured) (e.currentTarget as HTMLElement).style.background = C.accentHover;
+                    if (plan.featured) (e.currentTarget as HTMLElement).style.background = C.accentHover;
                     else (e.currentTarget as HTMLElement).style.borderColor = '#c8c5be';
                   }}
                   onMouseLeave={(e) => {
-                    if (featured) (e.currentTarget as HTMLElement).style.background = C.accent;
+                    if (plan.featured) (e.currentTarget as HTMLElement).style.background = C.accent;
                     else (e.currentTarget as HTMLElement).style.borderColor = C.border;
                   }}
                 >
-                  {cta}
+                  {plan.cta}
                 </button>
               </motion.div>
             );
           })}
         </div>
+        <FeatureComparisonTable />
       </div>
     </section>
   );
@@ -2177,6 +2648,16 @@ const landingStyles = `
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .landing-comparison-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .landing-comparison-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
   .landing-form-row {
     flex-direction: row;
   }
@@ -2206,6 +2687,15 @@ const landingStyles = `
     .landing-pricing-grid {
       grid-template-columns: 1fr !important;
     }
+    .landing-billing-toggle {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+      border-radius: 14px !important;
+    }
+    .landing-comparison-table {
+      min-width: 680px !important;
+    }
     .landing-form-row {
       flex-direction: column !important;
     }
@@ -2223,6 +2713,9 @@ const landingStyles = `
     }
     .landing-pricing-grid {
       grid-template-columns: 1fr 1fr !important;
+    }
+    .landing-comparison-table {
+      min-width: 720px !important;
     }
     .landing-feature-grid {
       gap: 48px !important;
