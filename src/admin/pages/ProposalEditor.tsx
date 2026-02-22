@@ -102,6 +102,10 @@ export function ProposalEditor() {
           status: updatedProposal.status,
           slides: updatedProposal.slides,
           themeId: updatedProposal.themeId,
+          visibility: updatedProposal.visibility,
+          accessPassword: updatedProposal.accessPassword,
+          expiresAt: updatedProposal.expiresAt,
+          brandOverrides: updatedProposal.brandOverrides,
         });
         setSaveState('saved');
         setHasUnsavedChanges(false);
