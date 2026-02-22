@@ -7,7 +7,6 @@ import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
 import { createDefaultSlide } from '../../data/slideDefaults';
 import { copyToClipboard } from '../../shared/utils/helpers';
-import { useDialKit } from 'dialkit';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
@@ -30,15 +29,15 @@ export function ProposalEditor() {
   } = useProposalStore();
   const ingestor = useIngestorState();
 
-  const editorValues = useDialKit('Editor', {
+  const editorValues = {
     autosave: {
       enabled: true,
-      debounceMs: [500, 5000, 250, 1000] as [number, number, number, number],
+      debounceMs: 1000,
     },
     preview: {
       showPanel: true,
     },
-  });
+  };
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);

@@ -485,6 +485,12 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
     items[index] = value;
     onChange({ after: { ...content.after, items } });
   };
+  const removeBeforeItem = (index: number) => {
+    onChange({ before: { ...content.before, items: content.before.items.filter((_, i) => i !== index) } });
+  };
+  const removeAfterItem = (index: number) => {
+    onChange({ after: { ...content.after, items: content.after.items.filter((_, i) => i !== index) } });
+  };
 
   return (
     <div className="space-y-4">
@@ -497,7 +503,19 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
           </div>
           <Input className="mb-2" value={content.before.label} onChange={(e) => onChange({ before: { ...content.before, label: e.target.value } })} />
           {content.before.items.map((item, i) => (
-            <Input key={i} className="mb-1.5" value={item} onChange={(e) => updateBeforeItem(i, e.target.value)} />
+            <div key={i} className="mb-1.5 flex items-center gap-1.5">
+              <Input value={item} onChange={(e) => updateBeforeItem(i, e.target.value)} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeBeforeItem(i)}
+                className="h-9 px-2 text-xs text-red-500 hover:text-red-600"
+                aria-label={`Remove before item ${i + 1}`}
+              >
+                Remove
+              </Button>
+            </div>
           ))}
           <Button
             type="button"
@@ -521,7 +539,19 @@ function ComparisonFields({ content, onChange }: { content: ComparisonSlideConte
           </div>
           <Input className="mb-2" value={content.after.label} onChange={(e) => onChange({ after: { ...content.after, label: e.target.value } })} />
           {content.after.items.map((item, i) => (
-            <Input key={i} className="mb-1.5" value={item} onChange={(e) => updateAfterItem(i, e.target.value)} />
+            <div key={i} className="mb-1.5 flex items-center gap-1.5">
+              <Input value={item} onChange={(e) => updateAfterItem(i, e.target.value)} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeAfterItem(i)}
+                className="h-9 px-2 text-xs text-red-500 hover:text-red-600"
+                aria-label={`Remove after item ${i + 1}`}
+              >
+                Remove
+              </Button>
+            </div>
           ))}
           <Button
             type="button"

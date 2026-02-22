@@ -1,13 +1,12 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import type { Proposal } from '../types/proposal';
+import type { Proposal, SlideConfig } from '../types/proposal';
 import { useProposalStore } from '../store/proposalStore';
 import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
-import { useDialKit } from 'dialkit';
 import { getTransitionVariants } from '../shared/utils/animations';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
@@ -15,6 +14,15 @@ import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 import { PasswordGate } from './components/PasswordGate';
 import { EmailGate } from './components/EmailGate';
 import { ExpiredPage } from './components/ExpiredPage';
+
+function getContentFingerprint(slide: SlideConfig): string {
+  const c = slide.content as Record<string, unknown>;
+  const parts: number[] = [];
+  for (const val of Object.values(c)) {
+    if (Array.isArray(val)) parts.push(val.length);
+  }
+  return parts.length > 0 ? parts.join('-') : '';
+}
 
 function ProposalViewerContent() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,21 +32,22 @@ function ProposalViewerContent() {
   const [error, setError] = useState('');
   const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState(false);
+  const isPreviewMode = useMemo(() => window.location.hash.includes('preview'), []);
 
-  const settings = useDialKit('Presentation', {
+  const settings = {
     appearance: {
       showNavDots: true,
       showProgress: true,
-      grainOpacity: [0, 0.1, 0.005, 0.03] as [number, number, number, number],
+      grainOpacity: 0.005,
     },
     animation: {
-      staggerDelay: [0.05, 0.4, 0.01, 0.12] as [number, number, number, number],
-      entryDuration: [0.3, 1.5, 0.05, 0.8] as [number, number, number, number],
+      staggerDelay: 0.12,
+      entryDuration: 0.8,
     },
     counter: {
-      durationMs: [500, 3000, 100, 1800] as [number, number, number, number],
+      durationMs: 1800,
     },
-  });
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -176,19 +185,25 @@ function ProposalViewerContent() {
             style={{ backgroundColor: 'var(--color-bg-primary)' }}
             onClick={handleContainerClick}
           >
-            {enabledSlides.map((slide, index) => (
-              <motion.section
-                key={`${slide.id}-${slide.transition ?? 'slide-up'}`}
-                className="slide-section"
-                style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
-                variants={getTransitionVariants(slide.transition)}
-                initial={false}
-                whileInView="visible"
-                viewport={{ once: false, amount: 0.6 }}
-              >
-                <SlideRenderer slide={slide} index={index} />
-              </motion.section>
-            ))}
+            {enabledSlides.map((slide, index) => {
+              const fp = isPreviewMode ? getContentFingerprint(slide) : '';
+              const slideKey = fp
+                ? `${slide.id}-${slide.transition ?? 'slide-up'}-${fp}`
+                : `${slide.id}-${slide.transition ?? 'slide-up'}`;
+              return (
+                <motion.section
+                  key={slideKey}
+                  className="slide-section"
+                  style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
+                  variants={getTransitionVariants(slide.transition)}
+                  initial={false}
+                  whileInView="visible"
+                  viewport={{ once: false, amount: 0.6 }}
+                >
+                  <SlideRenderer slide={slide} index={index} />
+                </motion.section>
+              );
+            })}
           </div>
         </>
       )}
