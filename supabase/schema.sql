@@ -307,6 +307,45 @@ AS $$
   ));
 $$;
 
+CREATE OR REPLACE FUNCTION public.bootstrap_workspace(
+  owner_name text,
+  owner_email text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  caller_id uuid := auth.uid();
+  new_workspace_id uuid;
+BEGIN
+  IF caller_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Already has a workspace — return it.
+  SELECT wm.workspace_id INTO new_workspace_id
+  FROM public.workspace_members wm
+  WHERE wm.user_id = caller_id
+    AND wm.status = 'active'
+  LIMIT 1;
+
+  IF new_workspace_id IS NOT NULL THEN
+    RETURN new_workspace_id;
+  END IF;
+
+  INSERT INTO public.workspaces (created_by, name)
+  VALUES (caller_id, COALESCE(NULLIF(trim(owner_name), ''), 'My') || '''s Workspace')
+  RETURNING id INTO new_workspace_id;
+
+  INSERT INTO public.workspace_members (workspace_id, user_id, email, role, status)
+  VALUES (new_workspace_id, caller_id, lower(trim(owner_email)), 'owner', 'active');
+
+  RETURN new_workspace_id;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.activate_pending_invites_for_user(
 +  target_user_id uuid,
 +  target_email text
@@ -342,7 +381,10 @@ $$;
 DROP POLICY IF EXISTS "Members can read their workspaces" ON workspaces;
 CREATE POLICY "Members can read their workspaces"
   ON workspaces FOR SELECT
-  USING (public.is_workspace_member(id));
+  USING (
+    public.is_workspace_member(id)
+    OR created_by = auth.uid()
+  );
 
 DROP POLICY IF EXISTS "Users can create their own workspaces" ON workspaces;
 CREATE POLICY "Users can create their own workspaces"

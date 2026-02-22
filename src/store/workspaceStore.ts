@@ -146,30 +146,18 @@ async function ensureWorkspaceForUser(user: AppUser): Promise<void> {
   const primary = await fetchPrimaryWorkspaceForUser(user.id);
   if (primary.workspace) return;
 
-  const { data: workspaceInsert, error: workspaceError } = await supabase
-    .from('workspaces')
-    .insert({
-      created_by: user.id,
-      name: `${user.displayName?.trim() || user.email}'s Workspace`,
-    })
-    .select('id')
-    .single();
-
-  if (workspaceError || !workspaceInsert) {
-    throw workspaceError || new Error('Failed to create workspace');
-  }
-
-  const { error: ownerError } = await supabase.from('workspace_members').insert({
-    workspace_id: workspaceInsert.id,
-    user_id: user.id,
-    email: normalizeEmail(user.email),
-    role: 'owner',
-    status: 'active',
+  const { data, error } = await supabase.rpc('bootstrap_workspace', {
+    owner_name: user.displayName?.trim() || user.email,
+    owner_email: normalizeEmail(user.email),
   });
 
-  if (ownerError) {
-    if (ownerError.code === '23505') return;
-    throw ownerError;
+  if (error) {
+    if (error.code === '23505') return;
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error('Failed to create workspace');
   }
 }
 
