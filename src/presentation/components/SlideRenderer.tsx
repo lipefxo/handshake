@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { TitleSlide } from './slides/TitleSlide';
 import { IntroSlide } from './slides/IntroSlide';

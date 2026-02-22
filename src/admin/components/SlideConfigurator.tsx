@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, SlideLink, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { AppIcon } from '../../shared/icons/AppIcon';
