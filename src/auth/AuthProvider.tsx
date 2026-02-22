@@ -63,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     void initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
+      if (session?.user) {
         sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
         const appUser = mapSessionUser(session.user);
         setUser(appUser);
