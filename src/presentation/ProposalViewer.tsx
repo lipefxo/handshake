@@ -36,6 +36,7 @@ function ProposalViewerContent() {
   const [accessGranted, setAccessGranted] = useState(false);
   const hasLivePreviewUpdateRef = useRef(false);
   const isPreviewMode = window.location.hash.includes('preview');
+  const isEmbeddedEditorPreview = isPreviewMode && window.self !== window.top;
 
   const settings = {
     appearance: {
@@ -155,7 +156,7 @@ function ProposalViewerContent() {
   const canReturnToEditor = Boolean(
     user &&
     proposal?.id &&
-    (isPreviewMode || proposal.user_id === user.id)
+    proposal.user_id === user.id
   );
   const backToEditorPath = canReturnToEditor && proposal?.id ? `/admin/proposals/${proposal.id}` : undefined;
 
@@ -195,7 +196,7 @@ function ProposalViewerContent() {
           {settings.appearance.showProgress && (
             <ProgressBar current={current} total={enabledSlides.length} />
           )}
-          {settings.appearance.showNavDots && (
+          {!isEmbeddedEditorPreview && settings.appearance.showNavDots && (
             <SlideNavigation
               current={current}
               total={enabledSlides.length}

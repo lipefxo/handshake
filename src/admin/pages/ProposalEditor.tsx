@@ -431,12 +431,9 @@ export function ProposalEditor() {
                       Previous
                     </Button>
                     <Button asChild variant="outline" size="sm" className="h-7 text-[11px] text-gray-700">
-                      <a
-                        href={`/p/${proposal.slug}#preview`}
-                        target="_blank"
-                      >
+                      <Link to={`/p/${proposal.slug}#preview`}>
                         Open full preview
-                      </a>
+                      </Link>
                     </Button>
                     <Button
                       type="button"

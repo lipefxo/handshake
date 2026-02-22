@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { FIELD_LIMITS } from '../../shared/utils/validation';
 
 export interface NewProposalFormValues {
   title: string;
@@ -50,6 +51,21 @@ function getInitialFormValues(): NewProposalFormValues {
   };
 }
 
+const INPUT_LIMITS = {
+  title: 45,
+  partnerName: 45,
+  contactName: 45,
+  contactEmail: 45,
+} as const;
+
+type FormErrors = Partial<Record<keyof NewProposalFormValues, string>>;
+
+function isValidDateValue(value: string): boolean {
+  if (!value) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return !Number.isNaN(new Date(value).getTime());
+}
+
 export function NewProposalDialog({
   isOpen,
   isCreating,
@@ -76,7 +92,27 @@ export function NewProposalDialog({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, isCreating, onClose]);
 
-  const canCreate = useMemo(() => values.partnerName.trim().length > 0, [values.partnerName]);
+  const errors = useMemo<FormErrors>(() => {
+    const next: FormErrors = {};
+    if (!values.partnerName.trim()) {
+      next.partnerName = 'Partner / client name is required.';
+    }
+
+    if (values.contactEmail.trim()) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(values.contactEmail.trim())) {
+        next.contactEmail = 'Enter a valid email address.';
+      }
+    }
+
+    if (!isValidDateValue(values.proposalDate)) {
+      next.proposalDate = 'Select a valid proposal date.';
+    }
+
+    return next;
+  }, [values.contactEmail, values.partnerName, values.proposalDate]);
+
+  const canCreate = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
   const updateField = <K extends keyof NewProposalFormValues>(key: K, value: NewProposalFormValues[K]) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -85,7 +121,13 @@ export function NewProposalDialog({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canCreate || isCreating) return;
-    await onCreate(values);
+    await onCreate({
+      ...values,
+      title: values.title.trim(),
+      partnerName: values.partnerName.trim(),
+      contactName: values.contactName.trim(),
+      contactEmail: values.contactEmail.trim(),
+    });
   };
 
   return (
@@ -108,7 +150,11 @@ export function NewProposalDialog({
                 value={values.title}
                 onChange={(event) => updateField('title', event.target.value)}
                 placeholder="Q3 2026 Partnership Proposal"
+                maxLength={INPUT_LIMITS.title}
               />
+              <p className="text-xs text-gray-500 text-right">
+                {values.title.length}/{INPUT_LIMITS.title}
+              </p>
             </div>
 
             <div className="grid gap-1.5">
@@ -120,7 +166,15 @@ export function NewProposalDialog({
                 onChange={(event) => updateField('partnerName', event.target.value)}
                 placeholder="Acme Corp"
                 required
+                maxLength={INPUT_LIMITS.partnerName}
+                aria-invalid={Boolean(errors.partnerName)}
               />
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <p className={errors.partnerName ? 'text-red-600' : 'text-transparent'}>{errors.partnerName ?? '.'}</p>
+                <p className="text-gray-500">
+                  {values.partnerName.length}/{INPUT_LIMITS.partnerName}
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
@@ -132,7 +186,11 @@ export function NewProposalDialog({
                   value={values.contactName}
                   onChange={(event) => updateField('contactName', event.target.value)}
                   placeholder="Jane Doe"
+                  maxLength={INPUT_LIMITS.contactName}
                 />
+                <p className="text-xs text-gray-500 text-right">
+                  {values.contactName.length}/{INPUT_LIMITS.contactName}
+                </p>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="new-proposal-contact-email-input">Contact email</Label>
@@ -142,7 +200,15 @@ export function NewProposalDialog({
                   value={values.contactEmail}
                   onChange={(event) => updateField('contactEmail', event.target.value)}
                   placeholder="jane@acme.com"
+                  maxLength={INPUT_LIMITS.contactEmail}
+                  aria-invalid={Boolean(errors.contactEmail)}
                 />
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <p className={errors.contactEmail ? 'text-red-600' : 'text-transparent'}>{errors.contactEmail ?? '.'}</p>
+                  <p className="text-gray-500">
+                    {values.contactEmail.length}/{INPUT_LIMITS.contactEmail}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -153,7 +219,12 @@ export function NewProposalDialog({
                 type="date"
                 value={values.proposalDate}
                 onChange={(event) => updateField('proposalDate', event.target.value)}
+                required
+                aria-invalid={Boolean(errors.proposalDate)}
               />
+              {errors.proposalDate ? (
+                <p className="text-xs text-red-600">{errors.proposalDate}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-1.5">

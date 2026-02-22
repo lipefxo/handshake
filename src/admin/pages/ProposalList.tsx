@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
@@ -252,13 +252,9 @@ export function ProposalList() {
                     )}
 
                     <Button asChild variant="ghost" size="icon" title="Preview">
-                      <a
-                        href={`/p/${proposal.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <Link to={`/p/${proposal.slug}`}>
                         <AppIcon icon="ui.external-link" className="w-4 h-4" />
-                      </a>
+                      </Link>
                     </Button>
 
                     <Button

@@ -30,21 +30,24 @@ export function SlideNavigation({ current, total, onNavigate, backToEditorPath }
   }, [current]);
 
   return (
-    <div ref={containerRef} className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
+    <>
       {backToEditorPath && (
-        <Link
-          to={backToEditorPath}
-          className="mb-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
-          style={{
-            borderColor: theme.colors.border,
-            color: theme.colors.textPrimary,
-            backgroundColor: theme.colors.bgSecondary,
-          }}
-          aria-label="Back to proposal editor"
-        >
-          Back to editor
-        </Link>
+        <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+          <Link
+            to={backToEditorPath}
+            className="rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+            style={{
+              borderColor: theme.colors.border,
+              color: theme.colors.textPrimary,
+              backgroundColor: theme.colors.bgSecondary,
+            }}
+            aria-label="Back to proposal editor"
+          >
+            Back to editor
+          </Link>
+        </div>
       )}
+      <div ref={containerRef} className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2.5">
       {Array.from({ length: total }).map((_, i) => (
         <button
           key={i}
@@ -77,6 +80,7 @@ export function SlideNavigation({ current, total, onNavigate, backToEditorPath }
           />
         </button>
       ))}
-    </div>
+      </div>
+    </>
   );
 }
