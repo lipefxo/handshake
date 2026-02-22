@@ -74,7 +74,13 @@ export function SlideRenderer({
       slideBody = <TableSlide content={content as TableSlideContent} />;
       break;
     case 'closing':
-      slideBody = <ClosingSlide content={content as ClosingSlideContent} companyName={proposalCompanyName} />;
+      slideBody = (
+        <ClosingSlide
+          content={content as ClosingSlideContent}
+          companyName={proposalCompanyName}
+          hideBottomBranding={isLastSlide}
+        />
+      );
       break;
     default:
       slideBody = (
@@ -97,8 +103,8 @@ export function SlideRenderer({
     <div className="relative w-full h-full">
       {slideBody}
 
-      {validLinks.length > 0 && (
-        <div className={`pointer-events-none absolute left-0 right-0 z-30 flex justify-center gap-3 px-6 ${isLastSlide ? 'bottom-14' : 'bottom-8'}`}>
+      {!isLastSlide && validLinks.length > 0 && (
+        <div className="pointer-events-none absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-3 px-6">
           {validLinks.map((link, index) => {
             const text = sanitizeText(link.text ?? '');
             const urlValidation = validateUrl(link.url ?? '');
@@ -133,11 +139,11 @@ export function SlideRenderer({
           href="https://www.handshake.design"
           target="_blank"
           rel="noopener noreferrer"
-          className="group pointer-events-auto absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1.5 no-underline"
+          className="group pointer-events-auto absolute bottom-10 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-0.5 no-underline"
           aria-label="Built with Handshake"
         >
           <span
-            className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+            className="text-[6px] font-semibold tracking-[0.18em] uppercase"
             style={{
               color: '#fff',
               mixBlendMode: 'difference',
@@ -146,17 +152,17 @@ export function SlideRenderer({
           >
             Built with
           </span>
-          <span className="flex items-center gap-2.5" style={{ mixBlendMode: 'difference' }}>
+          <span className="flex items-center gap-1" style={{ mixBlendMode: 'difference' }}>
             <img
               src="/handshake-logo-nobg.svg"
               alt=""
-              className="h-5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
+              className="h-2.5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
               style={{ filter: 'brightness(0) invert(1)' }}
             />
             <img
               src="/handshake_wordmark.svg"
               alt="Handshake"
-              className="h-7 w-auto opacity-85 transition-opacity group-hover:opacity-100"
+              className="h-3.5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
               style={{ filter: 'brightness(0) invert(1)' }}
             />
           </span>

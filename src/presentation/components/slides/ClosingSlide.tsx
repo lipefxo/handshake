@@ -8,9 +8,10 @@ import { sanitizeText, validateUrl } from '../../../shared/utils/validation';
 interface ClosingSlideProps {
   content: ClosingSlideContent;
   companyName?: string;
+  hideBottomBranding?: boolean;
 }
 
-export function ClosingSlide({ content, companyName }: ClosingSlideProps) {
+export function ClosingSlide({ content, companyName, hideBottomBranding = false }: ClosingSlideProps) {
   const safeCtaText = sanitizeText(content.ctaText ?? '');
   const safeCtaUrl = content.ctaUrl ? validateUrl(content.ctaUrl) : { value: '', isValid: false };
   const showCtaButton = Boolean(safeCtaText) && safeCtaUrl.isValid;
@@ -122,21 +123,22 @@ export function ClosingSlide({ content, companyName }: ClosingSlideProps) {
         )}
       </motion.div>
 
-      {/* Company wordmark at bottom */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 1, duration: 0.8 }}
-      >
-        <span
-          className="text-xs tracking-widest uppercase"
-          style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+      {!hideBottomBranding && (
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 1, duration: 0.8 }}
         >
-          {companyName || 'Company'}
-        </span>
-      </motion.div>
+          <span
+            className="text-xs tracking-widest uppercase"
+            style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+          >
+            {companyName || 'Company'}
+          </span>
+        </motion.div>
+      )}
     </div>
   );
 }
