@@ -85,13 +85,33 @@ function inferTypeFromContent(
     return 'features';
   }
 
+  // Heading keyword matching for numeric/stat-heavy sections.
+  if (/(pricing|cost|investment|budget|by the numbers|metrics)/i.test(heading)) {
+    return 'stats';
+  }
+
+  // Plain bullet lists (without pipe separators) are often features/benefits.
+  const plainBullets = lines.filter((l) => /^[-*]\s+.+/.test(l) && !l.includes('|'));
+  if (plainBullets.length >= 3) {
+    if (/(offer|feature|include|provide|visibility|reporting|dashboard)/i.test(heading)) {
+      return 'features';
+    }
+    if (/(benefit|gain|receive|access|what you get|community gains|your .* gains|why this matters)/i.test(heading + text)) {
+      return 'benefits';
+    }
+    if (/(offer|feature|include|provide|visibility|reporting|dashboard)/i.test(text)) {
+      return 'features';
+    }
+    return 'features';
+  }
+
   // First content section → title
   if (sectionIndex === 0) {
     return 'title';
   }
 
-  // Last section with contact info → closing
-  if (isLast && /(@[\w.]+\.|schedule|call|contact|mailto)/i.test(text)) {
+  // Last section with contact info or CTA language → closing
+  if (isLast && /(@[\w.]+\.|schedule|call|contact|mailto|let's|together|redefine|future|ready to|get started|next step|build that)/i.test(text)) {
     return 'closing';
   }
 
