@@ -363,6 +363,21 @@ CREATE POLICY "Members can read workspace members"
   ON workspace_members FOR SELECT
   USING (public.is_workspace_member(workspace_id));
 
+CREATE OR REPLACE FUNCTION public.is_workspace_creator(target_workspace_id uuid, target_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.workspaces w
+    WHERE w.id = target_workspace_id
+      AND w.created_by = target_user_id
+  );
+$$;
+
 DROP POLICY IF EXISTS "Owners can invite workspace members" ON workspace_members;
 CREATE POLICY "Owners can invite workspace members"
   ON workspace_members FOR INSERT
@@ -373,11 +388,7 @@ CREATE POLICY "Owners can invite workspace members"
       AND status = 'active'
       AND user_id = auth.uid()
       AND lower(email) = public.current_user_email()
-      AND EXISTS (
-        SELECT 1 FROM workspaces w
-        WHERE w.id = workspace_members.workspace_id
-          AND w.created_by = auth.uid()
-      )
+      AND public.is_workspace_creator(workspace_id)
     )
   );
 

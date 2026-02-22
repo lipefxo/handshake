@@ -167,7 +167,10 @@ async function ensureWorkspaceForUser(user: AppUser): Promise<void> {
     status: 'active',
   });
 
-  if (ownerError) throw ownerError;
+  if (ownerError) {
+    if (ownerError.code === '23505') return;
+    throw ownerError;
+  }
 }
 
 async function activatePendingInvitesForUser(user: AppUser): Promise<number> {
@@ -183,6 +186,8 @@ async function activatePendingInvitesForUser(user: AppUser): Promise<number> {
 
   return typeof data === 'number' ? data : 0;
 }
+
+let initializationInFlight: Promise<void> | null = null;
 
 const GENERIC_WORKSPACE_ERROR = 'Failed to load workspace. Please try again.';
 
@@ -262,28 +267,40 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       return;
     }
 
-    set({ loading: true, error: null });
-    try {
-      await activatePendingInvitesForUser(user);
-      await ensureWorkspaceForUser(user);
-      const primary = await fetchPrimaryWorkspaceForUser(user.id);
-      if (!primary.workspace) {
-        throw new Error('Workspace provisioning failed');
-      }
-
-      set({
-        currentWorkspace: primary.workspace,
-        currentUserRole: primary.role,
-      });
-      await get().refreshMembers();
-      set({ loading: false });
-    } catch (error) {
-      logStructuredError('initializeWorkspace failed', error);
-      set({
-        error: getWorkspaceError(error, GENERIC_WORKSPACE_ERROR),
-        loading: false,
-      });
+    if (initializationInFlight) {
+      await initializationInFlight;
+      return;
     }
+
+    set({ loading: true, error: null });
+    const run = async () => {
+      try {
+        await activatePendingInvitesForUser(user);
+        await ensureWorkspaceForUser(user);
+        const primary = await fetchPrimaryWorkspaceForUser(user.id);
+        if (!primary.workspace) {
+          throw new Error('Workspace provisioning failed');
+        }
+
+        set({
+          currentWorkspace: primary.workspace,
+          currentUserRole: primary.role,
+        });
+        await get().refreshMembers();
+        set({ loading: false });
+      } catch (error) {
+        logStructuredError('initializeWorkspace failed', error);
+        set({
+          error: getWorkspaceError(error, GENERIC_WORKSPACE_ERROR),
+          loading: false,
+        });
+      } finally {
+        initializationInFlight = null;
+      }
+    };
+
+    initializationInFlight = run();
+    await initializationInFlight;
   },
 
   refreshMembers: async () => {
