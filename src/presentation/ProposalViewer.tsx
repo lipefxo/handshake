@@ -169,6 +169,12 @@ function ProposalViewerContent() {
         return;
       }
       setLoading(false);
+      // Embedded editor previews can hydrate from postMessage shortly after mount.
+      // Avoid showing a false "not found" state while waiting for the first live update.
+      if (isEmbeddedEditorPreview) {
+        setError('');
+        return;
+      }
       setError('This proposal was not found.');
     };
 
@@ -176,7 +182,7 @@ function ProposalViewerContent() {
     return () => {
       cancelled = true;
     };
-  }, [slug, getProposalContentBySlug, getProposalMetaBySlug, getOwnProposalBySlug]);
+  }, [slug, getProposalContentBySlug, getProposalMetaBySlug, getOwnProposalBySlug, isEmbeddedEditorPreview]);
 
   useEffect(() => {
     const isPreviewMode = window.location.hash.includes('preview');
@@ -285,6 +291,11 @@ function ProposalViewerContent() {
             setError('Unable to unlock this proposal. Please try again.');
           }}
         />
+      ) : isEmbeddedEditorPreview && !proposal ? (
+        <div className="flex items-center justify-center min-h-screen"
+          style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}>
+          <p style={{ fontFamily: 'var(--font-body)' }}>Loading preview…</p>
+        </div>
       ) : error || !proposal ? (
         <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center"
           style={{ background: 'var(--color-bg-primary)' }}>

@@ -6,7 +6,6 @@ import { useAuthStore } from '../../store/authStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import type { Proposal, SlideConfig } from '../../types/proposal';
 import { generateSlug, formatDateTime, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
-import { createDefaultProposalSlides } from '../../data/slideDefaults';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { NewProposalDialog, type NewProposalFormValues } from '../components/NewProposalDialog';
@@ -78,12 +77,7 @@ export function ProposalList() {
         title: proposalTitle,
         partnerName,
         status: 'draft',
-        slides: createDefaultProposalSlides({
-          title: proposalTitle,
-          partnerName,
-          proposalDate: values.proposalDate,
-          themeId: values.themeId,
-        }),
+        slides: [],
         themeId: values.themeId,
       });
 

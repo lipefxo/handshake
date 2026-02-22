@@ -72,13 +72,13 @@ function mapMetaRowToProposalAccessMeta(row: Record<string, unknown>): ProposalA
   return {
     id: row.id as string,
     slug: row.slug as string,
-    shortCode: row.shortCode as string | undefined,
+    shortCode: (row.shortCode as string | undefined) ?? (row.short_code as string | undefined),
     title: row.title as string,
-    partnerName: row.partnerName as string,
+    partnerName: (row.partnerName as string) ?? (row.partner_name as string),
     status: row.status as ProposalAccessMeta['status'],
     visibility: (row.visibility as Proposal['visibility']) ?? 'public',
-    expiresAt: row.expiresAt as string | undefined,
-    themeId: isValidThemeId(row.themeId) ? row.themeId : defaultThemeId,
+    expiresAt: (row.expiresAt as string | undefined) ?? (row.expires_at as string | undefined),
+    themeId: isValidThemeId(row.themeId) ? row.themeId : isValidThemeId(row.theme_id) ? row.theme_id : defaultThemeId,
   };
 }
 
@@ -346,8 +346,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase.functions.invoke('proposal-meta', {
       body: { slug: safeSlug },
     });
-    if (error || !data?.proposal) return null;
-    return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
+    if (!error && data?.proposal) {
+      return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
+    }
+
+    // Fallback for public proposals if edge function is unavailable/misconfigured.
+    const { data: fallback } = await supabase
+      .from('proposals')
+      .select('id, slug, short_code, title, partner_name, status, visibility, expires_at, theme_id')
+      .eq('slug', safeSlug)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (!fallback) return null;
+    return mapMetaRowToProposalAccessMeta(fallback as Record<string, unknown>);
   },
 
   getProposalMetaByShortCode: async (shortCode) => {
@@ -357,8 +368,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase.functions.invoke('proposal-meta', {
       body: { shortCode: safeShortCode },
     });
-    if (error || !data?.proposal) return null;
-    return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
+    if (!error && data?.proposal) {
+      return mapMetaRowToProposalAccessMeta(data.proposal as Record<string, unknown>);
+    }
+
+    // Fallback for public proposals if edge function is unavailable/misconfigured.
+    const { data: fallback } = await supabase
+      .from('proposals')
+      .select('id, slug, short_code, title, partner_name, status, visibility, expires_at, theme_id')
+      .eq('short_code', safeShortCode)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (!fallback) return null;
+    return mapMetaRowToProposalAccessMeta(fallback as Record<string, unknown>);
   },
 
   getProposalContentBySlug: async (slug, accessToken) => {
@@ -368,8 +390,19 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const { data, error } = await supabase.functions.invoke('proposal-content', {
       body: { slug: safeSlug, accessToken: accessToken?.trim() || undefined },
     });
-    if (error || !data?.proposal) return null;
-    return dbRowToProposal(data.proposal as Record<string, unknown>);
+    if (!error && data?.proposal) {
+      return dbRowToProposal(data.proposal as Record<string, unknown>);
+    }
+
+    // Fallback for public proposals if edge function is unavailable/misconfigured.
+    const { data: fallback } = await supabase
+      .from('proposals')
+      .select('*')
+      .eq('slug', safeSlug)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (!fallback) return null;
+    return dbRowToProposal(fallback as Record<string, unknown>);
   },
 
   verifyProposalPassword: async (proposalId, password) => {
