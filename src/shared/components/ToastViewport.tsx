@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useToastStore, type ToastMessage } from '../feedback/toastStore';
+import { useToastStore, type ToastMessage, type ToastStore } from '../feedback/toastStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -10,12 +10,12 @@ const variantStyles: Record<ToastMessage['variant'], string> = {
 };
 
 export function ToastViewport() {
-  const toasts = useToastStore((state) => state.toasts);
-  const dismiss = useToastStore((state) => state.dismiss);
+  const toasts = useToastStore((state: ToastStore) => state.toasts);
+  const dismiss = useToastStore((state: ToastStore) => state.dismiss);
 
   return (
     <div className="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2">
-      {toasts.map((toast) => (
+      {toasts.map((toast: ToastMessage) => (
         <div
           key={toast.id}
           className={cn(

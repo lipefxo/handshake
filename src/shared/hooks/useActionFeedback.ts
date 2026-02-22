@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useToastStore } from '../feedback/toastStore';
+import { useToastStore, type ToastStore } from '../feedback/toastStore';
 
 interface ActionFeedbackOptions<T> {
   successMessage: string;
@@ -9,8 +9,8 @@ interface ActionFeedbackOptions<T> {
 }
 
 export function useActionFeedback() {
-  const showSuccess = useToastStore((state) => state.success);
-  const showError = useToastStore((state) => state.error);
+  const showSuccess = useToastStore((state: ToastStore) => state.success);
+  const showError = useToastStore((state: ToastStore) => state.error);
 
   const executeWithFeedback = useCallback(
     async <T>(action: () => Promise<T>, options: ActionFeedbackOptions<T>): Promise<T> => {

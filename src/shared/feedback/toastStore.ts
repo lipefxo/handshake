@@ -10,7 +10,7 @@ export interface ToastMessage {
   durationMs: number;
 }
 
-interface ToastStore {
+export interface ToastStore {
   toasts: ToastMessage[];
   show: (toast: Omit<ToastMessage, 'id'>) => string;
   success: (title: string, description?: string) => string;
@@ -26,47 +26,50 @@ function createToastId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export const useToastStore = create<ToastStore>((set) => ({
-  toasts: [],
-
-  show: (toast) => {
+export const useToastStore = create<ToastStore>((set) => {
+  const enqueueToast = (toast: Omit<ToastMessage, 'id'>): string => {
     const id = createToastId();
-    const nextToast: ToastMessage = { ...toast, id };
-    set((state) => ({ toasts: [...state.toasts, nextToast] }));
+    set((state) => ({ toasts: [...state.toasts, { ...toast, id }] }));
 
     window.setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((entry) => entry.id !== id) }));
     }, toast.durationMs);
 
     return id;
-  },
+  };
 
-  success: (title, description) =>
-    useToastStore.getState().show({
-      title,
-      description,
-      variant: 'success',
-      durationMs: DEFAULT_DURATION_MS,
-    }),
+  return {
+    toasts: [],
 
-  error: (title, description) =>
-    useToastStore.getState().show({
-      title,
-      description,
-      variant: 'error',
-      durationMs: ERROR_DURATION_MS,
-    }),
+    show: (toast) => enqueueToast(toast),
 
-  info: (title, description) =>
-    useToastStore.getState().show({
-      title,
-      description,
-      variant: 'info',
-      durationMs: DEFAULT_DURATION_MS,
-    }),
+    success: (title, description) =>
+      enqueueToast({
+        title,
+        description,
+        variant: 'success',
+        durationMs: DEFAULT_DURATION_MS,
+      }),
 
-  dismiss: (id) =>
-    set((state) => ({
-      toasts: state.toasts.filter((toast) => toast.id !== id),
-    })),
-}));
+    error: (title, description) =>
+      enqueueToast({
+        title,
+        description,
+        variant: 'error',
+        durationMs: ERROR_DURATION_MS,
+      }),
+
+    info: (title, description) =>
+      enqueueToast({
+        title,
+        description,
+        variant: 'info',
+        durationMs: DEFAULT_DURATION_MS,
+      }),
+
+    dismiss: (id) =>
+      set((state) => ({
+        toasts: state.toasts.filter((toast) => toast.id !== id),
+      })),
+  };
+});
