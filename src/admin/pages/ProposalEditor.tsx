@@ -517,9 +517,13 @@ export function ProposalEditor() {
                     type="button"
                     onClick={() => {
                       const iframe = previewIframeRef.current;
-                      if (iframe) {
-                        iframe.src = iframe.src;
+                      if (!iframe) return;
+                      const frameWindow = iframe.contentWindow;
+                      if (frameWindow) {
+                        frameWindow.location.reload();
+                        return;
                       }
+                      iframe.src = iframe.src;
                     }}
                     className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     title="Refresh preview"
