@@ -2829,7 +2829,7 @@ function Footer() {
             textAlign: 'center',
           }}
         >
-          © 2026 Handshake. All rights reserved.
+          © 2026 Handshake. All rights reserved. BUILT BY GRAFITE DESIGN LTDA.
         </div>
 
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
