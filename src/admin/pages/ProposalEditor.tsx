@@ -4,11 +4,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import bcrypt from 'bcryptjs';
 import { useProposalStore } from '../../store/proposalStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
-import type { Proposal, SlideConfig, SlideType, TitleSlideContent } from '../../types/proposal';
+import { useAuthStore } from '../../store/authStore';
+import { useToastStore } from '../../shared/feedback/toastStore';
+import type { Proposal, ProposalVersion, SlideConfig, SlideType, TitleSlideContent } from '../../types/proposal';
 import { SlideSortableList } from '../components/SlideSortableList';
 import { SlideConfigurator } from '../components/SlideConfigurator';
+import { VersionDropdown } from '../components/VersionDropdown';
 import { createDefaultSlide } from '../../data/slideDefaults';
-import { copyToClipboard } from '../../shared/utils/helpers';
+import { copyToClipboard, formatRelativeTime } from '../../shared/utils/helpers';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
@@ -24,6 +27,9 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type PreviewDevice = 'desktop' | 'mobile';
 
 const AUTOSAVE_DELAY = 800;
+const VERSION_INTERVAL_MS = 5 * 60 * 1000;
+const VERSION_TICK_MS = 30_000;
+const ACTIVE_EDITING_GRACE_MS = 90_000;
 const PREVIEW_CONTENT_WIDTH_CLASS = 'w-[92%]';
 const PREVIEW_DEVICE_CONFIG: Record<PreviewDevice, { scale: number; maxWidthClassName: string; frameAspectClassName: string }> = {
   desktop: {
@@ -46,8 +52,15 @@ export function ProposalEditor() {
     error: proposalsError,
     fetchProposals,
     updateProposal,
+    fetchVersions,
+    saveVersion,
+    restoreVersion,
     importMarkdownToProposal,
   } = useProposalStore();
+  const currentUser = useAuthStore((state) => state.user);
+  const members = useWorkspaceStore((state) => state.members);
+  const showSuccessToast = useToastStore((state) => state.success);
+  const showErrorToast = useToastStore((state) => state.error);
   const workspaceCompanyName = useWorkspaceStore((state) => state.currentWorkspace?.companyName ?? '');
   const ingestor = useIngestorState();
 
@@ -73,8 +86,16 @@ export function ProposalEditor() {
   const [publishPasswordInput, setPublishPasswordInput] = useState('');
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [publishing, setPublishing] = useState(false);
+  const [versions, setVersions] = useState<ProposalVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
+  const activeEditingMsRef = useRef(0);
+  const lastVersionTickRef = useRef(Date.now());
+  const lastEditAtRef = useRef<number | null>(null);
+  const editsSinceLastVersionRef = useRef(false);
+  const versionSaveInFlightRef = useRef(false);
 
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
@@ -110,6 +131,25 @@ export function ProposalEditor() {
   const previewScaleInverse = 1 / previewScale;
   const previewMaxWidthClassName = PREVIEW_DEVICE_CONFIG[previewDevice].maxWidthClassName;
   const previewFrameAspectClassName = PREVIEW_DEVICE_CONFIG[previewDevice].frameAspectClassName;
+
+  const resolveUserLabel = useCallback((userId?: string) => {
+    if (!userId) return 'Unknown user';
+    if (currentUser?.id === userId) {
+      return currentUser.displayName || currentUser.email;
+    }
+    const member = members.find((entry) => entry.userId === userId);
+    return member?.email ?? 'Unknown user';
+  }, [currentUser, members]);
+
+  const lastEditedByLabel = proposal?.updatedBy ? resolveUserLabel(proposal.updatedBy) : null;
+
+  const snapshotProposalForVersion = useCallback((source: Proposal) => ({
+    title: source.title,
+    partnerName: source.partnerName,
+    slides: source.slides,
+    themeId: source.themeId,
+    brandOverrides: source.brandOverrides,
+  }), []);
 
   const save = useCallback(
     async (updatedProposal: Proposal): Promise<boolean> => {
@@ -149,6 +189,42 @@ export function ProposalEditor() {
     return () => clearTimeout(timer);
   }, [proposal, save, editorValues.autosave.enabled, hasUnsavedChanges]);
 
+  useEffect(() => {
+    activeEditingMsRef.current = 0;
+    lastVersionTickRef.current = Date.now();
+    lastEditAtRef.current = null;
+    editsSinceLastVersionRef.current = false;
+  }, [proposal?.id]);
+
+  useEffect(() => {
+    if (!proposal) return;
+    const interval = window.setInterval(() => {
+      if (versionSaveInFlightRef.current) return;
+
+      const now = Date.now();
+      const elapsed = now - lastVersionTickRef.current;
+      lastVersionTickRef.current = now;
+
+      if (!editsSinceLastVersionRef.current) return;
+      if (!lastEditAtRef.current) return;
+      if (now - lastEditAtRef.current > ACTIVE_EDITING_GRACE_MS) return;
+
+      activeEditingMsRef.current += elapsed;
+
+      if (activeEditingMsRef.current < VERSION_INTERVAL_MS) return;
+
+      versionSaveInFlightRef.current = true;
+      void saveVersion(proposal.id, snapshotProposalForVersion(proposal)).finally(() => {
+        activeEditingMsRef.current = 0;
+        editsSinceLastVersionRef.current = false;
+        lastEditAtRef.current = null;
+        versionSaveInFlightRef.current = false;
+      });
+    }, VERSION_TICK_MS);
+
+    return () => window.clearInterval(interval);
+  }, [proposal, saveVersion, snapshotProposalForVersion]);
+
   const sendPreviewMessage = useCallback((p: Proposal, slideId: string | null, targetWindow?: Window | null) => {
     const message = {
       type: 'handshake-editor-preview-update',
@@ -161,6 +237,8 @@ export function ProposalEditor() {
   }, []);
 
   const updateLocal = (updates: Partial<Proposal>) => {
+    lastEditAtRef.current = Date.now();
+    editsSinceLastVersionRef.current = true;
     setProposal((prev) => {
       if (!prev) return prev;
       const next = { ...prev, ...updates };
@@ -318,6 +396,43 @@ export function ProposalEditor() {
     [proposal, ingestor, importMarkdownToProposal],
   );
 
+  const handleVersionMenuOpenChange = useCallback((open: boolean) => {
+    if (!open || !proposal) return;
+    setLoadingVersions(true);
+    void fetchVersions(proposal.id)
+      .then((items) => setVersions(items))
+      .finally(() => setLoadingVersions(false));
+  }, [fetchVersions, proposal]);
+
+  const handleRestoreVersion = useCallback(async (version: ProposalVersion) => {
+    if (!proposal) return;
+    setRestoringVersionId(version.id);
+    try {
+      const restored = await restoreVersion(proposal.id, version.id, snapshotProposalForVersion(proposal));
+      if (!restored) {
+        showErrorToast('Failed to restore this version');
+        return;
+      }
+
+      const restoredProposal: Proposal = {
+        ...proposal,
+        ...restored,
+      };
+      setProposal(restoredProposal);
+      setHasUnsavedChanges(true);
+      setSaveState('idle');
+      activeEditingMsRef.current = 0;
+      editsSinceLastVersionRef.current = false;
+      lastEditAtRef.current = null;
+      showSuccessToast(`Restored to version ${version.versionNumber}`);
+
+      const refreshedVersions = await fetchVersions(proposal.id);
+      setVersions(refreshedVersions);
+    } finally {
+      setRestoringVersionId(null);
+    }
+  }, [fetchVersions, proposal, restoreVersion, showErrorToast, showSuccessToast, snapshotProposalForVersion]);
+
   const handleMarkdownApply = useCallback((slides: SlideConfig[]) => {
     updateLocal({ slides });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -391,7 +506,7 @@ export function ProposalEditor() {
     <>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_28rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {id && (
           <SegmentedTabs
             value="slides"
@@ -421,8 +536,8 @@ export function ProposalEditor() {
           />
         </div>
 
-        <div className="w-[22rem] flex items-center justify-end gap-2">
-          <div className="flex-shrink-0 flex items-center gap-1.5 min-w-[4.5rem] justify-end">
+        <div className="w-[28rem] flex items-center justify-end gap-2">
+          <div className="flex-shrink-0 flex items-center gap-2 min-w-[4.5rem] justify-end">
             <AnimatePresence mode="wait">
               {saveState === 'saving' && (
                 <motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -439,9 +554,27 @@ export function ProposalEditor() {
                 </motion.span>
               )}
             </AnimatePresence>
+            {proposal.updatedAt && (
+              <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                Updated {formatRelativeTime(proposal.updatedAt)}
+              </span>
+            )}
+            {lastEditedByLabel && (
+              <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                by {lastEditedByLabel}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
+            <VersionDropdown
+              versions={versions}
+              loading={loadingVersions}
+              restoringVersionId={restoringVersionId}
+              onOpenChange={handleVersionMenuOpenChange}
+              onRestore={handleRestoreVersion}
+              resolveUserLabel={resolveUserLabel}
+            />
             <Button
               onClick={() => setMarkdownEditorOpen(true)}
               variant="outline"
