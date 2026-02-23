@@ -324,7 +324,7 @@ function ProposalViewerContent() {
         proposal?.workspaceBrandTheme
         ?? currentWorkspaceBrandTheme
         ?? cachedProposalBrandTheme
-        ?? cachedWorkspaceBrandTheme
+        ?? (cachedWorkspaceBrandTheme ?? undefined)
       }
       className="contents"
     >
