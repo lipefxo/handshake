@@ -255,6 +255,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const safeSlug = generateSafeSlug(proposal.slug);
     const safeShortCode = normalizeShortCode(proposal.shortCode ?? generateShortCode());
 
+    const currentWorkspaceBrandTheme = useWorkspaceStore.getState().currentWorkspace?.brandTheme;
     const { data, error } = await supabase
       .from('proposals')
       .insert({
@@ -268,6 +269,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         status: proposal.status,
         slides: normalizedSlides,
         theme_id: proposal.themeId,
+        ...(currentWorkspaceBrandTheme ? { workspace_brand_theme: currentWorkspaceBrandTheme } : {}),
       })
       .select()
       .single();

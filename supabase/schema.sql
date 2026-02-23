@@ -80,7 +80,8 @@ ALTER TABLE proposals
     CHECK (visibility IN ('public', 'password', 'email_gated')),
   ADD COLUMN IF NOT EXISTS access_password text,
   ADD COLUMN IF NOT EXISTS expires_at timestamptz,
-  ADD COLUMN IF NOT EXISTS brand_overrides jsonb DEFAULT '{}'::jsonb;
+  ADD COLUMN IF NOT EXISTS brand_overrides jsonb DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS workspace_brand_theme jsonb;
 
 DROP POLICY IF EXISTS "Published proposals are publicly readable" ON proposals;
 DROP POLICY IF EXISTS "Public published proposals are readable" ON proposals;

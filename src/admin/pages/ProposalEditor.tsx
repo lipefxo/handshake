@@ -530,7 +530,7 @@ export function ProposalEditor() {
     <>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="grid grid-cols-[11rem_minmax(0,1fr)] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[11rem_minmax(0,1fr)_28rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {id && (
           <SegmentedTabs
             value="slides"
@@ -558,6 +558,69 @@ export function ProposalEditor() {
             placeholder="Partner name"
             aria-label="Partner name"
           />
+        </div>
+
+        <div className="w-[28rem] flex items-center justify-end gap-2">
+          <VersionDropdown
+            versions={versions}
+            loading={loadingVersions}
+            restoringVersionId={restoringVersionId}
+            onOpenChange={handleVersionMenuOpenChange}
+            onRestore={handleRestoreVersion}
+            resolveUserLabel={resolveUserLabel}
+          />
+          <Button
+            onClick={() => setMarkdownEditorOpen(true)}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs"
+            title="Edit proposal as Markdown"
+          >
+            <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
+            Markdown
+          </Button>
+          {canToggleFooterBranding && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs"
+              onClick={() =>
+                updateLocal({
+                  brandOverrides: {
+                    ...proposal.brandOverrides,
+                    showFooterBranding: proposal.brandOverrides?.showFooterBranding === false,
+                  },
+                })
+              }
+              title="Toggle the final-slide Built with Handshake footer branding"
+            >
+              Footer branding: {proposal.brandOverrides?.showFooterBranding === false ? 'Off' : 'On'}
+            </Button>
+          )}
+          {proposal.status === 'published' && (
+            <Button
+              onClick={handleCopyLink}
+              variant="secondary"
+              size="sm"
+              className="h-9 gap-1.5 text-xs"
+            >
+              {copiedLink ? (
+                <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
+              ) : (
+                <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy link</>
+              )}
+            </Button>
+          )}
+          <Button
+            onClick={handlePublish}
+            variant={proposal.status === 'published' ? 'destructive' : 'default'}
+            className="h-9 px-4 text-xs font-semibold transition-all"
+            disabled={proposal.status !== 'published' && !hasSlides}
+            title={proposal.status !== 'published' && !hasSlides ? 'Add at least one slide before publishing' : undefined}
+          >
+            {proposal.status === 'published' ? 'Unpublish' : 'Publish'}
+          </Button>
         </div>
 
       </div>
@@ -663,97 +726,33 @@ export function ProposalEditor() {
                     </button>
                   </div>
                 </div>
-                <div className="px-4 py-2 border-b border-gray-100 flex-shrink-0 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <AnimatePresence mode="wait">
-                      {saveState === 'saving' && (
-                        <motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          className="text-xs text-gray-400 flex items-center gap-1.5">
-                          <span className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
-                          Saving…
-                        </motion.span>
-                      )}
-                      {saveState === 'saved' && (
-                        <motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          className="text-xs text-green-500 flex items-center gap-1">
-                          <AppIcon icon="ui.check" className="w-3 h-3" />
-                          Saved
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                    {proposal.updatedAt && (
-                      <span className="text-[11px] text-gray-400 whitespace-nowrap">
-                        Updated {formatRelativeTime(proposal.updatedAt)}
-                      </span>
+                <div className="px-4 py-2 border-b border-gray-100 flex-shrink-0 flex items-center justify-center gap-2">
+                  <AnimatePresence mode="wait">
+                    {saveState === 'saving' && (
+                      <motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="text-xs text-gray-400 flex items-center gap-1.5">
+                        <span className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+                        Saving…
+                      </motion.span>
                     )}
-                    {lastEditedByLabel && (
-                      <span className="text-[11px] text-gray-400 whitespace-nowrap">
-                        by {lastEditedByLabel}
-                      </span>
+                    {saveState === 'saved' && (
+                      <motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="text-xs text-green-500 flex items-center gap-1">
+                        <AppIcon icon="ui.check" className="w-3 h-3" />
+                        Saved
+                      </motion.span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <VersionDropdown
-                      versions={versions}
-                      loading={loadingVersions}
-                      restoringVersionId={restoringVersionId}
-                      onOpenChange={handleVersionMenuOpenChange}
-                      onRestore={handleRestoreVersion}
-                      resolveUserLabel={resolveUserLabel}
-                    />
-                    <Button
-                      onClick={() => setMarkdownEditorOpen(true)}
-                      variant="outline"
-                      size="sm"
-                      className="h-9 gap-1.5 text-xs"
-                      title="Edit proposal as Markdown"
-                    >
-                      <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
-                      Markdown
-                    </Button>
-                    {canToggleFooterBranding && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-9 text-xs"
-                        onClick={() =>
-                          updateLocal({
-                            brandOverrides: {
-                              ...proposal.brandOverrides,
-                              showFooterBranding: proposal.brandOverrides?.showFooterBranding === false,
-                            },
-                          })
-                        }
-                        title="Toggle the final-slide Built with Handshake footer branding"
-                      >
-                        Footer branding: {proposal.brandOverrides?.showFooterBranding === false ? 'Off' : 'On'}
-                      </Button>
-                    )}
-                    {proposal.status === 'published' && (
-                      <Button
-                        onClick={handleCopyLink}
-                        variant="secondary"
-                        size="sm"
-                        className="h-9 gap-1.5 text-xs"
-                      >
-                        {copiedLink ? (
-                          <><AppIcon icon="ui.check" className="w-3.5 h-3.5 text-green-500" /> Copied!</>
-                        ) : (
-                          <><AppIcon icon="ui.copy" className="w-3.5 h-3.5" /> Copy link</>
-                        )}
-                      </Button>
-                    )}
-                    <Button
-                      onClick={handlePublish}
-                      variant={proposal.status === 'published' ? 'destructive' : 'default'}
-                      className="h-9 px-4 text-xs font-semibold transition-all"
-                      disabled={proposal.status !== 'published' && !hasSlides}
-                      title={proposal.status !== 'published' && !hasSlides ? 'Add at least one slide before publishing' : undefined}
-                    >
-                      {proposal.status === 'published' ? 'Unpublish' : 'Publish'}
-                    </Button>
-                  </div>
+                  </AnimatePresence>
+                  {proposal.updatedAt && (
+                    <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                      Updated {formatRelativeTime(proposal.updatedAt)}
+                    </span>
+                  )}
+                  {lastEditedByLabel && (
+                    <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                      by {lastEditedByLabel}
+                    </span>
+                  )}
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <AnimatePresence mode="wait" initial={false}>
