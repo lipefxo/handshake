@@ -17,7 +17,11 @@ export function AuthCallback() {
       // pick them up and fire an auth state change. Listen for it rather
       // than calling getSession() before the exchange completes.
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' && session) {
+        // SIGNED_IN fires if tokens are exchanged after we subscribe.
+        // INITIAL_SESSION fires (with the established session) if the Supabase
+        // client already exchanged the hash tokens before this effect ran.
+        // Both cases must navigate to /admin so we never get stuck on a timeout.
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
           subscription.unsubscribe();
           navigate('/admin', { replace: true });
         }

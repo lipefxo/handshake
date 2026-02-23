@@ -85,8 +85,13 @@ ALTER TABLE proposals
 
 DROP POLICY IF EXISTS "Published proposals are publicly readable" ON proposals;
 DROP POLICY IF EXISTS "Public published proposals are readable" ON proposals;
+-- Restrict to the anon role only: authenticated workspace members already have
+-- access via "Workspace members can manage workspace proposals", and allowing
+-- authenticated users to read published proposals from any workspace would let
+-- them see content from other workspaces in the admin interface.
 CREATE POLICY "Public published proposals are readable"
   ON proposals FOR SELECT
+  TO anon
   USING (
     status = 'published'
     AND visibility = 'public'

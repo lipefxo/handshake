@@ -205,10 +205,16 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
   clearError: () => set({ error: null }),
 
   fetchProposals: async () => {
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    if (!currentWorkspaceId) {
+      set({ proposals: [], loading: false });
+      return;
+    }
     set({ loading: true, error: null });
     const { data, error } = await supabase
       .from('proposals')
       .select('*')
+      .eq('workspace_id', currentWorkspaceId)
       .order('created_at', { ascending: false });
     if (error) {
       logStructuredError('fetchProposals failed', error);

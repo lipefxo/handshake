@@ -47,7 +47,7 @@ export function ProposalList() {
 
   useEffect(() => {
     fetchProposals();
-  }, [fetchProposals]);
+  }, [fetchProposals, workspaceId]);
 
   useEffect(() => {
     if (!deletedProposalTitle) return undefined;
