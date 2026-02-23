@@ -360,6 +360,13 @@ export function ProposalEditor() {
         setProposal(previousProposal);
         return;
       }
+      const publishVersion = await saveVersion(nextProposal.id, snapshotProposalForVersion(nextProposal));
+      if (!publishVersion) {
+        showErrorToast('Published, but failed to save version history checkpoint.');
+      } else {
+        const refreshedVersions = await fetchVersions(nextProposal.id);
+        setVersions(refreshedVersions);
+      }
       setShowPublishConfirm(false);
       setShowPublishSuccess(true);
       setPublishPasswordInput('');
