@@ -1,12 +1,14 @@
 import type { SVGProps } from 'react';
 
 interface BrandWordmarkProps extends SVGProps<SVGSVGElement> {
-  variant?: 'light' | 'dark';
+  variant?: 'light' | 'dark' | 'current';
 }
 
 export function BrandWordmark({ variant = 'light', style, ...props }: BrandWordmarkProps) {
   const color =
-    variant === 'dark'
+    variant === 'current'
+      ? 'currentColor'
+      : variant === 'dark'
       ? 'var(--color-brand-wordmark-on-dark)'
       : 'var(--color-brand-wordmark)';
 

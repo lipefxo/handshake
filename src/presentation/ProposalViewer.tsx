@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { Proposal, ProposalAccessMeta, SlideConfig } from '../types/proposal';
@@ -17,6 +17,7 @@ import { PasswordGate } from './components/PasswordGate';
 import { EmailGate } from './components/EmailGate';
 import { ExpiredPage } from './components/ExpiredPage';
 import { DEMO_PROPOSAL, DEMO_PROPOSAL_SLUG } from '../data/demoProposal';
+import type { WorkspaceBrandTheme } from '../types/workspace';
 
 function getContentFingerprint(slide: SlideConfig): string {
   const c = slide.content as unknown as Record<string, unknown>;
@@ -29,6 +30,34 @@ function getContentFingerprint(slide: SlideConfig): string {
 
 function getGateStorageKey(proposalId: string): string {
   return `handshake:proposal-access:${proposalId}`;
+}
+
+function getProposalBrandThemeCacheKey(slug: string): string {
+  return `handshake:proposal-brand-theme:${slug}`;
+}
+
+function readCachedProposalBrandTheme(slug: string): WorkspaceBrandTheme | null {
+  try {
+    const raw = window.localStorage.getItem(getProposalBrandThemeCacheKey(slug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WorkspaceBrandTheme;
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedProposalBrandTheme(slug: string, brandTheme: WorkspaceBrandTheme | undefined): void {
+  if (!brandTheme) return;
+  try {
+    window.localStorage.setItem(
+      getProposalBrandThemeCacheKey(slug),
+      JSON.stringify(brandTheme),
+    );
+  } catch {
+    // no-op
+  }
 }
 
 function getStoredAccessToken(proposalId: string): string | null {
@@ -65,6 +94,7 @@ function ProposalViewerContent() {
   const user = useAuthStore((state) => state.user);
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
   const currentWorkspaceBrandTheme = useWorkspaceStore((state) => state.currentWorkspace?.brandTheme);
+  const cachedWorkspaceBrandTheme = useWorkspaceStore((state) => state.cachedBrandTheme);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [proposalMeta, setProposalMeta] = useState<ProposalAccessMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +104,10 @@ function ProposalViewerContent() {
   const hasLivePreviewUpdateRef = useRef(false);
   const isPreviewMode = window.location.hash.includes('preview');
   const isEmbeddedEditorPreview = isPreviewMode && window.self !== window.top;
+  const cachedProposalBrandTheme = useMemo(
+    () => (slug ? (readCachedProposalBrandTheme(slug) ?? undefined) : undefined),
+    [slug],
+  );
 
   const settings = {
     appearance: {
@@ -89,6 +123,11 @@ function ProposalViewerContent() {
       durationMs: 1800,
     },
   };
+
+  useEffect(() => {
+    if (!slug || !proposal?.workspaceBrandTheme) return;
+    writeCachedProposalBrandTheme(slug, proposal.workspaceBrandTheme);
+  }, [slug, proposal?.workspaceBrandTheme]);
 
   useEffect(() => {
     if (!slug) return;
@@ -281,7 +320,12 @@ function ProposalViewerContent() {
     <ThemeProvider
       themeId={proposal?.themeId ?? defaultThemeId}
       brandOverrides={proposal?.brandOverrides}
-      workspaceBrandTheme={proposal?.workspaceBrandTheme ?? currentWorkspaceBrandTheme}
+      workspaceBrandTheme={
+        proposal?.workspaceBrandTheme
+        ?? currentWorkspaceBrandTheme
+        ?? cachedProposalBrandTheme
+        ?? cachedWorkspaceBrandTheme
+      }
       className="contents"
     >
       {loading ? (
@@ -393,6 +437,7 @@ function ProposalViewerContent() {
                     proposalPartnerName={proposal.partnerName}
                     proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
                     proposalCompanyName={proposal.brandOverrides?.companyName}
+                    footerBrandingEnabled={proposal.brandOverrides?.showFooterBranding !== false}
                   />
                 </motion.section>
               );

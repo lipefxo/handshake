@@ -18,6 +18,28 @@
     <meta property="og:site_name" content="Handshake" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href="https://www.handshake.design" />
+    <script>
+      (function applyCachedBrandTheme() {
+        try {
+          var raw = window.localStorage.getItem('handshake:brand-theme-cache');
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          var bgPrimary = parsed && parsed.colors && parsed.colors.bgPrimary;
+          if (typeof bgPrimary !== 'string') return;
+          var color = bgPrimary.trim();
+          if (!color || color.length > 64) return;
+
+          document.documentElement.style.setProperty('--color-bg-primary', color);
+          document.documentElement.style.backgroundColor = color;
+
+          var styleTag = document.createElement('style');
+          styleTag.textContent = 'body{background-color:' + color + ';}';
+          document.head.appendChild(styleTag);
+        } catch {
+          // no-op
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

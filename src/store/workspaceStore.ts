@@ -7,6 +7,7 @@ import { sanitizeText } from '../shared/utils/validation';
 
 interface WorkspaceStore {
   currentWorkspace: Workspace | null;
+  cachedBrandTheme: WorkspaceBrandTheme | null;
   currentUserRole: WorkspaceMember['role'] | null;
   members: WorkspaceMember[];
   loading: boolean;
@@ -56,27 +57,84 @@ function sanitizePositiveNumber(value: unknown): number | undefined {
   return value;
 }
 
+function sanitizeUnitIntervalNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 0 || value > 1) return undefined;
+  return value;
+}
+
 function sanitizeWorkspaceBrandTheme(brandTheme: WorkspaceBrandTheme): WorkspaceBrandTheme {
   return {
     colors: {
       bgPrimary: sanitizeCssColor(brandTheme.colors?.bgPrimary),
       bgSecondary: sanitizeCssColor(brandTheme.colors?.bgSecondary),
+      bgSurface: sanitizeCssColor(brandTheme.colors?.bgSurface),
       accent: sanitizeCssColor(brandTheme.colors?.accent),
       accentHover: sanitizeCssColor(brandTheme.colors?.accentHover),
+      accentMuted: sanitizeCssColor(brandTheme.colors?.accentMuted),
       textPrimary: sanitizeCssColor(brandTheme.colors?.textPrimary),
       textSecondary: sanitizeCssColor(brandTheme.colors?.textSecondary),
+      textTertiary: sanitizeCssColor(brandTheme.colors?.textTertiary),
+      border: sanitizeCssColor(brandTheme.colors?.border),
+      borderLight: sanitizeCssColor(brandTheme.colors?.borderLight),
+      gradientStart: sanitizeCssColor(brandTheme.colors?.gradientStart),
+      gradientEnd: sanitizeCssColor(brandTheme.colors?.gradientEnd),
+      overlayBg: sanitizeCssColor(brandTheme.colors?.overlayBg),
     },
     fonts: {
       display: sanitizeFontValue(brandTheme.fonts?.display),
       displayWeight: sanitizePositiveNumber(brandTheme.fonts?.displayWeight),
       body: sanitizeFontValue(brandTheme.fonts?.body),
       bodyWeight: sanitizePositiveNumber(brandTheme.fonts?.bodyWeight),
+      mono: sanitizeFontValue(brandTheme.fonts?.mono),
       googleFontsImport: sanitizeFontValue(brandTheme.fonts?.googleFontsImport),
     },
     style: {
       borderRadius: sanitizeFontValue(brandTheme.style?.borderRadius),
+      decorativeOpacity: sanitizeUnitIntervalNumber(brandTheme.style?.decorativeOpacity),
+      textShadow: sanitizeFontValue(brandTheme.style?.textShadow),
     },
   };
+}
+
+const BRAND_THEME_CACHE_KEY = 'handshake:brand-theme-cache';
+
+function hasThemeOverrides(brandTheme: WorkspaceBrandTheme | null | undefined): boolean {
+  if (!brandTheme) return false;
+  return [
+    brandTheme.colors && Object.values(brandTheme.colors).some((value) => value !== undefined),
+    brandTheme.fonts && Object.values(brandTheme.fonts).some((value) => value !== undefined),
+    brandTheme.style && Object.values(brandTheme.style).some((value) => value !== undefined),
+  ].some(Boolean);
+}
+
+function readCachedBrandTheme(): WorkspaceBrandTheme | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(BRAND_THEME_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WorkspaceBrandTheme;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const sanitized = sanitizeWorkspaceBrandTheme(parsed);
+    return hasThemeOverrides(sanitized) ? sanitized : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedBrandTheme(brandTheme: WorkspaceBrandTheme | null | undefined): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!hasThemeOverrides(brandTheme)) {
+      window.localStorage.removeItem(BRAND_THEME_CACHE_KEY);
+      return;
+    }
+    window.localStorage.setItem(
+      BRAND_THEME_CACHE_KEY,
+      JSON.stringify(sanitizeWorkspaceBrandTheme(brandTheme as WorkspaceBrandTheme)),
+    );
+  } catch {
+    // no-op
+  }
 }
 
 function toWorkspaceMember(row: Record<string, unknown>): WorkspaceMember {
@@ -231,6 +289,7 @@ function formatInviteDispatchError(baseMessage: string, error: unknown, reason: 
 
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   currentWorkspace: null,
+  cachedBrandTheme: readCachedBrandTheme(),
   currentUserRole: null,
   members: [],
   loading: false,
@@ -270,9 +329,18 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         }
 
         set({
-          currentWorkspace: primary.workspace,
+          currentWorkspace: {
+            ...primary.workspace,
+            brandTheme: hasThemeOverrides(primary.workspace.brandTheme)
+              ? primary.workspace.brandTheme
+              : get().cachedBrandTheme ?? undefined,
+          },
+          cachedBrandTheme: hasThemeOverrides(primary.workspace.brandTheme)
+            ? primary.workspace.brandTheme ?? null
+            : get().cachedBrandTheme,
           currentUserRole: primary.role,
         });
+        writeCachedBrandTheme(primary.workspace.brandTheme);
         await get().refreshMembers();
         set({ loading: false });
       };
@@ -571,7 +639,9 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         ...workspace,
         brandTheme: cleanTheme,
       },
+      cachedBrandTheme: cleanTheme,
     });
+    writeCachedBrandTheme(cleanTheme);
 
     return true;
   },

@@ -125,6 +125,7 @@ function mapMetaRowToProposalAccessMeta(row: Record<string, unknown>): ProposalA
 const GENERIC_FETCH_ERROR = 'Failed to load proposals. Please try again.';
 const GENERIC_SAVE_ERROR = 'Failed to save proposal. Please try again.';
 const GENERIC_DELETE_ERROR = 'Failed to delete proposal. Please try again.';
+const FOOTER_BRANDING_ALLOWED_EMAIL = 'lipefxo@gmail.com';
 
 function getSafeErrorMessage(error: unknown, fallback: string): string {
   const code = (error as { code?: string } | null)?.code;
@@ -187,6 +188,10 @@ function getCurrentWorkspaceId(): string | null {
 
 function getCurrentUserId(): string | null {
   return useAuthStore.getState().user?.id ?? null;
+}
+
+function getCurrentUserEmail(): string | null {
+  return useAuthStore.getState().user?.email?.toLowerCase() ?? null;
 }
 
 function normalizeShortCode(shortCode: string): string {
@@ -284,6 +289,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
     const currentWorkspaceId = getCurrentWorkspaceId();
     const currentUserId = getCurrentUserId();
+    const currentUserEmail = getCurrentUserEmail();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
     if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
       set({ error: 'Unauthorized: cannot update proposal outside your workspace.' });
@@ -298,6 +304,12 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       ...(updates.slides && { slides: normalizeSlidesIconIds(sanitizeSlides(updates.slides)) }),
       ...(currentUserId ? { updatedBy: currentUserId } : {}),
     };
+
+    if (sanitizedUpdates.brandOverrides && currentUserEmail !== FOOTER_BRANDING_ALLOWED_EMAIL) {
+      const safeBrandOverrides = { ...sanitizedUpdates.brandOverrides };
+      delete safeBrandOverrides.showFooterBranding;
+      sanitizedUpdates.brandOverrides = safeBrandOverrides;
+    }
 
     const previousProposals = get().proposals;
     set((state) => ({

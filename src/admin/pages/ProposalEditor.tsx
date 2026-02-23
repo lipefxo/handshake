@@ -29,6 +29,7 @@ type PreviewDevice = 'desktop' | 'mobile';
 const AUTOSAVE_DELAY = 800;
 const VERSION_COOLDOWN_MS = 5 * 60 * 1000;
 const PREVIEW_CONTENT_WIDTH_CLASS = 'w-[92%]';
+const FOOTER_BRANDING_ALLOWED_EMAIL = 'lipefxo@gmail.com';
 const PREVIEW_DEVICE_CONFIG: Record<PreviewDevice, { scale: number; maxWidthClassName: string; frameAspectClassName: string }> = {
   desktop: {
     scale: 0.7,
@@ -140,6 +141,7 @@ export function ProposalEditor() {
   }, [currentUser, members]);
 
   const lastEditedByLabel = proposal?.updatedBy ? resolveUserLabel(proposal.updatedBy) : null;
+  const canToggleFooterBranding = currentUser?.email?.toLowerCase() === FOOTER_BRANDING_ALLOWED_EMAIL;
 
   const snapshotProposalForVersion = useCallback((source: Proposal) => ({
     title: source.title,
@@ -596,6 +598,25 @@ export function ProposalEditor() {
               <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
               Markdown
             </Button>
+            {canToggleFooterBranding && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 text-xs"
+                onClick={() =>
+                  updateLocal({
+                    brandOverrides: {
+                      ...proposal.brandOverrides,
+                      showFooterBranding: proposal.brandOverrides?.showFooterBranding === false,
+                    },
+                  })
+                }
+                title="Toggle the final-slide Built with Handshake footer branding"
+              >
+                Footer branding: {proposal.brandOverrides?.showFooterBranding === false ? 'Off' : 'On'}
+              </Button>
+            )}
 
             {proposal.status === 'published' && (
               <Button

@@ -145,6 +145,7 @@ export interface BrandOverrides {
   accentColor?: string;
   companyLogo?: string;
   companyName?: string;
+  showFooterBranding?: boolean;
 }
 
 export interface Proposal {

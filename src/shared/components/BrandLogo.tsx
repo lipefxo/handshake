@@ -1,12 +1,14 @@
 import type { SVGProps } from 'react';
 
 interface BrandLogoProps extends SVGProps<SVGSVGElement> {
-  variant?: 'light' | 'dark';
+  variant?: 'light' | 'dark' | 'current';
 }
 
 export function BrandLogo({ variant = 'light', style, ...props }: BrandLogoProps) {
   const color =
-    variant === 'dark'
+    variant === 'current'
+      ? 'currentColor'
+      : variant === 'dark'
       ? 'var(--color-brand-logo-on-dark)'
       : 'var(--color-brand-logo-accent)';
 
