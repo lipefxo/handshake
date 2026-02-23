@@ -192,7 +192,52 @@ export function TermsPage() {
             responsible for the availability, security, or practices of any third-party services.
           </p>
 
-          <h2 style={sectionHeadingStyle}>8. Termination</h2>
+          <h2 style={sectionHeadingStyle}>8. Refund Policy</h2>
+          <p style={paragraphStyle}>
+            If you are unsatisfied with the Service, you may request a refund within fourteen (14)
+            days of your initial purchase or subscription renewal. Refund requests must be submitted
+            by contacting us at{' '}
+            <a
+              href="mailto:hello@handshake.design"
+              style={{ color: C.accent, textDecoration: 'none' }}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accentHover)}
+              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.accent)}
+            >
+              hello@handshake.design
+            </a>
+            .
+          </p>
+          <p style={paragraphStyle}>
+            Refunds are subject to the following conditions:
+          </p>
+          <ul style={listStyle}>
+            <li style={{ marginBottom: 8 }}>
+              Refund requests must be made within 14 days of the charge date
+            </li>
+            <li style={{ marginBottom: 8 }}>
+              Refunds apply to subscription fees only and do not cover any third-party costs or
+              fees incurred through the use of the Service
+            </li>
+            <li style={{ marginBottom: 8 }}>
+              Partial-month or partial-period refunds are not provided for mid-cycle cancellations
+              outside the 14-day window
+            </li>
+            <li style={{ marginBottom: 8 }}>
+              Upon approval, refunds will be processed to the original payment method within 5–10
+              business days
+            </li>
+            <li style={{ marginBottom: 8 }}>
+              Handshake reserves the right to deny refund requests in cases of abuse, fraud, or
+              violation of these Terms
+            </li>
+          </ul>
+          <p style={paragraphStyle}>
+            If your account is terminated by Handshake for reasons other than a violation of these
+            Terms, you may be entitled to a pro-rata refund for any unused portion of your
+            prepaid subscription period.
+          </p>
+
+          <h2 style={sectionHeadingStyle}>9. Termination</h2>
           <p style={paragraphStyle}>
             We may suspend or terminate your access to the Service at any time, with or without
             cause, and with or without notice. You may also delete your account at any time. Upon
@@ -210,7 +255,7 @@ export function TermsPage() {
             </li>
           </ul>
 
-          <h2 style={sectionHeadingStyle}>9. Disclaimers</h2>
+          <h2 style={sectionHeadingStyle}>10. Disclaimers</h2>
           <p style={paragraphStyle}>
             THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND,
             WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
@@ -221,7 +266,7 @@ export function TermsPage() {
             secure, or that any defects will be corrected. You use the Service at your own risk.
           </p>
 
-          <h2 style={sectionHeadingStyle}>10. Limitation of Liability</h2>
+          <h2 style={sectionHeadingStyle}>11. Limitation of Liability</h2>
           <p style={paragraphStyle}>
             TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, HANDSHAKE AND ITS OFFICERS,
             EMPLOYEES, AGENTS, AND AFFILIATES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
@@ -235,7 +280,7 @@ export function TermsPage() {
             the claim.
           </p>
 
-          <h2 style={sectionHeadingStyle}>11. Indemnification</h2>
+          <h2 style={sectionHeadingStyle}>12. Indemnification</h2>
           <p style={paragraphStyle}>
             You agree to indemnify, defend, and hold harmless Handshake and its officers, employees,
             and agents from and against any claims, liabilities, damages, losses, and expenses,
@@ -243,7 +288,7 @@ export function TermsPage() {
             to or use of the Service, your User Content, or your violation of these Terms.
           </p>
 
-          <h2 style={sectionHeadingStyle}>12. Governing Law</h2>
+          <h2 style={sectionHeadingStyle}>13. Governing Law</h2>
           <p style={paragraphStyle}>
             These Terms shall be governed by and construed in accordance with the laws of the
             jurisdiction in which Handshake operates, without regard to its conflict of law
@@ -251,7 +296,7 @@ export function TermsPage() {
             the competent courts of that jurisdiction.
           </p>
 
-          <h2 style={sectionHeadingStyle}>13. Changes to These Terms</h2>
+          <h2 style={sectionHeadingStyle}>14. Changes to These Terms</h2>
           <p style={paragraphStyle}>
             We reserve the right to modify these Terms at any time. When we make material changes,
             we will update the "Last updated" date at the top of this page and, where appropriate,
@@ -259,7 +304,7 @@ export function TermsPage() {
             changes are posted constitutes your acceptance of the revised Terms.
           </p>
 
-          <h2 style={sectionHeadingStyle}>14. Contact</h2>
+          <h2 style={sectionHeadingStyle}>15. Contact</h2>
           <p style={paragraphStyle}>
             If you have any questions about these Terms of Service, please contact us at{' '}
             <a
