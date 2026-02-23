@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import type { BrandOverrides, Proposal, ProposalAccessGrant, ProposalAccessMeta, SlideConfig } from '../types/proposal';
+import type {
+  BrandOverrides,
+  Proposal,
+  ProposalAccessGrant,
+  ProposalAccessMeta,
+  ProposalVersion,
+  SlideConfig,
+} from '../types/proposal';
 import { supabase } from '../supabaseClient';
 import { generateShortCode, generateSlug } from '../shared/utils/helpers';
 import { useAuthStore } from './authStore';
@@ -18,8 +25,18 @@ interface ProposalStore {
   error: string | null;
   clearError: () => void;
   fetchProposals: () => Promise<void>;
-  createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Proposal | null>;
+  createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'>) => Promise<Proposal | null>;
   updateProposal: (id: string, updates: Partial<Proposal>) => Promise<void>;
+  fetchVersions: (proposalId: string) => Promise<ProposalVersion[]>;
+  saveVersion: (
+    proposalId: string,
+    snapshot?: Pick<Proposal, 'title' | 'partnerName' | 'slides' | 'themeId' | 'brandOverrides'>,
+  ) => Promise<ProposalVersion | null>;
+  restoreVersion: (
+    proposalId: string,
+    versionId: string,
+    currentSnapshot?: Pick<Proposal, 'title' | 'partnerName' | 'slides' | 'themeId' | 'brandOverrides'>,
+  ) => Promise<Pick<Proposal, 'title' | 'partnerName' | 'slides' | 'themeId' | 'brandOverrides'> | null>;
   deleteProposal: (id: string) => Promise<boolean>;
   duplicateProposal: (id: string) => Promise<Proposal | null>;
   getProposalMetaBySlug: (slug: string) => Promise<ProposalAccessMeta | null>;
@@ -60,6 +77,7 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     partnerName: row.partner_name as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    updatedBy: row.updated_by as string | undefined,
     status: row.status as 'draft' | 'published',
     slides,
     themeId: resolveThemeId(row),
@@ -70,6 +88,23 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     workspaceBrandTheme:
       (row.workspace_brand_theme as WorkspaceBrandTheme | undefined)
       ?? (row.workspaceBrandTheme as WorkspaceBrandTheme | undefined),
+  };
+}
+
+const MAX_PROPOSAL_VERSIONS = 8;
+
+function dbRowToProposalVersion(row: Record<string, unknown>): ProposalVersion {
+  return {
+    id: row.id as string,
+    proposalId: row.proposal_id as string,
+    versionNumber: row.version_number as number,
+    title: row.title as string,
+    partnerName: row.partner_name as string,
+    slides: normalizeSlidesIconIds(((row.slides as Proposal['slides']) || [])),
+    themeId: resolveThemeId(row),
+    brandOverrides: (row.brand_overrides as BrandOverrides) || {},
+    createdBy: row.created_by as string | undefined,
+    createdAt: row.created_at as string,
   };
 }
 
@@ -219,6 +254,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .from('proposals')
       .insert({
         user_id: currentUserId,
+        updated_by: currentUserId,
         workspace_id: proposal.workspace_id,
         slug: safeSlug,
         short_code: safeShortCode,
@@ -247,6 +283,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     }
 
     const currentWorkspaceId = getCurrentWorkspaceId();
+    const currentUserId = getCurrentUserId();
     const existingProposal = get().proposals.find((proposal) => proposal.id === id);
     if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
       set({ error: 'Unauthorized: cannot update proposal outside your workspace.' });
@@ -259,6 +296,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       ...(updates.partnerName !== undefined && { partnerName: sanitizeText(updates.partnerName) }),
       ...(updates.slug !== undefined && { slug: generateSafeSlug(updates.slug) }),
       ...(updates.slides && { slides: normalizeSlidesIconIds(sanitizeSlides(updates.slides)) }),
+      ...(currentUserId ? { updatedBy: currentUserId } : {}),
     };
 
     const previousProposals = get().proposals;
@@ -279,6 +317,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (sanitizedUpdates.accessPassword !== undefined) dbUpdates.access_password = sanitizedUpdates.accessPassword;
     if (sanitizedUpdates.expiresAt !== undefined) dbUpdates.expires_at = sanitizedUpdates.expiresAt;
     if (sanitizedUpdates.brandOverrides !== undefined) dbUpdates.brand_overrides = sanitizedUpdates.brandOverrides;
+    if (currentUserId) dbUpdates.updated_by = currentUserId;
 
     const { data: updatedRows, error } = await supabase
       .from('proposals')
@@ -298,6 +337,155 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       set({ error: noMatchError.message, proposals: previousProposals });
       throw noMatchError;
     }
+  },
+
+  fetchVersions: async (proposalId) => {
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    const existingProposal = get().proposals.find((proposal) => proposal.id === proposalId);
+    if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot access versions outside your workspace.' });
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('proposal_versions')
+      .select('*')
+      .eq('proposal_id', proposalId)
+      .order('version_number', { ascending: false });
+
+    if (error) {
+      logStructuredError('fetchVersions failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_FETCH_ERROR) });
+      return [];
+    }
+
+    return (data ?? []).map((row) => dbRowToProposalVersion(row as Record<string, unknown>));
+  },
+
+  saveVersion: async (proposalId, snapshot) => {
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    const currentUserId = getCurrentUserId();
+    const existingProposal = get().proposals.find((proposal) => proposal.id === proposalId);
+    if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot save version outside your workspace.' });
+      return null;
+    }
+
+    const source = snapshot ?? {
+      title: existingProposal.title,
+      partnerName: existingProposal.partnerName,
+      slides: existingProposal.slides,
+      themeId: existingProposal.themeId,
+      brandOverrides: existingProposal.brandOverrides,
+    };
+
+    const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(source.slides));
+    const { data: latestVersionRows, error: latestVersionError } = await supabase
+      .from('proposal_versions')
+      .select('version_number')
+      .eq('proposal_id', proposalId)
+      .order('version_number', { ascending: false })
+      .limit(1);
+
+    if (latestVersionError) {
+      logStructuredError('saveVersion latest-version query failed', latestVersionError);
+      set({ error: getSafeErrorMessage(latestVersionError, GENERIC_SAVE_ERROR) });
+      return null;
+    }
+
+    const nextVersionNumber = ((latestVersionRows?.[0] as { version_number?: number } | undefined)?.version_number ?? 0) + 1;
+
+    const { data: insertedVersion, error: insertError } = await supabase
+      .from('proposal_versions')
+      .insert({
+        proposal_id: proposalId,
+        version_number: nextVersionNumber,
+        title: sanitizeText(source.title),
+        partner_name: sanitizeText(source.partnerName),
+        slides: normalizedSlides,
+        theme_id: source.themeId,
+        brand_overrides: source.brandOverrides ?? {},
+        created_by: currentUserId,
+      })
+      .select('*')
+      .single();
+
+    if (insertError || !insertedVersion) {
+      logStructuredError('saveVersion insert failed', insertError);
+      set({ error: getSafeErrorMessage(insertError, GENERIC_SAVE_ERROR) });
+      return null;
+    }
+
+    const { data: allVersionRows, error: pruneLookupError } = await supabase
+      .from('proposal_versions')
+      .select('id')
+      .eq('proposal_id', proposalId)
+      .order('version_number', { ascending: false });
+
+    if (pruneLookupError) {
+      logStructuredError('saveVersion prune lookup failed', pruneLookupError);
+      set({ error: getSafeErrorMessage(pruneLookupError, GENERIC_SAVE_ERROR) });
+      return dbRowToProposalVersion(insertedVersion as Record<string, unknown>);
+    }
+
+    const idsToDelete = (allVersionRows ?? []).slice(MAX_PROPOSAL_VERSIONS).map((row) => row.id as string);
+    if (idsToDelete.length > 0) {
+      const { error: pruneError } = await supabase
+        .from('proposal_versions')
+        .delete()
+        .in('id', idsToDelete);
+
+      if (pruneError) {
+        logStructuredError('saveVersion prune failed', pruneError);
+        set({ error: getSafeErrorMessage(pruneError, GENERIC_SAVE_ERROR) });
+      }
+    }
+
+    return dbRowToProposalVersion(insertedVersion as Record<string, unknown>);
+  },
+
+  restoreVersion: async (proposalId, versionId, currentSnapshot) => {
+    const currentWorkspaceId = getCurrentWorkspaceId();
+    const existingProposal = get().proposals.find((proposal) => proposal.id === proposalId);
+    if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
+      set({ error: 'Unauthorized: cannot restore version outside your workspace.' });
+      return null;
+    }
+
+    const checkpointSnapshot = currentSnapshot ?? {
+      title: existingProposal.title,
+      partnerName: existingProposal.partnerName,
+      slides: existingProposal.slides,
+      themeId: existingProposal.themeId,
+      brandOverrides: existingProposal.brandOverrides,
+    };
+    const checkpoint = await get().saveVersion(proposalId, checkpointSnapshot);
+    if (!checkpoint) {
+      set({ error: 'Failed to create safety checkpoint before restore.' });
+      return null;
+    }
+
+    const { data: versionRow, error } = await supabase
+      .from('proposal_versions')
+      .select('*')
+      .eq('id', versionId)
+      .eq('proposal_id', proposalId)
+      .maybeSingle();
+
+    if (error || !versionRow) {
+      logStructuredError('restoreVersion failed', error);
+      set({ error: getSafeErrorMessage(error, GENERIC_FETCH_ERROR) });
+      return null;
+    }
+
+    const version = dbRowToProposalVersion(versionRow as Record<string, unknown>);
+    return {
+      title: version.title,
+      partnerName: version.partnerName,
+      slides: version.slides,
+      themeId: version.themeId,
+      brandOverrides: version.brandOverrides ?? {},
+    };
   },
 
   deleteProposal: async (id) => {
@@ -344,6 +532,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
       .from('proposals')
       .insert({
         user_id: currentUserId,
+        updated_by: currentUserId,
         workspace_id: currentWorkspaceId,
         slug: newSlug,
         short_code: newShortCode,
@@ -526,7 +715,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
 
     const normalizedSlides = normalizeSlidesIconIds(sanitizeSlides(slides));
 
-    const proposalBase: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt'> = {
+    const proposalBase: Omit<Proposal, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'> = {
       workspace_id: workspaceId,
       slug: generateSafeSlug(generateSlug(partnerName)),
       shortCode: normalizeShortCode(generateShortCode()),
@@ -546,6 +735,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         .from('proposals')
         .insert({
           user_id: currentUserId,
+          updated_by: currentUserId,
           workspace_id: proposal.workspace_id,
           slug: proposal.slug,
           short_code: proposal.shortCode,
@@ -602,9 +792,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
         ? normalizedNewSlides
         : [...(existing?.slides ?? []), ...normalizedNewSlides];
 
+    const currentUserId = getCurrentUserId();
     const { error } = await supabase
       .from('proposals')
-      .update({ slides: updatedSlides })
+      .update({ slides: updatedSlides, ...(currentUserId ? { updated_by: currentUserId } : {}) })
       .eq('id', proposalId);
 
     if (error) {

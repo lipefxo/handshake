@@ -156,6 +156,7 @@ export interface Proposal {
   partnerName: string;
   createdAt: string;
   updatedAt: string;
+  updatedBy?: string;
   status: 'draft' | 'published';
   slides: SlideConfig[];
   themeId: ThemeId;
@@ -166,6 +167,19 @@ export interface Proposal {
   // Brand overrides
   brandOverrides?: BrandOverrides;
   workspaceBrandTheme?: WorkspaceBrandTheme;
+}
+
+export interface ProposalVersion {
+  id: string;
+  proposalId: string;
+  versionNumber: number;
+  title: string;
+  partnerName: string;
+  slides: SlideConfig[];
+  themeId: ThemeId;
+  brandOverrides?: BrandOverrides;
+  createdBy?: string;
+  createdAt: string;
 }
 
 export interface ProposalAccessMeta {

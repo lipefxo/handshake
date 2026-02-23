@@ -61,6 +61,7 @@ export const APP_ICON_REGISTRY = {
   'ui.globe': Globe02Icon,
   'ui.help': HelpCircleIcon,
   'ui.refresh': ArrowReloadHorizontalIcon,
+  'ui.history': TimelineIcon,
   'ui.computer': ComputerIcon,
   'ui.smart-phone-02': SmartPhone02Icon,
   'slide.type.title': SparklesIcon,
