@@ -277,50 +277,55 @@ export function SlideSortableList({
         tabIndex={0}
       >
         <div className="grid grid-cols-2 gap-1.5 pb-1.5">
-          <button
-            type="button"
-            onClick={() => setShowPicker(!showPicker)}
-            className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 bg-white hover:bg-gray-50 transition-colors col-span-2"
-            aria-expanded={showPicker}
-            aria-controls="slide-type-picker"
-          >
-            <AppIcon icon="ui.add" className="w-3.5 h-3.5" />
-            Add slide
-          </button>
+          <div className="relative col-span-2">
+            <button
+              type="button"
+              onClick={() => setShowPicker(!showPicker)}
+              className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-500 bg-white hover:bg-gray-50 transition-colors"
+              aria-expanded={showPicker}
+              aria-controls="slide-type-picker"
+            >
+              <AppIcon icon="ui.add" className="w-3.5 h-3.5" />
+              Add slide
+            </button>
+
+            {showPicker && (
+              <div
+                id="slide-type-picker"
+                className="absolute left-0 right-0 top-full mt-1.5 border border-gray-200 rounded-xl shadow-lg shadow-black/10 bg-white overflow-hidden z-30"
+              >
+                <div className="p-2 border-b border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 px-2 py-1">Choose slide type</p>
+                </div>
+                <div className="p-2 max-h-64 overflow-y-auto">
+                  {(Object.keys(SLIDE_TYPE_META) as SlideType[]).map((type) => {
+                    const meta = SLIDE_TYPE_META[type];
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          onAdd(type);
+                          setShowPicker(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <SlideTypeThumbnail type={type} className="h-8 w-10 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-gray-900">{meta.label}</p>
+                          <p className="text-xs text-gray-400">{meta.description}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
           <p className="col-span-2 px-1 text-[10px] text-gray-400">
             Tip: drag and hold one slide over another to group them.
           </p>
         </div>
-
-        {showPicker && (
-          <div id="slide-type-picker" className="border border-gray-200 rounded-xl shadow-lg shadow-black/10 bg-white overflow-hidden z-20">
-            <div className="p-2 border-b border-gray-100">
-              <p className="text-xs font-semibold text-gray-500 px-2 py-1">Choose slide type</p>
-            </div>
-            <div className="p-2 max-h-64 overflow-y-auto">
-              {(Object.keys(SLIDE_TYPE_META) as SlideType[]).map((type) => {
-                const meta = SLIDE_TYPE_META[type];
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => {
-                      onAdd(type);
-                      setShowPicker(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <SlideTypeThumbnail type={type} className="h-8 w-10 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">{meta.label}</p>
-                      <p className="text-xs text-gray-400">{meta.description}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         <DndContext
           sensors={sensors}

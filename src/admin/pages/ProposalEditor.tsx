@@ -27,9 +27,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type PreviewDevice = 'desktop' | 'mobile';
 
 const AUTOSAVE_DELAY = 800;
-const VERSION_INTERVAL_MS = 5 * 60 * 1000;
-const VERSION_TICK_MS = 30_000;
-const ACTIVE_EDITING_GRACE_MS = 90_000;
+const VERSION_COOLDOWN_MS = 5 * 60 * 1000;
 const PREVIEW_CONTENT_WIDTH_CLASS = 'w-[92%]';
 const PREVIEW_DEVICE_CONFIG: Record<PreviewDevice, { scale: number; maxWidthClassName: string; frameAspectClassName: string }> = {
   desktop: {
@@ -91,11 +89,10 @@ export function ProposalEditor() {
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
-  const activeEditingMsRef = useRef(0);
-  const lastVersionTickRef = useRef(Date.now());
-  const lastEditAtRef = useRef<number | null>(null);
+  const lastVersionSaveAtRef = useRef(0);
   const editsSinceLastVersionRef = useRef(false);
   const versionSaveInFlightRef = useRef(false);
+  const initialVersionCheckedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
@@ -151,6 +148,22 @@ export function ProposalEditor() {
     brandOverrides: source.brandOverrides,
   }), []);
 
+  const maybeSaveVersion = useCallback((p: Proposal) => {
+    if (versionSaveInFlightRef.current) return;
+    if (!editsSinceLastVersionRef.current) return;
+    const elapsed = Date.now() - lastVersionSaveAtRef.current;
+    if (elapsed < VERSION_COOLDOWN_MS) return;
+
+    versionSaveInFlightRef.current = true;
+    void saveVersion(p.id, snapshotProposalForVersion(p)).then(() => {
+      lastVersionSaveAtRef.current = Date.now();
+      editsSinceLastVersionRef.current = false;
+      void fetchVersions(p.id).then(setVersions);
+    }).finally(() => {
+      versionSaveInFlightRef.current = false;
+    });
+  }, [saveVersion, snapshotProposalForVersion, fetchVersions]);
+
   const save = useCallback(
     async (updatedProposal: Proposal): Promise<boolean> => {
       setSaveState('saving');
@@ -174,13 +187,14 @@ export function ProposalEditor() {
         setSaveState('saved');
         setHasUnsavedChanges(false);
         setTimeout(() => setSaveState('idle'), 2000);
+        maybeSaveVersion(updatedProposal);
         return true;
       } catch {
         setSaveState('error');
         return false;
       }
     },
-    [updateProposal, workspaceCompanyName]
+    [updateProposal, workspaceCompanyName, maybeSaveVersion]
   );
 
   useEffect(() => {
@@ -190,40 +204,29 @@ export function ProposalEditor() {
   }, [proposal, save, editorValues.autosave.enabled, hasUnsavedChanges]);
 
   useEffect(() => {
-    activeEditingMsRef.current = 0;
-    lastVersionTickRef.current = Date.now();
-    lastEditAtRef.current = null;
+    lastVersionSaveAtRef.current = 0;
     editsSinceLastVersionRef.current = false;
-  }, [proposal?.id]);
+    initialVersionCheckedRef.current = null;
+  }, [id]);
 
   useEffect(() => {
-    if (!proposal) return;
-    const interval = window.setInterval(() => {
-      if (versionSaveInFlightRef.current) return;
+    if (!proposal || !proposal.id) return;
+    if (initialVersionCheckedRef.current === proposal.id) return;
+    if (proposal.slides.length === 0) return;
+    initialVersionCheckedRef.current = proposal.id;
 
-      const now = Date.now();
-      const elapsed = now - lastVersionTickRef.current;
-      lastVersionTickRef.current = now;
-
-      if (!editsSinceLastVersionRef.current) return;
-      if (!lastEditAtRef.current) return;
-      if (now - lastEditAtRef.current > ACTIVE_EDITING_GRACE_MS) return;
-
-      activeEditingMsRef.current += elapsed;
-
-      if (activeEditingMsRef.current < VERSION_INTERVAL_MS) return;
-
-      versionSaveInFlightRef.current = true;
-      void saveVersion(proposal.id, snapshotProposalForVersion(proposal)).finally(() => {
-        activeEditingMsRef.current = 0;
-        editsSinceLastVersionRef.current = false;
-        lastEditAtRef.current = null;
-        versionSaveInFlightRef.current = false;
-      });
-    }, VERSION_TICK_MS);
-
-    return () => window.clearInterval(interval);
-  }, [proposal, saveVersion, snapshotProposalForVersion]);
+    void fetchVersions(proposal.id).then((existing) => {
+      setVersions(existing);
+      if (existing.length === 0) {
+        void saveVersion(proposal.id, snapshotProposalForVersion(proposal)).then(() => {
+          lastVersionSaveAtRef.current = Date.now();
+          void fetchVersions(proposal.id).then(setVersions);
+        });
+      } else {
+        lastVersionSaveAtRef.current = Date.now();
+      }
+    });
+  }, [proposal, fetchVersions, saveVersion, snapshotProposalForVersion]);
 
   const sendPreviewMessage = useCallback((p: Proposal, slideId: string | null, targetWindow?: Window | null) => {
     const message = {
@@ -237,7 +240,6 @@ export function ProposalEditor() {
   }, []);
 
   const updateLocal = (updates: Partial<Proposal>) => {
-    lastEditAtRef.current = Date.now();
     editsSinceLastVersionRef.current = true;
     setProposal((prev) => {
       if (!prev) return prev;
@@ -421,9 +423,8 @@ export function ProposalEditor() {
       setProposal(restoredProposal);
       setHasUnsavedChanges(true);
       setSaveState('idle');
-      activeEditingMsRef.current = 0;
       editsSinceLastVersionRef.current = false;
-      lastEditAtRef.current = null;
+      lastVersionSaveAtRef.current = Date.now();
       showSuccessToast(`Restored to version ${version.versionNumber}`);
 
       const refreshedVersions = await fetchVersions(proposal.id);
