@@ -13,6 +13,8 @@ import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ToastViewport } from './shared/components/ToastViewport';
 import { LandingPage } from './landing/LandingPage';
+import { TermsPage } from './landing/TermsPage';
+import { PrivacyPage } from './landing/PrivacyPage';
 import { ShakegroundPage } from './shakeground/ShakegroundPage';
 import { useAuthStore } from './store/authStore';
 import { Agentation } from 'agentation';
@@ -46,6 +48,8 @@ export default function App() {
           <Routes>
             {/* Landing page */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
 
             {/* Auth routes */}
             <Route path="/login" element={<LoginPage />} />
