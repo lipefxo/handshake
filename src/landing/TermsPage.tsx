@@ -293,7 +293,7 @@ export function TermsPage() {
           }}
         >
           <div style={{ fontFamily: sans, fontSize: 12, color: C.textMuted }}>
-            © 2026 Handshake. All rights reserved.
+            © 2026 Handshake. All rights reserved. BUILT BY GRAFITE DESIGN LTDA.
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link
