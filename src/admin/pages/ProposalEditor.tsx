@@ -124,6 +124,7 @@ export function ProposalEditor() {
   const selectedSlideIndex = proposal?.slides.findIndex((s) => s.id === selectedSlideId) ?? -1;
   const hasPrevSlide = selectedSlideIndex > 0;
   const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
+  const hasSlides = proposal.slides.length > 0;
   const previewScale = PREVIEW_DEVICE_CONFIG[previewDevice].scale;
   const previewScaleInverse = 1 / previewScale;
   const previewMaxWidthClassName = PREVIEW_DEVICE_CONFIG[previewDevice].maxWidthClassName;
@@ -320,6 +321,7 @@ export function ProposalEditor() {
 
   const handlePublish = async () => {
     if (!proposal) return;
+    if (!hasSlides) return;
     if (proposal.status === 'published') {
       setShowUnpublishConfirm(true);
       return;
@@ -344,6 +346,7 @@ export function ProposalEditor() {
 
   const handleConfirmPublish = async () => {
     if (!proposal) return;
+    if (!hasSlides) return;
     setPublishing(true);
     try {
       const updates: Partial<Proposal> = {
@@ -613,6 +616,8 @@ export function ProposalEditor() {
               onClick={handlePublish}
               variant={proposal.status === 'published' ? 'destructive' : 'default'}
               className="h-9 px-4 text-xs font-semibold transition-all"
+              disabled={proposal.status !== 'published' && !hasSlides}
+              title={proposal.status !== 'published' && !hasSlides ? 'Add at least one slide before publishing' : undefined}
             >
               {proposal.status === 'published' ? 'Unpublish' : 'Publish'}
             </Button>
