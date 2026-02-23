@@ -7,6 +7,30 @@ import type { WorkspaceBrandTheme } from '@/types/workspace';
 
 const boldBrandDefaults = themes['bold-brand'];
 const HEX_COLOR = /^#([0-9a-fA-F]{6})$/;
+type PreviewSlideType =
+  | 'title'
+  | 'intro'
+  | 'stats'
+  | 'features'
+  | 'testimonial'
+  | 'comparison'
+  | 'timeline'
+  | 'media'
+  | 'benefits'
+  | 'closing';
+
+const PREVIEW_SLIDES = [
+  { type: 'title', title: 'Title Slide' },
+  { type: 'intro', title: 'Intro Slide' },
+  { type: 'stats', title: 'Stats Slide' },
+  { type: 'features', title: 'Features Slide' },
+  { type: 'testimonial', title: 'Testimonial Slide' },
+  { type: 'comparison', title: 'Comparison Slide' },
+  { type: 'timeline', title: 'Timeline Slide' },
+  { type: 'media', title: 'Media Slide' },
+  { type: 'benefits', title: 'Benefits Slide' },
+  { type: 'closing', title: 'Closing Slide' },
+] as const;
 
 const FONT_FAMILIES = [
   { label: 'Space Grotesk', value: "'Space Grotesk', system-ui, sans-serif", importParam: 'family=Space+Grotesk:wght@400;500;600;700' },
@@ -28,6 +52,99 @@ function buildGoogleFontsImport(displayFont?: string, bodyFont?: string): string
 
 function resolvePreviewColor(value: string | undefined, fallback: string): string {
   return HEX_COLOR.test(value ?? '') ? value as string : fallback;
+}
+
+function clampChannel(value: number): number {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const normalized = hex.replace('#', '');
+  const r = Number.parseInt(normalized.slice(0, 2), 16);
+  const g = Number.parseInt(normalized.slice(2, 4), 16);
+  const b = Number.parseInt(normalized.slice(4, 6), 16);
+  return [r, g, b];
+}
+
+function rgbToHex([r, g, b]: [number, number, number]): string {
+  return `#${clampChannel(r).toString(16).padStart(2, '0')}${clampChannel(g).toString(16).padStart(2, '0')}${clampChannel(b).toString(16).padStart(2, '0')}`.toUpperCase();
+}
+
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex).map((channel) => {
+    const srgb = channel / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(colorA: string, colorB: string): number {
+  const lumA = relativeLuminance(colorA);
+  const lumB = relativeLuminance(colorB);
+  const lighter = Math.max(lumA, lumB);
+  const darker = Math.min(lumA, lumB);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function mixHex(colorA: string, colorB: string, amount: number): string {
+  const [r1, g1, b1] = hexToRgb(colorA);
+  const [r2, g2, b2] = hexToRgb(colorB);
+  const t = Math.max(0, Math.min(1, amount));
+  return rgbToHex([
+    r1 + (r2 - r1) * t,
+    g1 + (g2 - g1) * t,
+    b1 + (b2 - b1) * t,
+  ]);
+}
+
+function pickBestContrastingText(backgroundHex: string): string {
+  const dark = '#0B0F14';
+  const light = '#F8FAFC';
+  return contrastRatio(dark, backgroundHex) >= contrastRatio(light, backgroundHex) ? dark : light;
+}
+
+function ensureContrast(foregroundHex: string, backgroundHex: string, minimumRatio: number): string {
+  if (contrastRatio(foregroundHex, backgroundHex) >= minimumRatio) return foregroundHex;
+
+  const candidates: string[] = ['#0B0F14', '#F8FAFC'];
+  for (let step = 1; step <= 20; step += 1) {
+    const t = step / 20;
+    candidates.push(mixHex(foregroundHex, '#0B0F14', t));
+    candidates.push(mixHex(foregroundHex, '#F8FAFC', t));
+  }
+
+  const passing = candidates.find((candidate) => contrastRatio(candidate, backgroundHex) >= minimumRatio);
+  return passing ?? pickBestContrastingText(backgroundHex);
+}
+
+function enforceAccessibleColorSystem(themeDraft: WorkspaceBrandTheme): WorkspaceBrandTheme {
+  const base = boldBrandDefaults.colors;
+  const bgPrimary = resolvePreviewColor(themeDraft.colors?.bgPrimary, base.bgPrimary);
+  const bgSecondary = resolvePreviewColor(themeDraft.colors?.bgSecondary, base.bgSecondary);
+  const rawAccent = resolvePreviewColor(themeDraft.colors?.accent, base.accent);
+  const rawTextPrimary = resolvePreviewColor(themeDraft.colors?.textPrimary, base.textPrimary);
+
+  // Buttons use accent background + bgPrimary text in the presentation layer.
+  // Keep these two colors at accessible contrast as users adjust any color input.
+  const accent = ensureContrast(rawAccent, bgPrimary, 4.5);
+  const textPrimary = ensureContrast(rawTextPrimary, bgPrimary, 4.5);
+
+  // Secondary text should remain readable on both main surfaces.
+  const baseSecondary = mixHex(textPrimary, bgPrimary, 0.35);
+  const textSecondary = ensureContrast(baseSecondary, bgSecondary, 4.5);
+
+  return {
+    ...themeDraft,
+    colors: {
+      ...themeDraft.colors,
+      bgPrimary,
+      bgSecondary,
+      accent,
+      accentHover: mixHex(accent, '#0B0F14', 0.12),
+      textPrimary,
+      textSecondary,
+    },
+  };
 }
 
 function ColorField({
@@ -57,7 +174,7 @@ function ColorField({
             value={colorValue}
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
-            className="h-full w-full border-0 p-0 cursor-pointer bg-transparent"
+            className="h-full w-full appearance-none border-0 bg-transparent p-0 cursor-pointer [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0 [&::-moz-color-swatch]:rounded-full [&::-moz-color-swatch]:border-0"
           />
         </label>
         <Input
@@ -87,6 +204,7 @@ export function BrandThemeConfigurator({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useEffect(() => {
     setDraft(value ?? {});
@@ -100,7 +218,7 @@ export function BrandThemeConfigurator({
   }, [saveMessage]);
 
   const updateDraft = (updater: (prev: WorkspaceBrandTheme) => WorkspaceBrandTheme) => {
-    setDraft((prev) => updater(prev));
+    setDraft((prev) => enforceAccessibleColorSystem(updater(prev)));
     setHasChanges(true);
     if (saveMessage) setSaveMessage('');
   };
@@ -115,6 +233,177 @@ export function BrandThemeConfigurator({
   };
 
   const previewTheme = useMemo(() => draft, [draft]);
+  const activePreviewSlide = PREVIEW_SLIDES[activeSlideIndex];
+  const renderPreviewSlideBody = (slideType: PreviewSlideType) => {
+    switch (slideType) {
+      case 'title':
+        return (
+          <div className="space-y-3 text-center">
+            <div className="mx-auto flex max-w-[220px] items-center justify-center gap-2 text-[10px]" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
+              <span>ACME</span>
+              <span>×</span>
+              <span>NORTHSTAR</span>
+            </div>
+            <h4 className="text-lg leading-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)', fontWeight: 'var(--font-display-weight)' }}>
+              Partnership proposal for Acme + Northstar
+            </h4>
+            <p className="text-xs" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              A cinematic overview of the strategic collaboration.
+            </p>
+          </div>
+        );
+      case 'intro':
+        return (
+          <div className="grid grid-cols-[1.5fr_1fr] gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
+                Introduction
+              </p>
+              <h4 className="mt-1 text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+                Why this partnership matters now
+              </h4>
+              <p className="mt-2 text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+                Aligning market timing, distribution power, and product depth.
+              </p>
+            </div>
+            <div className="rounded-md border" style={{ borderRadius: 'var(--radius)', borderColor: 'var(--color-border)', background: 'var(--color-bg-primary)' }} />
+          </div>
+        );
+      case 'stats':
+        return (
+          <div className="space-y-3">
+            <p className="text-center text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
+              Performance snapshot
+            </p>
+            <div className="grid grid-cols-3 gap-px">
+              {['42%', '3.2x', '18d'].map((value) => (
+                <div key={value} className="rounded-sm border px-2 py-3 text-center" style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius)', background: 'var(--color-bg-primary)' }}>
+                  <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'features':
+        return (
+          <div className="space-y-2">
+            <h4 className="text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              What we are launching together
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {['Onboarding', 'Automation', 'Analytics', 'Enablement'].map((item) => (
+                <div key={item} className="rounded-sm border px-2 py-2" style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius)' }}>
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'testimonial':
+        return (
+          <div className="space-y-3 text-center">
+            <p className="text-base leading-tight italic" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              "This changed how our team closes enterprise deals."
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-6 w-6 rounded-full border" style={{ borderColor: 'var(--color-border)' }} />
+              <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+                VP Revenue, Lighthouse Systems
+              </p>
+            </div>
+          </div>
+        );
+      case 'comparison':
+        return (
+          <div className="space-y-2">
+            <h4 className="text-sm text-center" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              Current approach vs partnership model
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-sm border p-2" style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius)' }}>
+                <p className="text-[10px] uppercase" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>Before</p>
+                <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>Manual handoffs</p>
+              </div>
+              <div className="rounded-sm border p-2" style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius)', background: 'var(--color-bg-primary)' }}>
+                <p className="text-[10px] uppercase" style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}>After</p>
+                <p className="text-[11px]" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>Shared playbook</p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'timeline':
+        return (
+          <div className="space-y-2">
+            <h4 className="text-sm text-center" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              30-day rollout plan
+            </h4>
+            <div className="space-y-2">
+              {['Week 1 Discovery', 'Week 2 Pilot', 'Week 3 Launch', 'Week 4 Review'].map((milestone) => (
+                <div key={milestone} className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-accent)' }} />
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>{milestone}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'media':
+        return (
+          <div className="space-y-2">
+            <div
+              className="aspect-video w-full rounded-md border"
+              style={{
+                borderColor: 'var(--color-border)',
+                borderRadius: 'var(--radius)',
+                background: 'linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-secondary))',
+              }}
+            />
+            <p className="text-center text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              Product walkthrough and launch visuals
+            </p>
+          </div>
+        );
+      case 'benefits':
+        return (
+          <div className="space-y-2">
+            <h4 className="text-sm text-center" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              Value for both teams
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {['Pipeline growth', 'Smoother handoffs', 'Higher win rate', 'Stronger retention'].map((item) => (
+                <div key={item} className="rounded-sm border p-2" style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius)' }}>
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'closing':
+        return (
+          <div className="space-y-3 text-center">
+            <h4 className="text-base" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
+              Ready to kick off?
+            </h4>
+            <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              Approve timeline and we will start implementation this week.
+            </p>
+            <button
+              type="button"
+              className="px-3 py-1 text-xs font-medium"
+              style={{
+                borderRadius: 'var(--radius)',
+                background: 'var(--color-accent)',
+                color: 'var(--color-bg-primary)',
+              }}
+            >
+              Book kickoff
+            </button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-5">
@@ -186,6 +475,9 @@ export function BrandThemeConfigurator({
           }
         />
       </div>
+      <p className="text-[11px] text-gray-500">
+        Colors auto-adjust to keep text and accent combinations accessible (WCAG contrast) as you edit.
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
@@ -305,36 +597,90 @@ export function BrandThemeConfigurator({
       <div>
         <p className="text-xs font-medium text-gray-500 mb-2">Live preview</p>
         <ThemeProvider themeId="bold-brand" workspaceBrandTheme={previewTheme} className="rounded-xl overflow-hidden border border-gray-200">
-          <div className="aspect-video flex flex-col items-center justify-center gap-3 px-4" style={{ background: 'var(--color-bg-primary)' }}>
-            <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-              Border Radius Preview
-            </p>
+          <div className="aspect-video flex flex-col justify-between gap-3 p-4 sm:p-5" style={{ background: 'var(--color-bg-primary)' }}>
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="inline-flex items-center rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {activePreviewSlide.title}
+              </span>
+              <span
+                className="text-[10px] uppercase tracking-wide"
+                style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+              >
+                {activeSlideIndex + 1} / {PREVIEW_SLIDES.length}
+              </span>
+            </div>
+
             <div
-              className="w-full max-w-xs border px-4 py-3"
+              className="w-full border px-4 py-4"
               style={{
                 borderColor: 'var(--color-border)',
                 borderRadius: 'var(--radius)',
                 background: 'var(--color-bg-secondary)',
               }}
             >
-              <h4 className="text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
-                Card Surface
-              </h4>
-              <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-                Cards and buttons now reflect this radius.
-              </p>
+              {renderPreviewSlideBody(activePreviewSlide.type)}
             </div>
-            <button
-              type="button"
-              className="px-3 py-1 text-xs font-medium"
-              style={{
-                borderRadius: 'var(--radius)',
-                background: 'var(--color-accent)',
-                color: 'var(--color-bg-primary)',
-              }}
-            >
-              Call to action
-            </button>
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 overflow-x-auto">
+                {PREVIEW_SLIDES.map((slide, index) => {
+                  const isActive = index === activeSlideIndex;
+                  return (
+                    <button
+                      key={slide.type}
+                      type="button"
+                      onClick={() => setActiveSlideIndex(index)}
+                      className="h-2.5 w-2.5 shrink-0 rounded-full border transition-opacity"
+                      style={{
+                        borderColor: 'var(--color-border)',
+                        background: isActive ? 'var(--color-accent)' : 'transparent',
+                        opacity: isActive ? 1 : 0.6,
+                      }}
+                      aria-label={`Preview ${slide.title}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSlideIndex((prev) => (prev - 1 + PREVIEW_SLIDES.length) % PREVIEW_SLIDES.length)
+                  }
+                  className="rounded-md border px-2 py-1 text-xs"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    borderRadius: 'var(--radius)',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                  aria-label="Previous preview slide"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSlideIndex((prev) => (prev + 1) % PREVIEW_SLIDES.length)}
+                  className="rounded-md border px-2 py-1 text-xs"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    borderRadius: 'var(--radius)',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                  aria-label="Next preview slide"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         </ThemeProvider>
       </div>

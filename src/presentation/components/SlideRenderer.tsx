@@ -145,25 +145,23 @@ export function SlideRenderer({
           <span
             className="text-[6px] font-semibold tracking-[0.18em] uppercase"
             style={{
-              color: '#fff',
+              color: '#000',
               mixBlendMode: 'difference',
               fontFamily: 'var(--font-body)',
             }}
           >
             Built with
           </span>
-          <span className="flex items-center gap-1" style={{ mixBlendMode: 'difference' }}>
+          <span className="flex items-center gap-2" style={{ mixBlendMode: 'difference' }}>
             <img
               src="/handshake-logo-nobg.svg"
               alt=""
-              className="h-2.5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              className="h-5 w-auto opacity-90 transition-opacity group-hover:opacity-100"
             />
             <img
               src="/handshake_wordmark.svg"
               alt="Handshake"
-              className="h-3.5 w-auto opacity-85 transition-opacity group-hover:opacity-100"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              className="h-7 w-auto opacity-90 transition-opacity group-hover:opacity-100"
             />
           </span>
         </a>

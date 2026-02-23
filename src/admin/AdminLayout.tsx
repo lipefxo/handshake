@@ -36,23 +36,23 @@ export function AdminLayout() {
       >
         {/* Logo */}
         <div className={`py-4 border-b border-light ${isSidebarExpanded ? 'px-5' : 'px-2'}`}>
-          <div className={`flex ${isSidebarExpanded ? 'items-center justify-between' : 'flex-col items-center justify-center gap-1'}`}>
-            <div className={`flex items-center justify-center shrink-0 ${isSidebarExpanded ? 'w-7 h-7' : 'w-6 h-6'}`}>
+          <div className={`flex ${isSidebarExpanded ? 'items-center' : 'flex-col items-center justify-center gap-1'}`}>
+            <div className={`flex items-center justify-center shrink-0 ${isSidebarExpanded ? 'w-10 h-10' : 'w-7 h-7'}`}>
               <BrandLogo
                 variant="light"
-                className={isSidebarExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'}
+                className={isSidebarExpanded ? 'w-8 h-8' : 'w-7 h-7'}
                 aria-label="Handshake logo"
               />
             </div>
             {isSidebarExpanded && (
-              <BrandWordmark variant="light" className="h-3.5 w-auto" aria-label="Handshake" />
+              <BrandWordmark variant="light" className="ml-0.5 h-3.5 w-auto" aria-label="Handshake" />
             )}
             <Button
               type="button"
               onClick={() => setIsSidebarExpanded((prev) => !prev)}
               variant="ghost"
               size="icon"
-              className={`text-[#6b6b6b] hover:text-[#1a1a1a] shrink-0 ${isSidebarExpanded ? 'h-7 w-7' : 'h-6 w-6'}`}
+              className={`text-[#6b6b6b] hover:text-[#1a1a1a] shrink-0 ${isSidebarExpanded ? 'ml-auto h-7 w-7' : 'h-6 w-6'}`}
               aria-label={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               title={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >

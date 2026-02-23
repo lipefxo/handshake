@@ -362,11 +362,9 @@ export function SlideSortableList({
                         {group.slides.map((slide) => (
                           <motion.div
                             key={slide.id}
-                            layout
-                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                            layout="position"
+                            initial={false}
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
                           >
                             <SlideSortableItem
                               slide={slide}
@@ -394,11 +392,9 @@ export function SlideSortableList({
                   {groupedSlides.ungrouped.map((slide) => (
                     <motion.div
                       key={slide.id}
-                      layout
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      layout="position"
+                      initial={false}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
                     >
                       <SlideSortableItem
                         slide={slide}

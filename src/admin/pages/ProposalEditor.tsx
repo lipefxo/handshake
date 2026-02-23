@@ -21,10 +21,22 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type PreviewDevice = 'desktop' | 'mobile';
 
 const AUTOSAVE_DELAY = 800;
-const PREVIEW_SCALE = 0.7;
-const PREVIEW_SCALE_INVERSE = 1 / PREVIEW_SCALE;
+const PREVIEW_CONTENT_WIDTH_CLASS = 'w-[92%]';
+const PREVIEW_DEVICE_CONFIG: Record<PreviewDevice, { scale: number; maxWidthClassName: string; frameAspectClassName: string }> = {
+  desktop: {
+    scale: 0.7,
+    maxWidthClassName: 'max-w-5xl',
+    frameAspectClassName: 'aspect-video',
+  },
+  mobile: {
+    scale: 0.78,
+    maxWidthClassName: 'max-w-[21rem]',
+    frameAspectClassName: 'aspect-[9/19.5]',
+  },
+};
 
 export function ProposalEditor() {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +71,7 @@ export function ProposalEditor() {
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const [publishVisibility, setPublishVisibility] = useState<Proposal['visibility']>('public');
   const [publishPasswordInput, setPublishPasswordInput] = useState('');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [publishing, setPublishing] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
@@ -93,6 +106,10 @@ export function ProposalEditor() {
   const selectedSlideIndex = proposal?.slides.findIndex((s) => s.id === selectedSlideId) ?? -1;
   const hasPrevSlide = selectedSlideIndex > 0;
   const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
+  const previewScale = PREVIEW_DEVICE_CONFIG[previewDevice].scale;
+  const previewScaleInverse = 1 / previewScale;
+  const previewMaxWidthClassName = PREVIEW_DEVICE_CONFIG[previewDevice].maxWidthClassName;
+  const previewFrameAspectClassName = PREVIEW_DEVICE_CONFIG[previewDevice].frameAspectClassName;
 
   const save = useCallback(
     async (updatedProposal: Proposal): Promise<boolean> => {
@@ -179,7 +196,9 @@ export function ProposalEditor() {
     const newSlide = { ...createDefaultSlide(type), transition: themeTransition };
     const slides = [...proposal.slides, newSlide];
     updateLocal({ slides });
-    setSelectedSlideId(newSlide.id);
+    if (!selectedSlideId) {
+      setSelectedSlideId(newSlide.id);
+    }
   };
 
   const handleRenameSlide = (slideId: string, label: string) => {
@@ -514,23 +533,52 @@ export function ProposalEditor() {
               <div className="h-full w-full max-w-[66rem] mx-auto border-x border-gray-100 bg-admin flex flex-col">
                 <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const iframe = previewIframeRef.current;
-                      if (!iframe) return;
-                      const frameWindow = iframe.contentWindow;
-                      if (frameWindow) {
-                        frameWindow.location.reload();
-                        return;
-                      }
-                      iframe.src = iframe.src;
-                    }}
-                    className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                    title="Refresh preview"
-                  >
-                    <AppIcon icon="ui.refresh" className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <SegmentedTabs
+                      value={previewDevice}
+                      onValueChange={setPreviewDevice}
+                      className="h-7"
+                      tabClassName="h-6 w-6 px-0"
+                      indicatorLayoutId="proposal-editor-preview-device-tabs"
+                      options={[
+                        {
+                          value: 'desktop',
+                          label: (
+                            <>
+                              <AppIcon icon="ui.computer" className="h-3.5 w-3.5" />
+                              <span className="sr-only">Desktop preview</span>
+                            </>
+                          ),
+                        },
+                        {
+                          value: 'mobile',
+                          label: (
+                            <>
+                              <AppIcon icon="ui.smart-phone-02" className="h-3.5 w-3.5" />
+                              <span className="sr-only">Mobile preview</span>
+                            </>
+                          ),
+                        },
+                      ]}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const iframe = previewIframeRef.current;
+                        if (!iframe) return;
+                        const frameWindow = iframe.contentWindow;
+                        if (frameWindow) {
+                          frameWindow.location.reload();
+                          return;
+                        }
+                        iframe.src = iframe.src;
+                      }}
+                      className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                      title="Refresh preview"
+                    >
+                      <AppIcon icon="ui.refresh" className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <AnimatePresence mode="wait" initial={false}>
@@ -543,7 +591,7 @@ export function ProposalEditor() {
                         transition={{ duration: 0.22, ease: 'easeOut' }}
                         className="absolute inset-0 overflow-auto admin-scroll p-2.5 flex flex-col gap-2"
                       >
-                        <div className="w-[92%] max-w-5xl mx-auto aspect-video relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                        <div className={`${PREVIEW_CONTENT_WIDTH_CLASS} ${previewMaxWidthClassName} ${previewFrameAspectClassName} mx-auto relative rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm`}>
                           <iframe
                             ref={previewIframeRef}
                             src={`/p/${proposal.slug}#preview`}
@@ -553,15 +601,15 @@ export function ProposalEditor() {
                             }}
                             className="absolute inset-0 border-0 pointer-events-none"
                             style={{
-                              width: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                              height: `${PREVIEW_SCALE_INVERSE * 100}%`,
-                              transform: `scale(${PREVIEW_SCALE})`,
+                              width: `${previewScaleInverse * 100}%`,
+                              height: `${previewScaleInverse * 100}%`,
+                              transform: `scale(${previewScale})`,
                               transformOrigin: 'top left',
                             }}
                             title="Slide preview"
                           />
                         </div>
-                        <div className="flex items-center justify-between gap-2">
+                        <div className={`${PREVIEW_CONTENT_WIDTH_CLASS} ${previewMaxWidthClassName} mx-auto flex items-center justify-between gap-2 px-1`}>
                           <Button
                             type="button"
                             onClick={handleGoToPrevSlide}
