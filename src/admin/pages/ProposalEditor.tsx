@@ -124,7 +124,7 @@ export function ProposalEditor() {
   const selectedSlideIndex = proposal?.slides.findIndex((s) => s.id === selectedSlideId) ?? -1;
   const hasPrevSlide = selectedSlideIndex > 0;
   const hasNextSlide = proposal ? selectedSlideIndex >= 0 && selectedSlideIndex < proposal.slides.length - 1 : false;
-  const hasSlides = proposal.slides.length > 0;
+  const hasSlides = (proposal?.slides.length ?? 0) > 0;
   const previewScale = PREVIEW_DEVICE_CONFIG[previewDevice].scale;
   const previewScaleInverse = 1 / previewScale;
   const previewMaxWidthClassName = PREVIEW_DEVICE_CONFIG[previewDevice].maxWidthClassName;
