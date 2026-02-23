@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabaseClient';
 import { DEMO_PROPOSAL_SLUG } from '../data/demoProposal';
@@ -2831,7 +2832,27 @@ function Footer() {
           © 2026 Handshake. All rights reserved.
         </div>
 
-        <div style={{ display: 'flex', gap: 20 }}>
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Terms', to: '/terms' },
+            { label: 'Privacy', to: '/privacy' },
+          ].map(({ label, to }) => (
+            <Link
+              key={label}
+              to={to}
+              style={{
+                fontFamily: sans,
+                fontSize: 13,
+                color: C.textMuted,
+                textDecoration: 'none',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textOnDark)}
+              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
+            >
+              {label}
+            </Link>
+          ))}
           {[
             { label: 'Twitter', href: '#' },
             { label: 'LinkedIn', href: '#' },
