@@ -48,7 +48,44 @@ Fill in your Supabase credentials:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_AGENTATION_ALLOWED_EMAIL=lipefxo@gmail.com
+VITE_LEMON_SQUEEZY_STORE_ID=your-store-id
+VITE_LEMON_SQUEEZY_PRO_MONTHLY_VARIANT_ID=your-pro-monthly-variant-id
+VITE_LEMON_SQUEEZY_PRO_ANNUAL_VARIANT_ID=your-pro-annual-variant-id
+VITE_LEMON_SQUEEZY_TEAM_MONTHLY_VARIANT_ID=your-team-monthly-variant-id
+VITE_LEMON_SQUEEZY_TEAM_ANNUAL_VARIANT_ID=your-team-annual-variant-id
 ```
+
+For Supabase Edge Functions, also set these server-side secrets in your project:
+
+```
+SUPABASE_URL=your-project-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+LEMON_SQUEEZY_WEBHOOK_SECRET=your-lemon-webhook-signing-secret
+LEMON_SQUEEZY_PRO_MONTHLY_VARIANT_ID=your-pro-monthly-variant-id
+LEMON_SQUEEZY_PRO_ANNUAL_VARIANT_ID=your-pro-annual-variant-id
+LEMON_SQUEEZY_TEAM_MONTHLY_VARIANT_ID=your-team-monthly-variant-id
+LEMON_SQUEEZY_TEAM_ANNUAL_VARIANT_ID=your-team-annual-variant-id
+```
+
+### 3.1 Lemon Squeezy dashboard setup
+
+1. Create a product named `Handshake Subscription`
+2. Create four variants:
+   - Pro Monthly (`$19/user/month`)
+   - Pro Annual (`$192/user/year`)
+   - Team Monthly (`$35/user/month`)
+   - Team Annual (`$348/user/year`)
+3. Configure a webhook endpoint to:
+   - `https://<your-project-ref>.functions.supabase.co/lemon-squeezy-webhook`
+4. Enable webhook events:
+   - `subscription_created`
+   - `subscription_updated`
+   - `subscription_cancelled`
+   - `subscription_resumed`
+   - `subscription_expired`
+   - `subscription_paused`
+   - `subscription_payment_success`
+   - `subscription_payment_failed`
 
 ### 4. Start the dev server
 
@@ -132,7 +169,7 @@ src/
 
 1. Push to GitHub
 2. Connect repo in Vercel dashboard
-3. Add environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
+3. Add environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and Lemon Squeezy `VITE_` variables)
 4. Set custom domain: `www.handshake.design`
 5. Update Supabase auth redirect URLs to match the domain
 

@@ -12,6 +12,8 @@ import { formatDateTime, formatRelativeTime } from '../../shared/utils/helpers';
 import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
 import { BrandThemeConfigurator } from '../components/settings/BrandThemeConfigurator';
 import { SettingsNav } from '../components/settings/SettingsNav';
+import { useSubscriptionStore } from '../../store/subscriptionStore';
+import { PLAN_DISPLAY, type BillingInterval, type SubscriptionPlan } from '../../types/subscription';
 
 const LIMITS = {
   companyName: 50,
@@ -21,8 +23,16 @@ const LIMITS = {
 
 const SETTINGS_SECTIONS = [
   { id: 'brand', label: 'Brand' },
+  { id: 'billing', label: 'Billing' },
   { id: 'team', label: 'Team' },
 ] as const;
+
+function getStatusLabel(status: string | undefined): string {
+  if (!status) return 'No active subscription';
+  if (status === 'past_due') return 'Past due';
+  if (status === 'on_trial') return 'Trial';
+  return status.replace('_', ' ');
+}
 
 function CharCounter({ value, max }: { value: string; max: number }) {
   const remaining = max - value.length;
@@ -157,6 +167,17 @@ export function ProposalSettings() {
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const isOwner = currentUserRole === 'owner';
   const { executeWithFeedback } = useActionFeedback();
+  const {
+    subscription,
+    plan,
+    loading: subscriptionLoading,
+    error: subscriptionError,
+    fetchSubscription,
+    openCheckout,
+    openCustomerPortal,
+    clearError: clearSubscriptionError,
+  } = useSubscriptionStore();
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('annual');
 
   useEffect(() => {
     if (email || !user?.email) return;
@@ -175,6 +196,11 @@ export function ProposalSettings() {
   useEffect(() => {
     setCompanyName(currentWorkspace?.companyName ?? '');
   }, [currentWorkspace?.companyName]);
+
+  useEffect(() => {
+    if (!currentWorkspace?.id) return;
+    void fetchSubscription(currentWorkspace.id);
+  }, [currentWorkspace?.id, fetchSubscription]);
 
   const [savingCompanyName, setSavingCompanyName] = useState(false);
   const companyNameDirty = companyName !== (currentWorkspace?.companyName ?? '');
@@ -248,6 +274,17 @@ export function ProposalSettings() {
       getErrorDescription: () => workspaceError ?? undefined,
     });
     setRenamingWorkspace(false);
+  };
+
+  const handleUpgrade = async (targetPlan: Exclude<SubscriptionPlan, 'free'>) => {
+    if (!currentWorkspace?.id || !user?.id || !user.email) return;
+    await openCheckout({
+      workspaceId: currentWorkspace.id,
+      userId: user.id,
+      userEmail: user.email,
+      plan: targetPlan,
+      billingInterval,
+    });
   };
 
   return (
@@ -340,6 +377,110 @@ export function ProposalSettings() {
         </Card>
 
             {/* Team */}
+            <Card id="billing" className="rounded-2xl border-gray-100 scroll-mt-6">
+              <CardHeader>
+                <CardTitle className="font-brand-serif text-base text-gray-900">Billing</CardTitle>
+                <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
+                  Manage your workspace plan and subscription.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Current plan</p>
+                      <p className="text-sm font-medium text-gray-900">{PLAN_DISPLAY[plan].label}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[11px] capitalize">
+                      {getStatusLabel(subscription?.status)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {subscription?.currentPeriodEnd
+                      ? `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                      : 'You are currently on the free plan.'}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-gray-100 px-4 py-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant={billingInterval === 'monthly' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setBillingInterval('monthly')}
+                    >
+                      Monthly
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={billingInterval === 'annual' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setBillingInterval('annual')}
+                    >
+                      Annual
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    <Button
+                      type="button"
+                      onClick={() => void handleUpgrade('pro')}
+                      disabled={!isOwner || subscriptionLoading}
+                      className="justify-between"
+                    >
+                      <span>Upgrade to Pro</span>
+                      <span className="text-xs opacity-90">
+                        ${billingInterval === 'annual' ? PLAN_DISPLAY.pro.annual : PLAN_DISPLAY.pro.monthly}/user/mo
+                      </span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleUpgrade('team')}
+                      disabled={!isOwner || subscriptionLoading}
+                      className="justify-between"
+                    >
+                      <span>Upgrade to Team</span>
+                      <span className="text-xs opacity-90">
+                        ${billingInterval === 'annual' ? PLAN_DISPLAY.team.annual : PLAN_DISPLAY.team.monthly}/user/mo
+                      </span>
+                    </Button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={openCustomerPortal}
+                    disabled={!isOwner || !subscription?.customerPortalUrl}
+                    className="px-0 text-xs text-gray-600 hover:text-gray-900"
+                  >
+                    Manage subscription in customer portal
+                  </Button>
+                </div>
+
+                {subscriptionError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
+                    <span>{subscriptionError}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-2 py-1 text-xs text-red-700 hover:text-red-800"
+                      onClick={clearSubscriptionError}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                )}
+
+                {!isOwner && (
+                  <p className="text-xs text-gray-500">Only workspace owners can manage billing.</p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
             <CardTitle className="font-brand-serif text-base text-gray-900">Team</CardTitle>

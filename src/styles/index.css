@@ -115,8 +115,9 @@
   @media (max-width: 767px) {
     .slide-section {
       overflow-y: auto;
-      min-height: 100dvh;
-      height: auto;
+      height: 100dvh;
+      padding-top: max(env(safe-area-inset-top), 0.75rem);
+      padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
     }
   }
 

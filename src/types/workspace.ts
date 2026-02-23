@@ -26,6 +26,7 @@ export interface Workspace {
   id: string;
   name: string;
   companyName: string;
+  plan: 'free' | 'pro' | 'team';
   brandTheme?: WorkspaceBrandTheme;
   createdBy?: string;
   createdAt: string;

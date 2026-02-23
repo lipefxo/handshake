@@ -4,6 +4,8 @@ import type { AppUser } from '../types/auth';
 import type { Workspace, WorkspaceBrandTheme, WorkspaceMember } from '../types/workspace';
 import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
 import { sanitizeText } from '../shared/utils/validation';
+import { PLAN_LIMITS } from '../types/subscription';
+import { useSubscriptionStore } from './subscriptionStore';
 
 interface WorkspaceStore {
   currentWorkspace: Workspace | null;
@@ -33,10 +35,20 @@ function toWorkspace(row: Record<string, unknown>): Workspace {
     id: row.id as string,
     name: (row.name as string) || 'My Workspace',
     companyName: (row.company_name as string) || '',
+    plan: ((row.plan as Workspace['plan']) ?? 'free'),
     brandTheme,
     createdBy: row.created_by as string | undefined,
     createdAt: row.created_at as string,
   };
+}
+
+function getCurrentPlanLimits() {
+  const plan = useSubscriptionStore.getState().plan;
+  return PLAN_LIMITS[plan];
+}
+
+function syncPlanFromWorkspace(workspace: Workspace | null) {
+  useSubscriptionStore.getState().setPlan(workspace?.plan ?? 'free');
 }
 
 function sanitizeCssColor(value: unknown): string | undefined {
@@ -113,6 +125,7 @@ async function fetchPrimaryWorkspaceForUser(userId: string): Promise<{
         id,
         name,
         company_name,
+        plan,
         brand_theme,
         created_by,
         created_at
@@ -244,6 +257,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       loading: false,
       error: null,
     });
+    syncPlanFromWorkspace(null);
   },
 
   clearError: () => set({ error: null }),
@@ -273,6 +287,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
           currentWorkspace: primary.workspace,
           currentUserRole: primary.role,
         });
+        syncPlanFromWorkspace(primary.workspace);
         await get().refreshMembers();
         set({ loading: false });
       };
@@ -400,6 +415,26 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     if (!cleanEmail || !cleanEmail.includes('@')) {
       set({ error: 'Enter a valid email address.' });
       return { added: false, emailSent: false };
+    }
+
+    const planLimits = getCurrentPlanLimits();
+    if (Number.isFinite(planLimits.maxMembers)) {
+      const { count, error: countError } = await supabase
+        .from('workspace_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('workspace_id', workspace.id)
+        .in('status', ['active', 'pending']);
+
+      if (countError) {
+        logStructuredError('inviteMember member-limit count failed', countError);
+        set({ error: getWorkspaceError(countError, 'Failed to verify member limit. Please try again.') });
+        return { added: false, emailSent: false };
+      }
+
+      if ((count ?? 0) >= planLimits.maxMembers) {
+        set({ error: 'Member limit reached for current plan. Upgrade to invite teammates.' });
+        return { added: false, emailSent: false };
+      }
     }
 
     set({ error: null });

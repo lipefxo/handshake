@@ -235,12 +235,49 @@ CREATE TABLE IF NOT EXISTS workspaces (
   name text NOT NULL DEFAULT 'My Workspace',
   company_name text NOT NULL DEFAULT '',
   brand_theme jsonb NOT NULL DEFAULT '{}'::jsonb,
+  plan text NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'team')),
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz DEFAULT now()
 );
 
 ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS company_name text NOT NULL DEFAULT '';
 ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS brand_theme jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE workspaces
+  ADD COLUMN IF NOT EXISTS plan text NOT NULL DEFAULT 'free'
+  CHECK (plan IN ('free', 'pro', 'team'));
+
+-- Workspace subscriptions (Lemon Squeezy sync target)
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE UNIQUE,
+  lemon_squeezy_subscription_id text NOT NULL UNIQUE,
+  lemon_squeezy_customer_id text NOT NULL,
+  lemon_squeezy_variant_id text NOT NULL,
+  plan text NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'team')),
+  status text NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'cancelled', 'expired', 'past_due', 'paused', 'on_trial', 'unpaid')),
+  billing_interval text CHECK (billing_interval IN ('monthly', 'annual')),
+  current_period_start timestamptz,
+  current_period_end timestamptz,
+  cancel_at timestamptz,
+  cancelled_at timestamptz,
+  trial_ends_at timestamptz,
+  update_payment_method_url text,
+  customer_portal_url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_workspace_id ON subscriptions(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_plan ON subscriptions(plan);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+DROP TRIGGER IF EXISTS subscriptions_updated_at ON subscriptions;
+CREATE TRIGGER subscriptions_updated_at
+  BEFORE UPDATE ON subscriptions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 CREATE TABLE IF NOT EXISTS workspace_members (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -386,6 +423,11 @@ CREATE POLICY "Members can read their workspaces"
     OR created_by = auth.uid()
   );
 
+DROP POLICY IF EXISTS "Workspace members can read subscriptions" ON subscriptions;
+CREATE POLICY "Workspace members can read subscriptions"
+  ON subscriptions FOR SELECT
+  USING (public.is_workspace_member(workspace_id));
+
 DROP POLICY IF EXISTS "Users can create their own workspaces" ON workspaces;
 CREATE POLICY "Users can create their own workspaces"
   ON workspaces FOR INSERT
@@ -399,6 +441,12 @@ CREATE POLICY "Owners can update their workspaces"
   ON workspaces FOR UPDATE
   USING (public.is_workspace_owner(id))
   WITH CHECK (public.is_workspace_owner(id));
+
+DROP POLICY IF EXISTS "Owners can update subscriptions" ON subscriptions;
+CREATE POLICY "Owners can update subscriptions"
+  ON subscriptions FOR UPDATE
+  USING (public.is_workspace_owner(workspace_id))
+  WITH CHECK (public.is_workspace_owner(workspace_id));
 
 DROP POLICY IF EXISTS "Members can read workspace members" ON workspace_members;
 CREATE POLICY "Members can read workspace members"

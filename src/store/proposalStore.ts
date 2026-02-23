@@ -11,6 +11,8 @@ import { generateSafeSlug, sanitizeText, validateUrl } from '../shared/utils/val
 import { appendErrorDiagnostic, logStructuredError } from '../shared/utils/errorHandling';
 import type { WorkspaceBrandTheme } from '../types/workspace';
 import { isDemoProposal } from '../data/demoProposal';
+import { PLAN_LIMITS } from '../types/subscription';
+import { useSubscriptionStore } from './subscriptionStore';
 
 interface ProposalStore {
   proposals: Proposal[];
@@ -154,6 +156,11 @@ function getCurrentUserId(): string | null {
   return useAuthStore.getState().user?.id ?? null;
 }
 
+function getCurrentPlanLimits() {
+  const plan = useSubscriptionStore.getState().plan;
+  return PLAN_LIMITS[plan];
+}
+
 function normalizeShortCode(shortCode: string): string {
   return shortCode.trim().replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
 }
@@ -188,6 +195,22 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     }
     if (!currentWorkspaceId || currentWorkspaceId !== proposal.workspace_id) {
       set({ error: 'Unauthorized: cannot create proposal for another workspace.' });
+      return null;
+    }
+
+    const { count: workspaceProposalCount, error: planCountError } = await supabase
+      .from('proposals')
+      .select('*', { count: 'exact', head: true })
+      .eq('workspace_id', currentWorkspaceId);
+
+    if (planCountError) {
+      logStructuredError('createProposal plan-limit count failed', planCountError);
+      set({ error: getSafeErrorMessage(planCountError, GENERIC_SAVE_ERROR) });
+      return null;
+    }
+
+    if ((workspaceProposalCount ?? 0) >= getCurrentPlanLimits().maxProposals) {
+      set({ error: 'Plan limit reached. Upgrade to create more proposals.' });
       return null;
     }
 
@@ -251,6 +274,21 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (!existingProposal || !currentWorkspaceId || existingProposal.workspace_id !== currentWorkspaceId) {
       set({ error: 'Unauthorized: cannot update proposal outside your workspace.' });
       throw new Error('Unauthorized: cannot update proposal outside your workspace.');
+    }
+
+    if (updates.themeId && getCurrentPlanLimits().availableThemes !== 'all' && updates.themeId !== 'dark-minimal') {
+      set({ error: 'Theme upgrade required. Upgrade to Pro to unlock all themes.' });
+      throw new Error('Theme upgrade required.');
+    }
+
+    if (updates.visibility === 'password' && !getCurrentPlanLimits().features.passwordProtection) {
+      set({ error: 'Password-protected proposals require the Pro plan.' });
+      throw new Error('Password-protected proposals require Pro plan.');
+    }
+
+    if (updates.visibility === 'email_gated' && !getCurrentPlanLimits().features.emailGate) {
+      set({ error: 'Email-gated proposals require the Team plan.' });
+      throw new Error('Email-gated proposals require Team plan.');
     }
 
     const sanitizedUpdates: Partial<Proposal> = {
@@ -337,6 +375,10 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const currentUserId = getCurrentUserId();
     if (!currentUserId) return null;
     if (!currentWorkspaceId || existing.workspace_id !== currentWorkspaceId) return null;
+    if (!getCurrentPlanLimits().features.duplicateProposal) {
+      set({ error: 'Duplicate proposal is available on Pro and Team plans.' });
+      return null;
+    }
 
     const newSlug = generateSafeSlug(generateSlug(`${existing.partnerName}-copy`));
     const newShortCode = normalizeShortCode(generateShortCode());
@@ -519,6 +561,22 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     const workspaceId = getCurrentWorkspaceId();
     const currentUserId = getCurrentUserId();
     if (!workspaceId || !currentUserId) return null;
+
+    const { count: workspaceProposalCount, error: planCountError } = await supabase
+      .from('proposals')
+      .select('*', { count: 'exact', head: true })
+      .eq('workspace_id', workspaceId);
+
+    if (planCountError) {
+      logStructuredError('createFromMarkdown plan-limit count failed', planCountError);
+      set({ error: getSafeErrorMessage(planCountError, GENERIC_SAVE_ERROR) });
+      return null;
+    }
+
+    if ((workspaceProposalCount ?? 0) >= getCurrentPlanLimits().maxProposals) {
+      set({ error: 'Plan limit reached. Upgrade to create more proposals.' });
+      return null;
+    }
 
     const partnerName = sanitizeText(frontmatter.partner || 'Untitled Partner');
     const title = sanitizeText(frontmatter.title || `${partnerName} Proposal`);
