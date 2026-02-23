@@ -14,7 +14,7 @@ export function TableSlide({ content }: TableSlideProps) {
 
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center px-8 py-12 overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center px-4 md:px-8 py-8 md:py-12 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
       <GradientOrb size={520} className="top-0 right-0 translate-x-1/4 -translate-y-1/4" />

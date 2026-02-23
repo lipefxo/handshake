@@ -36,7 +36,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
         viewport={{ once: true, amount: 0.5 }}
       >
         {/* Logos row */}
-        <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-6 mb-12">
+        <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-4 md:gap-6 mb-8 md:mb-12">
           {effectiveCompanyLogo ? (
             <OptimizedImage src={effectiveCompanyLogo} alt="Company logo" className="h-8 object-contain opacity-90" />
           ) : (
@@ -69,7 +69,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
         {/* Main headline */}
         <motion.h1
           variants={fadeUpChild}
-          className="text-5xl md:text-7xl leading-tight mb-6"
+          className="text-3xl md:text-7xl leading-tight mb-4 md:mb-6"
           style={{
             fontFamily: 'var(--font-display)',
             color: 'var(--color-text-primary)',
@@ -82,7 +82,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
         {content.subheadline && (
           <motion.p
             variants={fadeUpChild}
-            className="text-lg md:text-xl mb-10"
+            className="text-base md:text-xl mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
             {content.subheadline}

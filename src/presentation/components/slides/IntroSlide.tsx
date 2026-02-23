@@ -24,7 +24,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
       <GradientOrb size={500} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       <div className="grain-overlay" />
 
-      <div className={`relative z-10 w-full max-w-6xl mx-auto px-8 flex flex-col md:flex-row items-center gap-8 md:gap-16 ${hasImage && !imageRight ? 'md:flex-row-reverse' : ''}`}>
+      <div className={`relative z-10 w-full max-w-6xl mx-auto px-6 md:px-8 flex flex-col md:flex-row items-center gap-6 md:gap-16 ${hasImage && !imageRight ? 'md:flex-row-reverse' : ''}`}>
         <motion.div
           className="flex-1"
           variants={staggerContainer}
@@ -34,21 +34,21 @@ export function IntroSlide({ content }: IntroSlideProps) {
         >
           <motion.p
             variants={fadeUpChild}
-            className="text-xs tracking-widest uppercase mb-4"
+            className="text-xs tracking-widest uppercase mb-2 md:mb-4"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
             Introduction
           </motion.p>
           <motion.h2
             variants={fadeUpChild}
-            className="text-4xl md:text-6xl mb-4 md:mb-8 leading-tight"
+            className="text-2xl md:text-6xl mb-3 md:mb-8 leading-tight"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
             {content.heading}
           </motion.h2>
           <motion.div
             variants={fadeUpChild}
-            className="text-base md:text-lg leading-relaxed space-y-4"
+            className="text-sm md:text-lg leading-relaxed space-y-3 md:space-y-4"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', maxWidth: '52ch' }}
           >
             {(bodyParagraphs.length > 0 ? bodyParagraphs : [content.body || '']).map((paragraph, index) => (
@@ -61,7 +61,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
 
         {hasImage && (
           <motion.div
-            className="w-full max-w-[240px] md:flex-1 md:aspect-square md:max-w-md"
+            className="w-full max-w-[180px] md:flex-1 md:aspect-square md:max-w-md"
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.3 }}

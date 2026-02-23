@@ -11,7 +11,7 @@ interface TestimonialSlideProps {
 export function TestimonialSlide({ content }: TestimonialSlideProps) {
   return (
     <div
-      className="relative w-full h-full flex items-center justify-center px-8 overflow-hidden"
+      className="relative w-full h-full flex items-center justify-center px-6 md:px-8 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
       <GradientOrb size={700} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -35,7 +35,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
 
         <motion.blockquote
           variants={fadeUpChild}
-          className="text-2xl md:text-3xl leading-relaxed mb-6 md:mb-10 italic"
+          className="text-xl md:text-3xl leading-relaxed mb-6 md:mb-10 italic"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.quote}

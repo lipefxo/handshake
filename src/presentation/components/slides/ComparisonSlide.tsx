@@ -11,7 +11,7 @@ interface ComparisonSlideProps {
 export function ComparisonSlide({ content }: ComparisonSlideProps) {
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
       <GradientOrb size={600} className="top-0 left-0 -translate-x-1/4 -translate-y-1/4" />
@@ -26,7 +26,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
       >
         <motion.h2
           variants={fadeUpChild}
-          className="text-4xl md:text-5xl text-center mb-8 md:mb-14"
+          className="text-2xl md:text-5xl text-center mb-6 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
@@ -34,14 +34,14 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
 
         <motion.div variants={fadeUpChild} className="grid grid-cols-1 md:grid-cols-2 gap-px">
           {/* Before column */}
-          <div className="p-5 md:p-8" style={{ background: 'var(--color-bg-primary)' }}>
+          <div className="p-4 md:p-8" style={{ background: 'var(--color-bg-primary)' }}>
             <div
-              className="text-xs tracking-widest uppercase mb-6 font-medium"
+              className="text-xs tracking-widest uppercase mb-3 md:mb-6 font-medium"
               style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
             >
               {content.before.label}
             </div>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {content.before.items.map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
@@ -57,14 +57,14 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
           </div>
 
           {/* After column */}
-          <div className="p-5 md:p-8" style={{ background: 'var(--color-bg-secondary)' }}>
+          <div className="p-4 md:p-8" style={{ background: 'var(--color-bg-secondary)' }}>
             <div
-              className="text-xs tracking-widest uppercase mb-6 font-medium"
+              className="text-xs tracking-widest uppercase mb-3 md:mb-6 font-medium"
               style={{ color: 'var(--color-success)', fontFamily: 'var(--font-body)' }}
             >
               {content.after.label}
             </div>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {content.after.items.map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"

@@ -11,7 +11,7 @@ interface StatsSlideProps {
 export function StatsSlide({ content }: StatsSlideProps) {
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
       <GradientOrb size={500} className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
@@ -43,7 +43,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
               style={{ background: 'var(--color-bg-secondary)' }}
             >
               <div
-                className="text-4xl md:text-6xl font-light mb-3 tabular-nums"
+                className="text-3xl md:text-6xl font-light mb-2 md:mb-3 tabular-nums"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
               >
                 <AnimatedCounter
@@ -54,7 +54,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
                 />
               </div>
               <div
-                className="text-sm font-semibold mb-1.5 tracking-wide"
+                className="text-xs md:text-sm font-semibold mb-1 md:mb-1.5 tracking-wide"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
                 {stat.label}

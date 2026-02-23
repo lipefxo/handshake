@@ -10,7 +10,7 @@ interface TimelineSlideProps {
 export function TimelineSlide({ content }: TimelineSlideProps) {
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-secondary)' }}
     >
       <GradientOrb size={500} className="bottom-0 right-0 translate-x-1/3 translate-y-1/3" />
@@ -25,7 +25,7 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
       >
         <motion.h2
           variants={fadeUpChild}
-          className="text-4xl md:text-5xl mb-14 text-center"
+          className="text-2xl md:text-5xl mb-6 md:mb-14 text-center"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
@@ -42,7 +42,7 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
             transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
           />
 
-          <div className="space-y-8">
+            <div className="space-y-4 md:space-y-8">
             {content.milestones.map((milestone, i) => (
               <motion.div
                 key={i}

@@ -46,7 +46,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
 
         <motion.h2
           variants={fadeUpChild}
-          className="text-4xl md:text-6xl leading-tight mb-6"
+          className="text-2xl md:text-6xl leading-tight mb-4 md:mb-6"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
@@ -55,7 +55,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
         {content.subheading && (
           <motion.p
             variants={fadeUpChild}
-            className="text-lg mb-10"
+            className="text-base md:text-lg mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
             {content.subheading}

@@ -112,19 +112,6 @@
     will-change: transform, opacity;
   }
 
-  @media (max-width: 767px) {
-    .slide-section {
-      overflow-y: auto;
-      height: 100dvh;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
-    }
-
-    .slide-section > * {
-      min-height: 100dvh;
-      height: auto !important;
-    }
-  }
 
   .grain-overlay {
     position: absolute;

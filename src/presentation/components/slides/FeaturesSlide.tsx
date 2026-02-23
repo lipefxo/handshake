@@ -14,7 +14,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
 
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center px-8 py-16 overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
       style={{ background: 'var(--color-bg-primary)' }}
     >
       <GradientOrb size={600} className="bottom-0 right-0 translate-x-1/4 translate-y-1/4" />
@@ -27,17 +27,17 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <div className="mb-6 md:mb-14 text-center md:text-left">
+        <div className="mb-4 md:mb-14 text-center md:text-left">
           <motion.p
             variants={fadeUpChild}
-            className="text-xs tracking-widest uppercase mb-3"
+            className="text-xs tracking-widest uppercase mb-2 md:mb-3"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
             What we offer
           </motion.p>
           <motion.h2
             variants={fadeUpChild}
-            className="text-4xl md:text-5xl"
+            className="text-2xl md:text-5xl"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
             {content.heading}
@@ -58,24 +58,24 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
             <motion.div
               key={i}
               variants={fadeUpChild}
-              className="p-4 md:p-8 group"
+              className="p-3 md:p-8 group"
               style={{ background: 'var(--color-bg-primary)' }}
               whileHover={{ backgroundColor: theme.colors.bgSecondary }}
               transition={{ duration: 0.2 }}
             >
               {feature.icon && (
-                <div className="mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                <div className="mb-2 md:mb-4" style={{ color: 'var(--color-text-primary)' }}>
                   <AppIcon icon={feature.icon} size={22} />
                 </div>
               )}
               <h3
-                className="text-base font-semibold mb-2"
+                className="text-sm md:text-base font-semibold mb-1 md:mb-2"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
                 {feature.title}
               </h3>
               <p
-                className="text-sm leading-relaxed"
+                className="text-xs md:text-sm leading-relaxed"
                 style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
               >
                 {feature.description}
