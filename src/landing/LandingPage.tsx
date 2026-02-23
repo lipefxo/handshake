@@ -2853,26 +2853,6 @@ function Footer() {
               {label}
             </Link>
           ))}
-          {[
-            { label: 'Twitter', href: '#' },
-            { label: 'LinkedIn', href: '#' },
-          ].map(({ label, href }) => (
-            <a
-              key={label}
-              href={href}
-              style={{
-                fontFamily: sans,
-                fontSize: 13,
-                color: C.textMuted,
-                textDecoration: 'none',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textOnDark)}
-              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
-            >
-              {label}
-            </a>
-          ))}
         </div>
       </div>
     </footer>
