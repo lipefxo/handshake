@@ -643,6 +643,16 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     });
     writeCachedBrandTheme(cleanTheme);
 
+    // Propagate brand theme to all proposals in this workspace so that
+    // the live shareable link reflects the updated theme for public viewers.
+    const { error: propagateError } = await supabase
+      .from('proposals')
+      .update({ workspace_brand_theme: cleanTheme })
+      .eq('workspace_id', workspace.id);
+    if (propagateError) {
+      logStructuredError('propagate brand theme to proposals failed', propagateError);
+    }
+
     return true;
   },
 }));
