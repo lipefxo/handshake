@@ -3,7 +3,7 @@ import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markdown';
 import type { SlideType } from '../types/proposal';
-import { snippets, SNIPPET_LABELS } from './templates/sectionSnippets';
+import { getSnippet, getSnippetLabel } from './templates/sectionSnippets';
 import { copyToClipboard } from '../shared/utils/helpers';
 import { AppIcon } from '../shared/icons/AppIcon';
 
@@ -57,7 +57,8 @@ export function MarkdownEditor({ value, onChange, onCursorChange }: MarkdownEdit
 
   const handleInsertSnippet = useCallback(
     (type: SlideType) => {
-      const snippet = snippets[type];
+      const snippet = getSnippet(type);
+      if (!snippet) return;
       const textarea = editorRef.current?.querySelector('textarea');
       const pos = textarea?.selectionStart ?? value.length;
       const before = value.slice(0, pos);
@@ -131,7 +132,7 @@ Example:
               onClick={() => handleInsertSnippet(type)}
               className="px-2 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:border-gray-400 hover:text-gray-900 transition-all flex-shrink-0"
             >
-              + {SNIPPET_LABELS[type]}
+              + {getSnippetLabel(type)}
             </button>
           ))}
           <div className="flex-1" />

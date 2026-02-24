@@ -12,7 +12,7 @@ export function SlideTypeThumbnail({ type, isSelected = false, className = '' }:
   const softFill = isSelected ? 'bg-[#d4785c]/45' : 'bg-gray-200';
   const border = isSelected ? 'border-[#d4785c]/40 bg-[#d4785c]/10' : 'border-gray-200 bg-gray-50';
 
-  const shapeByType = {
+  const shapeByType: Partial<Record<SlideType, ReactNode>> = {
     // Centered headline + subline + logo block
     title: (
       <>
@@ -104,11 +104,19 @@ export function SlideTypeThumbnail({ type, isSelected = false, className = '' }:
         <div className={`absolute left-3 right-3 bottom-2 h-3 rounded ${fill}`} />
       </>
     ),
-  } satisfies Record<SlideType, ReactNode>;
+  };
+
+  const fallbackShape = (
+    <>
+      <div className={`absolute left-3 right-3 top-2 h-1.5 rounded ${fill}`} />
+      <div className={`absolute left-3 right-3 top-5 h-1 rounded ${softFill}`} />
+      <div className={`absolute left-3 right-3 top-7 h-1 rounded ${softFill}`} />
+    </>
+  );
 
   return (
     <div className={`relative h-9 w-11 overflow-hidden rounded-md border ${border} ${className}`}>
-      {shapeByType[type]}
+      {shapeByType[type] ?? fallbackShape}
     </div>
   );
 }

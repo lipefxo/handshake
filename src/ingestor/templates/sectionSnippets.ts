@@ -1,6 +1,6 @@
 import type { SlideType } from '../../types/proposal';
 
-export const snippets: Record<SlideType, string> = {
+export const snippets: Partial<Record<SlideType, string>> = {
   title: `# Your Headline Here
 <!-- type: title -->
 Partner × Acme Corp
@@ -110,7 +110,7 @@ email@company.com | (555) 123-4567
 ---`,
 };
 
-export const SNIPPET_LABELS: Record<SlideType, string> = {
+export const SNIPPET_LABELS: Partial<Record<SlideType, string>> = {
   title: 'Title',
   intro: 'Intro',
   stats: 'Stats',
@@ -123,3 +123,11 @@ export const SNIPPET_LABELS: Record<SlideType, string> = {
   table: 'Table',
   closing: 'Closing',
 };
+
+export function getSnippet(type: SlideType): string {
+  return snippets[type] ?? '';
+}
+
+export function getSnippetLabel(type: SlideType): string {
+  return SNIPPET_LABELS[type] ?? type;
+}

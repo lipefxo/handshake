@@ -5,7 +5,7 @@ import type { SlideType } from '../types/proposal';
 
 const MAX_PREVIEW_SLIDES = 20;
 
-const SLIDE_TYPE_ICONS: Record<SlideType, string> = {
+const SLIDE_TYPE_ICONS: Partial<Record<SlideType, string>> = {
   title: '✦',
   intro: '◈',
   stats: '◐',
@@ -19,7 +19,7 @@ const SLIDE_TYPE_ICONS: Record<SlideType, string> = {
   closing: '◉',
 };
 
-const SLIDE_TYPE_LABELS: Record<SlideType, string> = {
+const SLIDE_TYPE_LABELS: Partial<Record<SlideType, string>> = {
   title: 'Title',
   intro: 'Intro',
   stats: 'Stats',
@@ -72,6 +72,14 @@ function getSlidePreviewText(slide: { type: SlideType; content: unknown }): stri
   }
 }
 
+function getSlideTypeIcon(type: SlideType): string {
+  return SLIDE_TYPE_ICONS[type] ?? '◌';
+}
+
+function getSlideTypeLabel(type: SlideType): string {
+  return SLIDE_TYPE_LABELS[type] ?? type;
+}
+
 interface SlideCardProps {
   slide: { id: string; type: SlideType; content: unknown };
   validation: ValidationResult | undefined;
@@ -113,8 +121,8 @@ function SlideCard({ slide, validation, index, wasInferred }: SlideCardProps) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-gray-400">{SLIDE_TYPE_ICONS[slide.type]}</span>
-          <span className="text-xs font-semibold text-gray-700">{SLIDE_TYPE_LABELS[slide.type]} slide</span>
+          <span className="text-xs font-mono text-gray-400">{getSlideTypeIcon(slide.type)}</span>
+          <span className="text-xs font-semibold text-gray-700">{getSlideTypeLabel(slide.type)} slide</span>
           {wasInferred && (
             <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-500 rounded font-medium border border-blue-100">
               inferred

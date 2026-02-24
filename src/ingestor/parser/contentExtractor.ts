@@ -415,5 +415,6 @@ export function extractContent(section: TypedSection): SlideContent {
     case 'media':       return extractMedia(section);
     case 'table':       return extractTable(section);
     case 'closing':     return extractClosing(section);
+    default:            return extractIntro(section);
   }
 }
