@@ -4,6 +4,7 @@ import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { useTheme } from '../../../themes/useTheme';
 import { AppIcon } from '../../../shared/icons/AppIcon';
+import { RichText } from '../../../shared/components/RichText';
 
 interface FeaturesSlideProps {
   content: FeaturesSlideContent;
@@ -33,14 +34,14 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
             className="text-xs tracking-widest uppercase mb-2 md:mb-3"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.label || 'What we offer'}
+            <RichText text={content.label || 'What we offer'} />
           </motion.p>
           <motion.h2
             variants={fadeUpChild}
             className="text-2xl md:text-5xl"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
-            {content.heading}
+            <RichText text={content.heading} />
           </motion.h2>
           {content.subheading && (
             <motion.p
@@ -48,7 +49,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
               className="mt-3 text-lg"
               style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
             >
-              {content.subheading}
+              <RichText text={content.subheading} />
             </motion.p>
           )}
         </div>
@@ -72,13 +73,13 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
                 className="text-sm md:text-base font-semibold mb-1 md:mb-2"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
-                {feature.title}
+                <RichText text={feature.title} />
               </h3>
               <p
                 className="text-xs md:text-sm leading-relaxed"
                 style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
               >
-                {feature.description}
+                <RichText text={feature.description} />
               </p>
             </motion.div>
           ))}

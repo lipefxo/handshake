@@ -47,6 +47,17 @@ export function SlideTypeThumbnail({ type, isSelected = false, className = '' }:
         <div className={`absolute right-2 bottom-2 h-3 w-[38%] rounded ${fill}`} />
       </>
     ),
+    // Bullet list rows with left dots
+    'bullet-list': (
+      <>
+        <div className={`absolute left-3 top-2.5 h-1.5 w-1.5 rounded-full ${fill}`} />
+        <div className={`absolute left-5.5 right-2 top-2.5 h-1.5 rounded ${fill}`} />
+        <div className={`absolute left-3 top-5 h-1.5 w-1.5 rounded-full ${softFill}`} />
+        <div className={`absolute left-5.5 right-2 top-5 h-1.5 rounded ${softFill}`} />
+        <div className={`absolute left-3 top-7.5 h-1.5 w-1.5 rounded-full ${softFill}`} />
+        <div className={`absolute left-5.5 right-2 top-7.5 h-1.5 rounded ${softFill}`} />
+      </>
+    ),
     // Wide quote bars
     testimonial: (
       <>

@@ -13,7 +13,7 @@ function highlight(code: string): string {
 }
 
 const SNIPPET_ORDER: SlideType[] = [
-  'title', 'intro', 'stats', 'features', 'benefits',
+  'title', 'intro', 'stats', 'features', 'bullet-list', 'benefits',
   'testimonial', 'comparison', 'timeline', 'media', 'closing',
 ];
 
@@ -32,7 +32,7 @@ Requirements:
 - Split slides with --- on its own line.
 - Use headings and bullets where appropriate.
 - If a slide type is obvious, add <!-- type: slideType --> before that slide.
-- Valid slide types: title, intro, stats, features, benefits, testimonial, comparison, timeline, media, closing.
+- Valid slide types: title, intro, stats, features, bullet-list, benefits, testimonial, comparison, timeline, media, closing.
 - For feature/benefit rows, prefer icon IDs like [icon: slide.features.default] or [icon: slide.benefits.default].
 - Do not include explanations outside the markdown output.
 

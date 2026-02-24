@@ -3,6 +3,7 @@ import type { IntroSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { OptimizedImage } from '../OptimizedImage';
+import { RichText } from '../../../shared/components/RichText';
 
 interface IntroSlideProps {
   content: IntroSlideContent;
@@ -37,14 +38,14 @@ export function IntroSlide({ content }: IntroSlideProps) {
             className="text-xs tracking-widest uppercase mb-2 md:mb-4"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.label || 'Introduction'}
+            <RichText text={content.label || 'Introduction'} />
           </motion.p>
           <motion.h2
             variants={fadeUpChild}
             className="text-2xl md:text-6xl mb-3 md:mb-8 leading-tight"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
-            {content.heading}
+            <RichText text={content.heading} />
           </motion.h2>
           <motion.div
             variants={fadeUpChild}
@@ -53,7 +54,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
           >
             {(bodyParagraphs.length > 0 ? bodyParagraphs : [content.body || '']).map((paragraph, index) => (
               <p key={index} className="whitespace-pre-line">
-                {paragraph}
+                <RichText text={paragraph} />
               </p>
             ))}
           </motion.div>

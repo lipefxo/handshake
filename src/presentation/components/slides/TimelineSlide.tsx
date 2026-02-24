@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { TimelineSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { RichText } from '../../../shared/components/RichText';
 
 interface TimelineSlideProps {
   content: TimelineSlideContent;
@@ -28,7 +29,7 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
           className="text-2xl md:text-5xl mb-6 md:mb-14 text-center"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
-          {content.heading}
+          <RichText text={content.heading} />
         </motion.h2>
 
         <div className="relative">
@@ -55,16 +56,16 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
                     <div>
                       <div className="text-xs tracking-widest uppercase mb-1 font-medium"
                         style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
-                        {milestone.date}
+                        <RichText text={milestone.date} />
                       </div>
                       <div className="text-base font-semibold"
                         style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
-                        {milestone.title}
+                        <RichText text={milestone.title} />
                       </div>
                       {milestone.description && (
                         <div className="text-sm mt-1"
                           style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-                          {milestone.description}
+                          <RichText text={milestone.description} />
                         </div>
                       )}
                     </div>
@@ -83,16 +84,16 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
                   <div className="md:hidden">
                     <div className="text-xs tracking-widest uppercase mb-1 font-medium"
                       style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
-                      {milestone.date}
+                      <RichText text={milestone.date} />
                     </div>
                     <div className="text-base font-semibold"
                       style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
-                      {milestone.title}
+                      <RichText text={milestone.title} />
                     </div>
                     {milestone.description && (
                       <div className="text-sm mt-1"
                         style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-                        {milestone.description}
+                        <RichText text={milestone.description} />
                       </div>
                     )}
                   </div>
@@ -101,16 +102,16 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
                       <div>
                         <div className="text-xs tracking-widest uppercase mb-1 font-medium"
                           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
-                          {milestone.date}
+                          <RichText text={milestone.date} />
                         </div>
                         <div className="text-base font-semibold"
                           style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
-                          {milestone.title}
+                          <RichText text={milestone.title} />
                         </div>
                         {milestone.description && (
                           <div className="text-sm mt-1"
                             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-                            {milestone.description}
+                            <RichText text={milestone.description} />
                           </div>
                         )}
                       </div>

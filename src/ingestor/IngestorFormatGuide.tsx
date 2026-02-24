@@ -41,6 +41,16 @@ Body text goes here.
 - [icon: slide.features.protection] Security | Description`,
   },
   {
+    type: 'bullet-list',
+    label: 'Bullet List',
+    example: `# Key Points
+<!-- type: bullet-list -->
+
+- Point one
+- Point two
+- Point three`,
+  },
+  {
     type: 'benefits',
     label: 'Benefits',
     example: `# Partner Benefits
@@ -110,7 +120,7 @@ export function IngestorFormatGuide() {
       >
         <AppIcon icon="ui.chevron-right" className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
         Format guide
-        <span className="text-gray-300 ml-auto font-normal">10 slide types</span>
+        <span className="text-gray-300 ml-auto font-normal">11 slide types</span>
       </button>
 
       {isOpen && (
@@ -132,6 +142,8 @@ export function IngestorFormatGuide() {
           ))}
           <div className="col-span-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 text-[11px] text-blue-600">
             <span className="font-semibold">Tip:</span> Separate slides with <code className="bg-blue-100 px-1 rounded font-mono">---</code> horizontal rules. Add a frontmatter block at the top with <code className="bg-blue-100 px-1 rounded font-mono">title:</code>, <code className="bg-blue-100 px-1 rounded font-mono">partner:</code>, <code className="bg-blue-100 px-1 rounded font-mono">date:</code>, and optional <code className="bg-blue-100 px-1 rounded font-mono">theme:</code> fields.
+            <br />
+            Plain text is also supported: paste content with <code className="bg-blue-100 px-1 rounded font-mono">#</code>/<code className="bg-blue-100 px-1 rounded font-mono">##</code> headings, lists, and tables, and slide types will be inferred.
           </div>
         </div>
       )}

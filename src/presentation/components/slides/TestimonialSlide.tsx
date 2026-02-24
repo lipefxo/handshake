@@ -3,6 +3,7 @@ import type { TestimonialSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { OptimizedImage } from '../OptimizedImage';
+import { RichText } from '../../../shared/components/RichText';
 
 interface TestimonialSlideProps {
   content: TestimonialSlideContent;
@@ -38,7 +39,7 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
           className="text-xl md:text-3xl leading-relaxed mb-6 md:mb-10 italic"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
-          {content.quote}
+          <RichText text={content.quote} />
         </motion.blockquote>
 
         <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-4">
@@ -62,14 +63,14 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
               className="text-sm font-semibold"
               style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
             >
-              {content.author}
+              <RichText text={content.author} />
             </div>
             {(content.role || content.company) && (
               <div
                 className="text-xs mt-0.5"
                 style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
               >
-                {[content.role, content.company].filter(Boolean).join(', ')}
+                <RichText text={[content.role, content.company].filter(Boolean).join(', ')} />
               </div>
             )}
           </div>

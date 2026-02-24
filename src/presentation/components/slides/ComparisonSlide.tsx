@@ -3,6 +3,7 @@ import type { ComparisonSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { AppIcon } from '../../../shared/icons/AppIcon';
+import { RichText } from '../../../shared/components/RichText';
 
 interface ComparisonSlideProps {
   content: ComparisonSlideContent;
@@ -29,7 +30,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
           className="text-2xl md:text-5xl text-center mb-6 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
-          {content.heading}
+          <RichText text={content.heading} />
         </motion.h2>
 
         <motion.div variants={fadeUpChild} className="grid grid-cols-1 md:grid-cols-2 gap-px">
@@ -39,7 +40,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
               className="text-xs tracking-widest uppercase mb-3 md:mb-6 font-medium"
               style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
             >
-              {content.before.label}
+              <RichText text={content.before.label} />
             </div>
             <ul className="space-y-2 md:space-y-3">
               {content.before.items.map((item, i) => (
@@ -49,7 +50,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
                     <AppIcon icon="ui.close" className="w-2.5 h-2.5" strokeWidth={3} style={{ color: 'var(--color-text-tertiary)' }} />
                   </div>
                   <span className="text-sm" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
-                    {item}
+                    <RichText text={item} />
                   </span>
                 </li>
               ))}
@@ -62,7 +63,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
               className="text-xs tracking-widest uppercase mb-3 md:mb-6 font-medium"
               style={{ color: 'var(--color-success)', fontFamily: 'var(--font-body)' }}
             >
-              {content.after.label}
+              <RichText text={content.after.label} />
             </div>
             <ul className="space-y-2 md:space-y-3">
               {content.after.items.map((item, i) => (
@@ -72,7 +73,7 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
                     <AppIcon icon="ui.check" className="w-2.5 h-2.5" strokeWidth={3} style={{ color: 'var(--color-success)' }} />
                   </div>
                   <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
-                    {item}
+                    <RichText text={item} />
                   </span>
                 </li>
               ))}

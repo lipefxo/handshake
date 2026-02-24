@@ -3,6 +3,7 @@ import type { TitleSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { OptimizedImage } from '../OptimizedImage';
+import { RichText } from '../../../shared/components/RichText';
 
 interface TitleSlideProps {
   content: TitleSlideContent;
@@ -75,7 +76,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
             color: 'var(--color-text-primary)',
           }}
         >
-          {content.headline || 'A Strategic Partnership'}
+          <RichText text={content.headline || 'A Strategic Partnership'} />
         </motion.h1>
 
         {/* Subheadline */}
@@ -85,7 +86,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
             className="text-base md:text-xl mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.subheadline}
+            <RichText text={content.subheadline} />
           </motion.p>
         )}
 
@@ -100,7 +101,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
                 fontFamily: 'var(--font-body)',
               }}
             >
-              {content.date}
+              <RichText text={content.date} />
             </span>
           </motion.div>
         )}

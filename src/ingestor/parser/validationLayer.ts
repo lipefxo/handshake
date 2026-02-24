@@ -2,6 +2,7 @@ import type { SlideConfig, SlideType } from '../../types/proposal';
 import type {
   StatsSlideContent,
   FeaturesSlideContent,
+  BulletListSlideContent,
   BenefitsSlideContent,
   TestimonialSlideContent,
   TimelineSlideContent,
@@ -63,6 +64,14 @@ export function validateSlides(slides: SlideConfig[]): ValidationResult[] {
             messages.push({ level: 'warning', field: `features[${i}].description`, message: `Feature ${i + 1} "${f.title}" is missing a description.` });
           }
         });
+        break;
+      }
+
+      case 'bullet-list': {
+        const c = slide.content as BulletListSlideContent;
+        if (!c.items || c.items.length === 0) {
+          messages.push({ level: 'error', field: 'items', message: 'No bullet points detected.' });
+        }
         break;
       }
 

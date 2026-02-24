@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { MediaSlideContent } from '../../../types/proposal';
 import { useTheme } from '../../../themes/useTheme';
 import { OptimizedImage } from '../OptimizedImage';
+import { RichText } from '../../../shared/components/RichText';
 
 interface MediaSlideProps {
   content: MediaSlideContent;
@@ -66,7 +67,7 @@ export function MediaSlide({ content }: MediaSlideProps) {
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           <p className="text-sm text-center" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-primary)' }}>
-            {content.caption}
+            <RichText text={content.caption} />
           </p>
         </motion.div>
       )}

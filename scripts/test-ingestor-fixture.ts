@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   );
 
   const result = markdownToSlides(markdown);
-  const expectedSlideTypes = ['title', 'benefits', 'intro', 'stats', 'features', 'closing'];
+  const expectedSlideTypes = ['title', 'benefits', 'intro', 'table', 'features', 'closing'];
 
   assert.equal(result.errors.length, 0, `Expected no parser errors, got: ${result.errors.join('; ')}`);
   assert.equal(result.slides.length, 6, `Expected 6 slides, got ${result.slides.length}`);

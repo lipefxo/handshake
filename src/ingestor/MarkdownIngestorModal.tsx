@@ -150,8 +150,8 @@ export function MarkdownIngestorModal({
                   </h2>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {mode === 'new'
-                      ? 'Write or paste structured markdown to generate a complete proposal.'
-                      : 'Write or paste markdown to add slides to the current proposal.'}
+                      ? 'Write or paste markdown or structured plain text to generate a complete proposal.'
+                      : 'Write or paste markdown or structured plain text to add slides to the current proposal.'}
                   </p>
                 </div>
 

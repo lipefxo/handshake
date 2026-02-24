@@ -9,7 +9,7 @@ export interface TypedSection extends RawSection {
 
 const VALID_TYPES: Set<SlideType> = new Set([
   'title', 'intro', 'stats', 'features', 'testimonial',
-  'comparison', 'timeline', 'media', 'benefits', 'table', 'closing',
+  'comparison', 'timeline', 'media', 'benefits', 'bullet-list', 'table', 'closing',
 ]);
 
 function parseDirectives(raw: string): Record<string, string> {
@@ -39,6 +39,7 @@ function inferTypeFromContent(
 ): SlideType {
   const lines = raw.split('\n').map((l) => l.trim());
   const heading = lines.find((l) => l.startsWith('#'))?.toLowerCase() ?? '';
+  const headingText = heading.replace(/^#+\s+/, '');
   const text = raw.toLowerCase();
 
   // Only image content → media
@@ -51,6 +52,29 @@ function inferTypeFromContent(
   // Blockquote followed by attribution → testimonial
   if (/^>\s+/m.test(raw) && /^[—–-]\s+\w+/m.test(raw)) {
     return 'testimonial';
+  }
+
+  // Heading-first inference for plain text / light-markup sources.
+  if (/(executive summary)/i.test(headingText) && sectionIndex === 0) {
+    return 'title';
+  }
+  if (/(program structure|investment|pricing menu|pricing table|cost breakdown|budget)/i.test(headingText)) {
+    return 'table';
+  }
+  if (/(partnership roadmap|roadmap|timeline|milestone|journey)/i.test(headingText)) {
+    return 'timeline';
+  }
+  if (/(key value proposition|value proposition|what .* gets|partner benefit|benefit)/i.test(headingText)) {
+    return 'benefits';
+  }
+  if (/(why now|opportunity|overview|about|portfolio intelligence|data network effects)/i.test(headingText)) {
+    return 'intro';
+  }
+  if (/(solution|capabilities|what we offer|proof points|partnership.*impact)/i.test(headingText)) {
+    return 'features';
+  }
+  if (sectionIndex === 0) {
+    return 'title';
   }
 
   // Bullet items with | where first segment has numbers/currency → stats
@@ -92,7 +116,29 @@ function inferTypeFromContent(
 
   // Plain bullet lists (without pipe separators) are often features/benefits.
   const plainBullets = lines.filter((l) => /^[-*]\s+.+/.test(l) && !l.includes('|'));
+  if (plainBullets.length >= 2) {
+    const numericLead = plainBullets.filter((line) =>
+      /^[-*]\s*[$€£¥]?\d/i.test(line) || /^[-*]\s*(founded|network of)\s+\d/i.test(line),
+    ).length;
+    if (
+      numericLead / plainBullets.length >= 0.5 &&
+      /(overview|by the numbers|metrics|stat|impact|cost|pricing|investment)/i.test(heading + text.slice(0, 300))
+    ) {
+      return 'stats';
+    }
+
+    const timelineLead = plainBullets.filter((line) =>
+      /^[-*]\s*(q[1-4]\s*\d{4}|\d{4}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(line),
+    ).length;
+    if (timelineLead >= 2) {
+      return 'timeline';
+    }
+  }
+
   if (plainBullets.length >= 3) {
+    if (/(key points|highlights|agenda|takeaways|checklist)/i.test(heading + text)) {
+      return 'bullet-list';
+    }
     if (/(offer|feature|include|provide|visibility|reporting|dashboard)/i.test(heading)) {
       return 'features';
     }
@@ -103,11 +149,6 @@ function inferTypeFromContent(
       return 'features';
     }
     return 'features';
-  }
-
-  // First content section → title
-  if (sectionIndex === 0) {
-    return 'title';
   }
 
   // Last section with contact info or CTA language → closing

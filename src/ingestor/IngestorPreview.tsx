@@ -10,6 +10,7 @@ const SLIDE_TYPE_ICONS: Record<SlideType, string> = {
   intro: '◈',
   stats: '◐',
   features: '▤',
+  'bullet-list': '•',
   benefits: '◆',
   testimonial: '❝',
   comparison: '⊞',
@@ -24,6 +25,7 @@ const SLIDE_TYPE_LABELS: Record<SlideType, string> = {
   intro: 'Intro',
   stats: 'Stats',
   features: 'Features',
+  'bullet-list': 'Bullet List',
   benefits: 'Benefits',
   testimonial: 'Testimonial',
   comparison: 'Comparison',
@@ -47,6 +49,10 @@ function getSlidePreviewText(slide: { type: SlideType; content: unknown }): stri
     case 'features': {
       const feats = c['features'] as unknown[] | undefined;
       return (c['heading'] as string) ?? (feats ? `${feats.length} features` : '');
+    }
+    case 'bullet-list': {
+      const items = c['items'] as unknown[] | undefined;
+      return (c['heading'] as string) ?? (items ? `${items.length} bullet points` : '');
     }
     case 'benefits': {
       const bens = c['benefits'] as unknown[] | undefined;

@@ -27,6 +27,15 @@ Your subheadline here.
 
 ---`,
 
+  'bullet-list': `# Key Points
+<!-- type: bullet-list -->
+
+- First important point
+- Second important point
+- Third important point
+
+---`,
+
   testimonial: `# What Partners Say
 <!-- type: testimonial -->
 
@@ -115,6 +124,7 @@ export const SNIPPET_LABELS: Record<SlideType, string> = {
   intro: 'Intro',
   stats: 'Stats',
   features: 'Features',
+  'bullet-list': 'Bullet List',
   benefits: 'Benefits',
   testimonial: 'Testimonial',
   comparison: 'Comparison',

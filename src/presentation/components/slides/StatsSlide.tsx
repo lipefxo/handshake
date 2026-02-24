@@ -3,6 +3,7 @@ import type { StatsSlideContent } from '../../../types/proposal';
 import { AnimatedCounter } from '../../../shared/components/AnimatedCounter';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { RichText } from '../../../shared/components/RichText';
 
 interface StatsSlideProps {
   content: StatsSlideContent;
@@ -30,7 +31,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
             className="text-center text-sm tracking-widest uppercase mb-8 md:mb-16"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.heading}
+            <RichText text={content.heading} />
           </motion.p>
         )}
 
@@ -57,14 +58,14 @@ export function StatsSlide({ content }: StatsSlideProps) {
                 className="text-xs md:text-sm font-semibold mb-1 md:mb-1.5 tracking-wide"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
-                {stat.label}
+                <RichText text={stat.label} />
               </div>
               {stat.description && (
                 <div
                   className="text-xs"
                   style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
                 >
-                  {stat.description}
+                  <RichText text={stat.description} />
                 </div>
               )}
             </motion.div>

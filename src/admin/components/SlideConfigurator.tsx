@@ -76,28 +76,124 @@ function getMockItem<T>(items: T[], index: number): T {
 
 const selectClassName = 'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50';
 
+type TextControl = HTMLInputElement | HTMLTextAreaElement;
+
+const DECORATION_PRESETS: Array<{ id: string; label: string; title: string; prefix: string; suffix: string }> = [
+  { id: 'bold', label: 'B', title: 'Bold', prefix: '**', suffix: '**' },
+  { id: 'italic', label: 'I', title: 'Italic', prefix: '*', suffix: '*' },
+  { id: 'underline', label: 'U', title: 'Underline', prefix: '<u>', suffix: '</u>' },
+  { id: 'strike', label: 'S', title: 'Strikethrough', prefix: '~~', suffix: '~~' },
+  { id: 'code', label: '</>', title: 'Inline code', prefix: '`', suffix: '`' },
+];
+
+function setNativeTextControlValue(control: TextControl, value: string) {
+  const prototype = control instanceof HTMLTextAreaElement
+    ? HTMLTextAreaElement.prototype
+    : HTMLInputElement.prototype;
+  const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+  descriptor?.set?.call(control, value);
+}
+
+function applyDecoration(control: TextControl, prefix: string, suffix: string) {
+  const start = control.selectionStart ?? 0;
+  const end = control.selectionEnd ?? start;
+  const selected = control.value.slice(start, end);
+  const decorated = `${prefix}${selected || 'text'}${suffix}`;
+  const nextValue = `${control.value.slice(0, start)}${decorated}${control.value.slice(end)}`;
+  const selectionOffset = start + prefix.length;
+  const selectionLength = (selected || 'text').length;
+
+  setNativeTextControlValue(control, nextValue);
+  control.dispatchEvent(new Event('input', { bubbles: true }));
+  requestAnimationFrame(() => {
+    control.focus();
+    control.setSelectionRange(selectionOffset, selectionOffset + selectionLength);
+  });
+}
+
+function DecorationToolbar({
+  controlRef,
+}: {
+  controlRef: React.RefObject<TextControl | null>;
+}) {
+  return (
+    <div className="pointer-events-auto absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white/95 p-0.5 shadow-sm">
+      {DECORATION_PRESETS.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          className={`inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-[10px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 ${preset.id === 'italic' ? 'italic' : ''}`}
+          title={preset.title}
+          aria-label={preset.title}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            if (!controlRef.current) return;
+            applyDecoration(controlRef.current, preset.prefix, preset.suffix);
+          }}
+        >
+          {preset.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Input({
   maxLength,
   type,
+  className,
+  decorations,
   ...props
-}: React.ComponentProps<typeof BaseInput>) {
+}: React.ComponentProps<typeof BaseInput> & { decorations?: boolean }) {
   const defaultMaxLength = type === 'email' || type === 'tel'
     ? FIELD_LIMITS.contactField
     : FIELD_LIMITS.slideHeading;
+  const controlRef = React.useRef<HTMLInputElement>(null);
+  const supportsDecorations = decorations ?? (!type || type === 'text' || type === 'search');
+
+  if (!supportsDecorations) {
+    return (
+      <BaseInput
+        type={type}
+        maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
+        className={className}
+        {...props}
+      />
+    );
+  }
+
   return (
-    <BaseInput
-      type={type}
-      maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
-      {...props}
-    />
+    <div className="relative">
+      <DecorationToolbar controlRef={controlRef} />
+      <BaseInput
+        ref={controlRef}
+        type={type}
+        maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
+        className={`${className ?? ''} pr-28`}
+        {...props}
+      />
+    </div>
   );
 }
 
 function Textarea({
   maxLength = FIELD_LIMITS.slideBody,
+  className,
+  decorations = true,
   ...props
-}: React.ComponentProps<typeof BaseTextarea>) {
-  return <BaseTextarea maxLength={maxLength} {...props} />;
+}: React.ComponentProps<typeof BaseTextarea> & { decorations?: boolean }) {
+  const controlRef = React.useRef<HTMLTextAreaElement>(null);
+
+  if (!decorations) {
+    return <BaseTextarea className={className} maxLength={maxLength} {...props} />;
+  }
+
+  return (
+    <div className="relative">
+      <DecorationToolbar controlRef={controlRef} />
+      <BaseTextarea ref={controlRef} className={`${className ?? ''} pt-8`} maxLength={maxLength} {...props} />
+    </div>
+  );
 }
 
 export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
@@ -121,6 +217,9 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
+        Formatting: select text and use <strong>B</strong>, <em>I</em>, <u>U</u>, <s>S</s>, or <code className="rounded bg-black/10 px-1 py-0.5">code</code>.
+      </div>
       {/* Slide header */}
       <div className="pb-4 border-b border-gray-100">
         <div>
@@ -177,6 +276,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
                 </FieldGroup>
                 <FieldGroup label="URL (required)">
                   <Input
+                    decorations={false}
                     maxLength={FIELD_LIMITS.url}
                     value={link.url || ''}
                     onChange={(e) => updateLink(index, { url: e.target.value })}
@@ -1046,7 +1146,7 @@ function ClosingFields({ content, onChange }: { content: ClosingSlideContent; on
         </div>
       </FieldGroup>
       <FieldGroup label="CTA Button Text (required)"><Input value={content.ctaText || ''} onChange={(e) => onChange({ ctaText: e.target.value })} placeholder="Schedule a Call" /></FieldGroup>
-      <FieldGroup label="CTA URL (required)"><Input maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
+      <FieldGroup label="CTA URL (required)"><Input decorations={false} maxLength={FIELD_LIMITS.url} value={content.ctaUrl || ''} onChange={(e) => onChange({ ctaUrl: e.target.value })} placeholder="https://calendly.com/..." /></FieldGroup>
       <p className="text-[11px] text-gray-400 -mt-1">CTA button appears only when both Button Text and a valid URL are provided.</p>
       <div className="pt-2 border-t border-gray-100">
         <p className="text-xs font-medium text-gray-500 mb-3">Contact Info</p>

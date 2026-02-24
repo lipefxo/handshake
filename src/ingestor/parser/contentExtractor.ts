@@ -5,6 +5,7 @@ import type {
   IntroSlideContent,
   StatsSlideContent,
   FeaturesSlideContent,
+  BulletListSlideContent,
   TestimonialSlideContent,
   ComparisonSlideContent,
   TimelineSlideContent,
@@ -63,6 +64,7 @@ function extractParagraphs(text: string): string[] {
     .replace(/^#\s+.+$/m, '')
     .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/^[-*]\s+.+$/gm, '')
+    .replace(/^\d+[.)]\s+.+$/gm, '')
     .trim();
 
   return cleaned
@@ -71,19 +73,51 @@ function extractParagraphs(text: string): string[] {
     .filter(Boolean);
 }
 
+function extractListBodies(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^[-*]\s+.+/.test(line) || /^\d+[.)]\s+.+/.test(line))
+    .map((line) => line.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+    .filter(Boolean);
+}
+
+function parseStructuredListItem(body: string): string[] | null {
+  if (body.includes('|')) {
+    const parts = body.split('|').map((s) => s.trim());
+    return parts.length >= 2 ? parts : null;
+  }
+
+  const timelineMatch = body.match(
+    /^(q[1-4]\s*\d{4}|\d{4}|jan(?:uary)?\s+\d{4}|feb(?:ruary)?\s+\d{4}|mar(?:ch)?\s+\d{4}|apr(?:il)?\s+\d{4}|may\s+\d{4}|jun(?:e)?\s+\d{4}|jul(?:y)?\s+\d{4}|aug(?:ust)?\s+\d{4}|sep(?:tember)?\s+\d{4}|oct(?:ober)?\s+\d{4}|nov(?:ember)?\s+\d{4}|dec(?:ember)?\s+\d{4})\s*[:-]\s*(.+)$/i,
+  );
+  if (timelineMatch) {
+    return [timelineMatch[1], timelineMatch[2]];
+  }
+
+  const colonMatch = body.match(/^([^:|]{2,120}):\s+(.+)$/);
+  if (colonMatch) {
+    return [colonMatch[1], colonMatch[2]];
+  }
+
+  const dashMatch = body.match(/^([^|]{2,120}?)\s+[—–-]\s+(.+)$/);
+  if (dashMatch) {
+    return [dashMatch[1], dashMatch[2]];
+  }
+
+  return null;
+}
+
 function parsePipeItems(text: string): string[][] {
-  const lines = text.split('\n');
-  return lines
-    .filter((l) => /^[-*]\s+.+/.test(l.trim()))
-    .map((l) => l.replace(/^[-*]\s+/, '').split('|').map((s) => s.trim()));
+  return extractListBodies(text)
+    .map(parseStructuredListItem)
+    .filter((parts): parts is string[] => Array.isArray(parts) && parts.length >= 2);
 }
 
 function extractPlainBullets(text: string): string[][] {
-  const lines = text.split('\n');
-  return lines
-    .map((l) => l.trim())
-    .filter((l) => /^[-*]\s+.+/.test(l) && !l.includes('|'))
-    .map((l) => [l.replace(/^[-*]\s+/, '').trim()]);
+  return extractListBodies(text)
+    .filter((body) => !body.includes('|'))
+    .map((body) => [body]);
 }
 
 export function extractLinks(text: string): SlideLink[] {
@@ -221,6 +255,20 @@ function extractFeatures(section: TypedSection): FeaturesSlideContent {
     heading,
     subheading: cleanText(paragraphs[0] ?? ''),
     features: normalizedItems.map((item) => parseIconItem(item, 'slide.features.default')),
+  };
+}
+
+function extractBulletList(section: TypedSection): BulletListSlideContent {
+  const clean = stripDirectiveComments(section.raw);
+  const heading = cleanText(extractH1(clean) ?? '');
+  const paragraphs = extractParagraphs(clean);
+  const plainBullets = extractPlainBullets(clean).map((item) => cleanText(item[0] ?? '')).filter(Boolean);
+
+  return {
+    label: undefined,
+    heading,
+    subheading: cleanText(paragraphs[0] ?? ''),
+    items: plainBullets,
   };
 }
 
@@ -389,6 +437,7 @@ export function extractContent(section: TypedSection): SlideContent {
     case 'intro':       return extractIntro(section);
     case 'stats':       return extractStats(section);
     case 'features':    return extractFeatures(section);
+    case 'bullet-list': return extractBulletList(section);
     case 'benefits':    return extractBenefits(section);
     case 'testimonial': return extractTestimonial(section);
     case 'comparison':  return extractComparison(section);

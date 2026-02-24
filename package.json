@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:ingestor-fixture": "tsx scripts/test-ingestor-fixture.ts"
+    "test:ingestor-fixture": "tsx scripts/test-ingestor-fixture.ts",
+    "test:ingestor-plain-text-fixture": "tsx scripts/test-ingestor-plain-text-fixture.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

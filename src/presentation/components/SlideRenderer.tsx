@@ -17,6 +17,7 @@ import { BrandLogo } from '../../shared/components/BrandLogo';
 import { BrandWordmark } from '../../shared/components/BrandWordmark';
 import { pickBestContrastingText } from '../../shared/utils/colorContrast';
 import { sanitizeText, validateUrl } from '../../shared/utils/validation';
+import { RichText } from '../../shared/components/RichText';
 
 interface SlideRendererProps {
   slide: SlideConfig;
@@ -159,7 +160,7 @@ export function SlideRenderer({
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                {text}
+                <RichText text={text} />
                 <AppIcon icon="ui.external-link" className="w-3.5 h-3.5" />
               </a>
             );

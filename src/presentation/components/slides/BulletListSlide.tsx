@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { BulletListSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { fadeUpChild, staggerContainer } from '../../../shared/utils/animations';
+import { RichText } from '../../../shared/components/RichText';
 
 interface BulletListSlideProps {
   content: BulletListSlideContent;
@@ -30,14 +31,14 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
           className="text-xs tracking-widest uppercase mb-2 md:mb-3"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          {content.label || 'Key points'}
+          <RichText text={content.label || 'Key points'} />
         </motion.p>
         <motion.h2
           variants={fadeUpChild}
           className="text-2xl md:text-5xl leading-tight"
           style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
         >
-          {content.heading}
+          <RichText text={content.heading} />
         </motion.h2>
         {content.subheading && (
           <motion.p
@@ -45,7 +46,7 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
             className="mt-3 text-sm md:text-lg"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.subheading}
+            <RichText text={content.subheading} />
           </motion.p>
         )}
 
@@ -68,7 +69,7 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
                 className="text-sm md:text-lg leading-relaxed"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
-                {item}
+                <RichText text={item} />
               </p>
             </motion.li>
           ))}

@@ -4,6 +4,7 @@ import type {
   IntroSlideContent,
   StatsSlideContent,
   FeaturesSlideContent,
+  BulletListSlideContent,
   TestimonialSlideContent,
   ComparisonSlideContent,
   TimelineSlideContent,
@@ -66,6 +67,16 @@ function serializeFeatures(content: FeaturesSlideContent): string {
   for (const feature of content.features) {
     const iconPart = feature.icon ? `[icon: ${feature.icon}] ` : '';
     lines.push(`- ${iconPart}${feature.title} | ${feature.description}`);
+  }
+  return lines.join('\n');
+}
+
+function serializeBulletList(content: BulletListSlideContent): string {
+  const lines: string[] = ['<!-- type: bullet-list -->'];
+  if (content.heading) lines.push(`# ${content.heading}`);
+  if (content.subheading) lines.push(content.subheading);
+  for (const item of content.items) {
+    lines.push(`- ${item}`);
   }
   return lines.join('\n');
 }
@@ -179,6 +190,9 @@ export function slideToMarkdown(slide: SlideConfig, companyName?: string): strin
       break;
     case 'features':
       markdown = serializeFeatures(slide.content as FeaturesSlideContent);
+      break;
+    case 'bullet-list':
+      markdown = serializeBulletList(slide.content as BulletListSlideContent);
       break;
     case 'testimonial':
       markdown = serializeTestimonial(slide.content as TestimonialSlideContent);

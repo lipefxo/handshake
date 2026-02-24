@@ -1,6 +1,7 @@
 import { v4 as generateUUID } from 'uuid';
 import type {
   BenefitsSlideContent,
+  BulletListSlideContent,
   FeaturesSlideContent,
   SlideConfig,
   StatsSlideContent,
@@ -13,13 +14,15 @@ import { validateSlides } from './validationLayer';
 import type { ValidationResult } from './validationLayer';
 import { FIELD_LIMITS, sanitizeText } from '../../shared/utils/validation';
 
-function insertDividersBeforeH2(markdown: string): string {
+function insertDividersBeforeSectionHeadings(markdown: string, includeH3: boolean): string {
   const lines = markdown.split('\n');
   const output: string[] = [];
 
   for (const line of lines) {
-    const isH2 = /^##\s+/.test(line.trimStart());
-    if (isH2 && output.length > 0) {
+    const isSectionHeading =
+      /^##\s+/.test(line.trimStart()) || (includeH3 && /^###\s+/.test(line.trimStart()));
+
+    if (isSectionHeading && output.length > 0) {
       let prev = output.length - 1;
       while (prev >= 0 && output[prev].trim() === '') prev--;
       if (prev >= 0 && output[prev].trim() !== '---') {
@@ -81,6 +84,35 @@ function stripStrikethrough(markdown: string): string {
   return markdown.replace(/~~[^~]+~~/g, '');
 }
 
+function isLikelyPlainTextSource(markdown: string): boolean {
+  const hasTypeDirective = /<!--[\s\S]*?\btype\s*:\s*[a-zA-Z]+\b[\s\S]*?-->/i.test(markdown);
+  if (hasTypeDirective) return false;
+
+  const headingCount = (markdown.match(/^##\s+.+$/gm) ?? []).length;
+  const hasNumberedList = /^\s*\d+[.)]\s+.+$/m.test(markdown);
+  const hasTable = /^\s*\|.+\|/m.test(markdown);
+  const hasEditorialMarker = /^\s*#?\s*dt\s*edit\s*$/im.test(markdown);
+
+  return headingCount >= 2 || hasNumberedList || hasTable || hasEditorialMarker;
+}
+
+function stripEditorialNoiseLines(markdown: string): string {
+  return markdown
+    .split('\n')
+    .filter((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return true;
+      if (/^#?\s*dt\s*edit\s*$/i.test(trimmed)) return false;
+      if (/^[*]{6,}$/.test(trimmed)) return false;
+      return true;
+    })
+    .join('\n');
+}
+
+function convertNumberedListsToBullets(markdown: string): string {
+  return markdown.replace(/^(\s*)\d+[.)]\s+(.+)$/gm, '$1- $2');
+}
+
 function isTableSeparatorRow(row: string): boolean {
   const trimmed = row.trim();
   if (!trimmed.startsWith('|')) return false;
@@ -111,14 +143,12 @@ function containsMarkdownTable(section: string): boolean {
 }
 
 function injectTableTypeDirectives(markdown: string): string {
-  const parts = markdown.split(/(^[ \t]*---[ \t]*$)/m);
-  return parts
-    .map((part) => {
-      if (/^[ \t]*---[ \t]*$/.test(part)) return part;
-      if (!containsMarkdownTable(part) || hasAnyTypeDirective(part)) return part;
-      return `<!-- type: table -->\n${part}`;
-    })
-    .join('');
+  const sections = markdown.split(/^[ \t]*---[ \t]*$/m);
+  const transformed = sections.map((section) => {
+    if (!containsMarkdownTable(section) || hasAnyTypeDirective(section)) return section;
+    return `<!-- type: table -->\n${section}`;
+  });
+  return transformed.join('\n---\n');
 }
 
 function convertTablesInSection(section: string): string {
@@ -187,14 +217,12 @@ function convertTableBlockToBulletLines(blockLines: string[]): string[] {
 }
 
 function convertMarkdownTablesToBulletPipes(markdown: string): string {
-  const parts = markdown.split(/(^[ \t]*---[ \t]*$)/m);
-  return parts
-    .map((part) => {
-      if (/^[ \t]*---[ \t]*$/.test(part)) return part;
-      if (hasTableTypeDirective(part)) return part;
-      return convertTablesInSection(part);
-    })
-    .join('');
+  const sections = markdown.split(/^[ \t]*---[ \t]*$/m);
+  const transformed = sections.map((section) => {
+    if (hasTableTypeDirective(section)) return section;
+    return convertTablesInSection(section);
+  });
+  return transformed.join('\n---\n');
 }
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -215,6 +243,15 @@ function splitOversizedSlides(slides: SlideConfig[]): SlideConfig[] {
           ...slide,
           id: index === 0 ? slide.id : generateUUID(),
           content: { ...content, features: chunk },
+        }));
+      }
+      case 'bullet-list': {
+        const content = slide.content as BulletListSlideContent;
+        if (content.items.length <= FIELD_LIMITS.maxBulletItems) return [slide];
+        return chunkArray(content.items, FIELD_LIMITS.maxBulletItems).map((chunk, index) => ({
+          ...slide,
+          id: index === 0 ? slide.id : generateUUID(),
+          content: { ...content, items: chunk },
         }));
       }
       case 'benefits': {
@@ -250,10 +287,14 @@ function splitOversizedSlides(slides: SlideConfig[]): SlideConfig[] {
   });
 }
 
-function normalizeMarkdown(markdown: string): string {
+function normalizeMarkdown(markdown: string, plainTextMode: boolean): string {
   let normalized = markdown;
+  if (plainTextMode) {
+    normalized = stripEditorialNoiseLines(normalized);
+    normalized = convertNumberedListsToBullets(normalized);
+  }
   normalized = stripLeadingDocumentH1(normalized);
-  normalized = insertDividersBeforeH2(normalized);
+  normalized = insertDividersBeforeSectionHeadings(normalized, plainTextMode);
   normalized = promoteLeadingH2ToH1PerSection(normalized);
   normalized = normalizeEmojiParagraphs(normalized);
   normalized = stripStrikethrough(normalized);
@@ -281,7 +322,8 @@ export function markdownToSlides(markdown: string): ParseResult {
     return { frontmatter: {}, slides: [], validation: [], errors: ['No markdown content provided.'] };
   }
 
-  const normalizedMarkdown = normalizeMarkdown(markdown);
+  const plainTextMode = isLikelyPlainTextSource(markdown);
+  const normalizedMarkdown = normalizeMarkdown(markdown, plainTextMode);
 
   // Step 1: Detect sections
   const sections = detectSections(normalizedMarkdown);
@@ -328,7 +370,7 @@ export function markdownToSlides(markdown: string): ParseResult {
   // Step 5: Check for unknown type directives
   typedSections.forEach((ts) => {
     if (ts.directives['_unknownType']) {
-      errors.push(`Unknown slide type directive "type: ${ts.directives['_unknownType']}" in section ${ts.index + 1}. Valid types: title, intro, stats, features, benefits, testimonial, comparison, timeline, media, table, closing.`);
+      errors.push(`Unknown slide type directive "type: ${ts.directives['_unknownType']}" in section ${ts.index + 1}. Valid types: title, intro, stats, features, bullet-list, benefits, testimonial, comparison, timeline, media, table, closing.`);
     }
   });
 

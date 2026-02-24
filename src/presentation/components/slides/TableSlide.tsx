@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { TableSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { fadeUpChild, staggerContainer } from '../../../shared/utils/animations';
+import { RichText } from '../../../shared/components/RichText';
 
 interface TableSlideProps {
   content: TableSlideContent;
@@ -32,14 +33,14 @@ export function TableSlide({ content }: TableSlideProps) {
             className="text-3xl md:text-4xl"
             style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
           >
-            {content.heading}
+            <RichText text={content.heading} />
           </h2>
           {content.description && (
             <p
               className="mt-2 text-sm md:text-base"
               style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
             >
-              {content.description}
+              <RichText text={content.description} />
             </p>
           )}
         </motion.div>
@@ -59,7 +60,7 @@ export function TableSlide({ content }: TableSlideProps) {
                     }}
                     title={column}
                   >
-                    {column}
+                    <RichText text={column} />
                   </th>
                 ))}
               </tr>
@@ -84,7 +85,7 @@ export function TableSlide({ content }: TableSlideProps) {
                       }}
                       title={row[colIndex] ?? ''}
                     >
-                      {row[colIndex] ?? ''}
+                      <RichText text={row[colIndex] ?? ''} />
                     </td>
                   ))}
                 </motion.tr>

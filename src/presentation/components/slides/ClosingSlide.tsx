@@ -4,6 +4,7 @@ import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { AppIcon } from '../../../shared/icons/AppIcon';
 import { sanitizeText, validateUrl } from '../../../shared/utils/validation';
+import { RichText } from '../../../shared/components/RichText';
 
 interface ClosingSlideProps {
   content: ClosingSlideContent;
@@ -41,7 +42,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
           className="text-xs tracking-widest uppercase mb-4"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          {content.label || 'Next steps'}
+          <RichText text={content.label || 'Next steps'} />
         </motion.p>
 
         <motion.h2
@@ -49,7 +50,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
           className="text-2xl md:text-6xl leading-tight mb-4 md:mb-6"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
-          {content.heading}
+          <RichText text={content.heading} />
         </motion.h2>
 
         {content.subheading && (
@@ -58,7 +59,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
             className="text-base md:text-lg mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
-            {content.subheading}
+            <RichText text={content.subheading} />
           </motion.p>
         )}
 
@@ -75,7 +76,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
                 fontFamily: 'var(--font-body)',
               }}
             >
-              {safeCtaText}
+              <RichText text={safeCtaText} />
               <AppIcon icon="ui.chevron-right" className="w-4 h-4" />
             </a>
           </motion.div>
@@ -93,7 +94,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
                 className="text-sm font-semibold mb-1"
                 style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
               >
-                {content.contactName}
+                <RichText text={content.contactName} />
               </p>
             )}
             <div className="flex items-center justify-center gap-4 flex-wrap">

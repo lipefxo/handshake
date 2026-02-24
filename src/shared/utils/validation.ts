@@ -18,6 +18,7 @@ export const FIELD_LIMITS = {
   url: 2000,
   maxStats: 4,
   maxFeatures: 6,
+  maxBulletItems: 8,
   maxBenefits: 6,
   maxMilestones: 6,
   maxComparisonItems: 6,

@@ -6,6 +6,7 @@ const LEGACY_ICON_MAP: Record<string, AppIconId> = {
   '◎': 'slide.type.intro',
   '▲': 'slide.type.stats',
   '⬡': 'slide.type.features',
+  '•': 'slide.type.bullet-list',
   '❝': 'slide.type.testimonial',
   '⇄': 'slide.type.comparison',
   '◉': 'slide.type.timeline',

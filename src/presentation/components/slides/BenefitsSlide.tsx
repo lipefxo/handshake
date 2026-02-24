@@ -4,6 +4,7 @@ import { GradientOrb } from '../../../shared/components/GradientOrb';
 import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
 import { useTheme } from '../../../themes/useTheme';
 import { AppIcon } from '../../../shared/icons/AppIcon';
+import { RichText } from '../../../shared/components/RichText';
 
 interface BenefitsSlideProps {
   content: BenefitsSlideContent;
@@ -32,7 +33,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
           className="text-2xl md:text-5xl text-center mb-6 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
-          {content.heading}
+          <RichText text={content.heading} />
         </motion.h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-px">
@@ -55,13 +56,13 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
                   className="text-sm md:text-base font-semibold mb-1 md:mb-2"
                   style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
                 >
-                  {benefit.title}
+                  <RichText text={benefit.title} />
                 </h3>
                 <p
                   className="text-xs md:text-sm leading-relaxed"
                   style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
                 >
-                  {benefit.description}
+                  <RichText text={benefit.description} />
                 </p>
               </div>
             </motion.div>
