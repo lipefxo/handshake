@@ -37,7 +37,7 @@ export function IntroSlide({ content }: IntroSlideProps) {
             className="text-xs tracking-widest uppercase mb-2 md:mb-4"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
-            Introduction
+            {content.label || 'Introduction'}
           </motion.p>
           <motion.h2
             variants={fadeUpChild}

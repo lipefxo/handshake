@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SlideConfig, SlideLink, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, SlideLink, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, BulletListSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { ImageUploader } from './ImageUploader';
 import { SLIDE_TYPE_META } from '../../data/slideDefaults';
 import { AppIcon } from '../../shared/icons/AppIcon';
@@ -41,6 +41,13 @@ const MOCK_FEATURES = [
   { icon: 'slide.features.default' as AppIconId, title: 'Workflow Automation', description: 'Automate repetitive steps and reduce manual follow-up for every campaign.' },
   { icon: 'slide.features.default' as AppIconId, title: 'Live Collaboration', description: 'Keep your team aligned with shared updates and quick in-context feedback.' },
   { icon: 'slide.features.default' as AppIconId, title: 'Performance Insights', description: 'Track outcomes in real time with clear reporting and trend visibility.' },
+];
+
+const MOCK_BULLET_ITEMS = [
+  'Align on shared launch goals and success metrics',
+  'Define scope, ownership, and implementation cadence',
+  'Prioritize immediate opportunities for fast impact',
+  'Confirm next steps and kickoff timeline',
 ];
 
 const MOCK_BENEFITS = [
@@ -127,6 +134,7 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
       {slide.type === 'intro' && <IntroFields content={slide.content as IntroSlideContent} onChange={updateContent} />}
       {slide.type === 'stats' && <StatsFields content={slide.content as StatsSlideContent} onChange={updateContent} />}
       {slide.type === 'features' && <FeaturesFields content={slide.content as FeaturesSlideContent} onChange={updateContent} />}
+      {slide.type === 'bullet-list' && <BulletListFields content={slide.content as BulletListSlideContent} onChange={updateContent} />}
       {slide.type === 'testimonial' && <TestimonialFields content={slide.content as TestimonialSlideContent} onChange={updateContent} />}
       {slide.type === 'comparison' && <ComparisonFields content={slide.content as ComparisonSlideContent} onChange={updateContent} />}
       {slide.type === 'timeline' && <TimelineFields content={slide.content as TimelineSlideContent} onChange={updateContent} />}
@@ -328,6 +336,13 @@ function TitleFields({ content, onChange }: { content: TitleSlideContent; onChan
 function IntroFields({ content, onChange }: { content: IntroSlideContent; onChange: (u: Record<string, unknown>) => void }) {
   return (
     <div className="space-y-4">
+      <FieldGroup label="Section Label">
+        <Input
+          value={content.label || ''}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Introduction"
+        />
+      </FieldGroup>
       <FieldGroup label="Heading">
         <Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} />
       </FieldGroup>
@@ -445,6 +460,13 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
 
   return (
     <div className="space-y-4">
+      <FieldGroup label="Section Label">
+        <Input
+          value={content.label || ''}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="What we offer"
+        />
+      </FieldGroup>
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <FieldGroup label="Subheading"><Input value={content.subheading || ''} onChange={(e) => onChange({ subheading: e.target.value })} /></FieldGroup>
       <div>
@@ -490,6 +512,80 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
                 <label className="text-xs text-gray-400 mb-1 block">Description</label>
                 <Textarea style={{ minHeight: '56px' }} value={feature.description} onChange={(e) => updateFeature(i, 'description', e.target.value)} rows={2} />
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BulletListFields({ content, onChange }: { content: BulletListSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const atMaxItems = content.items.length >= FIELD_LIMITS.maxBulletItems;
+
+  const updateItem = (index: number, value: string) => {
+    onChange({ items: content.items.map((item, i) => (i === index ? value : item)) });
+  };
+  const addItem = () => {
+    if (atMaxItems) return;
+    onChange({ items: [...content.items, getMockItem(MOCK_BULLET_ITEMS, content.items.length)] });
+  };
+  const removeItem = (index: number) => {
+    onChange({ items: content.items.filter((_, i) => i !== index) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <FieldGroup label="Section Label">
+        <Input
+          value={content.label || ''}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Key points"
+        />
+      </FieldGroup>
+      <FieldGroup label="Heading">
+        <Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} />
+      </FieldGroup>
+      <FieldGroup label="Subheading">
+        <Input value={content.subheading || ''} onChange={(e) => onChange({ subheading: e.target.value })} />
+      </FieldGroup>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">Bullet items</label>
+            <ItemCounter count={content.items.length} max={FIELD_LIMITS.maxBulletItems} />
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={addItem}
+            disabled={atMaxItems}
+            title={atMaxItems ? `Limit reached (${FIELD_LIMITS.maxBulletItems})` : undefined}
+            className="h-auto p-0 text-xs text-[#d4785c]"
+          >
+            + Add item
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {content.items.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                value={item}
+                onChange={(e) => updateItem(index, e.target.value)}
+                maxLength={FIELD_LIMITS.slideBody}
+                placeholder={`Bullet item ${index + 1}`}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeItem(index)}
+                className="h-9 px-2 text-xs text-red-500 hover:text-red-600"
+              >
+                Remove
+              </Button>
             </div>
           ))}
         </div>
@@ -930,6 +1026,13 @@ function TableFields({ content, onChange }: { content: TableSlideContent; onChan
 function ClosingFields({ content, onChange }: { content: ClosingSlideContent; onChange: (u: Record<string, unknown>) => void }) {
   return (
     <div className="space-y-4">
+      <FieldGroup label="Section Label">
+        <Input
+          value={content.label || ''}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Next steps"
+        />
+      </FieldGroup>
       <FieldGroup label="Heading"><Input value={content.heading || ''} onChange={(e) => onChange({ heading: e.target.value })} /></FieldGroup>
       <FieldGroup label="Subheading">
         <div>

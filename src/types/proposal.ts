@@ -7,6 +7,7 @@ export type SlideType =
   | 'intro'
   | 'stats'
   | 'features'
+  | 'bullet-list'
   | 'testimonial'
   | 'comparison'
   | 'timeline'
@@ -44,6 +45,7 @@ export interface TitleSlideContent {
 }
 
 export interface IntroSlideContent {
+  label?: string;
   heading: string;
   body: string;
   image?: string;
@@ -62,6 +64,7 @@ export interface StatsSlideContent {
 }
 
 export interface FeaturesSlideContent {
+  label?: string;
   heading: string;
   subheading?: string;
   features: Array<{
@@ -69,6 +72,13 @@ export interface FeaturesSlideContent {
     title: string;
     description: string;
   }>;
+}
+
+export interface BulletListSlideContent {
+  label?: string;
+  heading: string;
+  subheading?: string;
+  items: string[];
 }
 
 export interface TestimonialSlideContent {
@@ -118,6 +128,7 @@ export interface TableSlideContent {
 }
 
 export interface ClosingSlideContent {
+  label?: string;
   heading: string;
   subheading?: string;
   ctaText?: string;
@@ -132,6 +143,7 @@ export type SlideContent =
   | IntroSlideContent
   | StatsSlideContent
   | FeaturesSlideContent
+  | BulletListSlideContent
   | TestimonialSlideContent
   | ComparisonSlideContent
   | TimelineSlideContent

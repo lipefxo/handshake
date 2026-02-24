@@ -41,7 +41,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
           className="text-xs tracking-widest uppercase mb-4"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          Next steps
+          {content.label || 'Next steps'}
         </motion.p>
 
         <motion.h2

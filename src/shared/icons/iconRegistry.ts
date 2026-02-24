@@ -69,6 +69,7 @@ export const APP_ICON_REGISTRY = {
   'slide.type.intro': StarIcon,
   'slide.type.stats': Chart01Icon,
   'slide.type.features': StarIcon,
+  'slide.type.bullet-list': File01Icon,
   'slide.type.testimonial': QuoteUpIcon,
   'slide.type.comparison': ShuffleIcon,
   'slide.type.timeline': TimelineIcon,
