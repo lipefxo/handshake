@@ -1,9 +1,10 @@
 import { useMemo, type ReactNode } from 'react';
-import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
+import type { SlideConfig, TitleSlideContent, IntroSlideContent, StatsSlideContent, FeaturesSlideContent, BulletListSlideContent, TestimonialSlideContent, ComparisonSlideContent, TimelineSlideContent, MediaSlideContent, BenefitsSlideContent, TableSlideContent, ClosingSlideContent } from '../../types/proposal';
 import { TitleSlide } from './slides/TitleSlide';
 import { IntroSlide } from './slides/IntroSlide';
 import { StatsSlide } from './slides/StatsSlide';
 import { FeaturesSlide } from './slides/FeaturesSlide';
+import { BulletListSlide } from './slides/BulletListSlide';
 import { TestimonialSlide } from './slides/TestimonialSlide';
 import { ComparisonSlide } from './slides/ComparisonSlide';
 import { TimelineSlide } from './slides/TimelineSlide';
@@ -83,6 +84,9 @@ export function SlideRenderer({
       break;
     case 'features':
       slideBody = <FeaturesSlide content={content as FeaturesSlideContent} />;
+      break;
+    case 'bullet-list':
+      slideBody = <BulletListSlide content={content as BulletListSlideContent} />;
       break;
     case 'testimonial':
       slideBody = <TestimonialSlide content={content as TestimonialSlideContent} />;
