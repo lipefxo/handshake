@@ -18,6 +18,7 @@ export const SLIDE_TYPE_META: Record<SlideType, { label: string; icon: AppIconId
   intro: { label: 'Introduction', icon: 'slide.type.intro', description: 'Who we are or partnership overview' },
   stats: { label: 'Stats & Metrics', icon: 'slide.type.stats', description: 'Animated counters & key metrics' },
   features: { label: 'Features', icon: 'slide.type.features', description: 'Product or service highlights' },
+  'bullet-list': { label: 'Bullet List', icon: 'slide.type.bullet-list', description: 'Simple list of key points' },
   testimonial: { label: 'Testimonial', icon: 'slide.type.testimonial', description: 'Quote with attribution' },
   comparison: { label: 'Comparison', icon: 'slide.type.comparison', description: 'Before & after or side-by-side' },
   timeline: { label: 'Timeline', icon: 'slide.type.timeline', description: 'Partnership roadmap & milestones' },
@@ -36,6 +37,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     },
     intro: {
+      label: 'Introduction',
       heading: 'Who We Are',
       body: 'Acme Corp is a leading provider of premium protective packaging solutions. We partner with world-class brands to deliver exceptional quality and unmatched reliability.',
       imagePosition: 'right',
@@ -50,6 +52,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       ],
     },
     features: {
+      label: 'What we offer',
       heading: 'What We Offer',
       subheading: 'Premium solutions designed for your brand',
       features: [
@@ -57,6 +60,17 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
         { icon: 'slide.features.branding', title: 'Custom Branding', description: 'Full-bleed printing, custom shapes, and bespoke finishes.' },
         { icon: 'slide.features.speed', title: 'Fast Turnaround', description: '5-day standard production with expedited options available.' },
         { icon: 'slide.features.sustainability', title: 'Sustainable Materials', description: '100% recyclable and biodegradable options for eco-conscious brands.' },
+      ],
+    },
+    'bullet-list': {
+      label: 'Key points',
+      heading: 'What We Will Cover',
+      subheading: 'The main outcomes for this partnership.',
+      items: [
+        'Shared success metrics and launch goals',
+        'Timeline, responsibilities, and communication plan',
+        'Execution approach and quality checkpoints',
+        'Next steps to kick off implementation',
       ],
     },
     testimonial: {
@@ -111,6 +125,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
       ],
     },
     closing: {
+      label: 'Next steps',
       heading: "Let's Build Something Great",
       subheading: "We're ready when you are. Reach out to start the conversation.",
       ctaText: 'Schedule a Call',

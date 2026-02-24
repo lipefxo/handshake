@@ -33,7 +33,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
             className="text-xs tracking-widest uppercase mb-2 md:mb-3"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
-            What we offer
+            {content.label || 'What we offer'}
           </motion.p>
           <motion.h2
             variants={fadeUpChild}
