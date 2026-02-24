@@ -88,7 +88,7 @@ A quick side-by-side view.
 ---`,
 
   intro: `# Section Heading
-<!-- type: intro -->
+<!-- type: intro, image_position: right, image_layout: constrained -->
 
 Your body text goes here. This can be multiple paragraphs
 with as much detail as needed.

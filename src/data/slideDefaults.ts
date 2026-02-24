@@ -38,6 +38,7 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
     intro: {
       heading: 'Who We Are',
       body: 'Acme Corp is a leading provider of premium protective packaging solutions. We partner with world-class brands to deliver exceptional quality and unmatched reliability.',
+      imageLayout: 'constrained',
       imagePosition: 'right',
     },
     stats: {

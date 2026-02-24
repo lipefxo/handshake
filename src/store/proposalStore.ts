@@ -150,7 +150,21 @@ function sanitizeUnknown(value: unknown, key = ''): unknown {
   if (typeof value === 'string') {
     const lowerKey = key.toLowerCase();
     if (lowerKey === 'imageposition') {
-      return value === 'left' || value === 'right' ? value : '';
+      return value === 'left' || value === 'right' ? value : 'right';
+    }
+    if (lowerKey === 'imagelayout') {
+      return (
+        value === 'constrained'
+        || value === 'split'
+        || value === 'full-width-top'
+        || value === 'full-width-middle'
+        || value === 'full-width-bottom'
+      )
+        ? value
+        : 'constrained';
+    }
+    if (lowerKey === 'imageenabled') {
+      return value === 'true';
     }
     if (lowerKey.includes('url') || lowerKey.includes('image') || lowerKey.includes('logo') || lowerKey === 'src') {
       const validated = validateUrl(value);
@@ -831,4 +845,3 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     }));
   },
 }));
-

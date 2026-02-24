@@ -13,7 +13,7 @@ Transforming financial operations together.
 ---
 
 # Who We Are
-<!-- type: intro, image_position: right -->
+<!-- type: intro, image_position: right, image_layout: constrained -->
 
 Acme Corp is the leading financial SaaS platform serving over
 250 active customers with automated bookkeeping, tax preparation,

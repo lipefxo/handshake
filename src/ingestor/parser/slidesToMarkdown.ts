@@ -36,11 +36,22 @@ function serializeTitle(content: TitleSlideContent, companyName?: string): strin
 }
 
 function serializeIntro(content: IntroSlideContent): string {
-  const directive =
-    content.imagePosition === 'left'
-      ? '<!-- type: intro, image_position: left -->'
-      : '<!-- type: intro -->';
-  const lines: string[] = [directive];
+  const directives: string[] = ['type: intro'];
+  const imagePosition = content.imagePosition ?? 'right';
+  const imageLayout = content.imageLayout ?? 'constrained';
+  const imageLayoutDirective = imageLayout.replace(/-/g, '_');
+
+  if (imagePosition === 'left') {
+    directives.push('image_position: left');
+  }
+  if (imageLayout !== 'constrained') {
+    directives.push(`image_layout: ${imageLayoutDirective}`);
+  }
+  if (content.imageEnabled && !content.image) {
+    directives.push('image_enabled: true');
+  }
+
+  const lines: string[] = [`<!-- ${directives.join(', ')} -->`];
   if (content.heading) lines.push(`# ${content.heading}`);
   if (content.body) lines.push(content.body);
   if (content.image) lines.push(`![image](${content.image})`);

@@ -131,17 +131,36 @@ function extractTitle(section: TypedSection): TitleSlideContent {
   };
 }
 
+function normalizeIntroImageLayout(rawLayout: string): IntroSlideContent['imageLayout'] {
+  const normalized = rawLayout.trim().toLowerCase().replace(/_/g, '-');
+  if (
+    normalized === 'constrained'
+    || normalized === 'split'
+    || normalized === 'full-width-top'
+    || normalized === 'full-width-middle'
+    || normalized === 'full-width-bottom'
+  ) {
+    return normalized;
+  }
+  return 'constrained';
+}
+
 function extractIntro(section: TypedSection): IntroSlideContent {
   const clean = stripDirectiveComments(section.raw);
   const heading = cleanText(extractH1(clean) ?? '');
   const paragraphs = extractParagraphs(clean);
   const image = extractImage(clean);
-  const imagePosition = (section.directives['image_position'] as 'left' | 'right') ?? 'right';
+  const imagePosition = section.directives['image_position'] === 'left' ? 'left' : 'right';
+  const imageLayout = normalizeIntroImageLayout(section.directives['image_layout'] ?? '');
+  const imageEnabledDirective = (section.directives['image_enabled'] ?? '').trim().toLowerCase();
+  const imageEnabled = Boolean(image?.url) || imageEnabledDirective === 'true';
 
   return {
     heading,
     body: cleanText(paragraphs.join('\n\n')),
     image: image?.url || undefined,
+    imageEnabled,
+    imageLayout,
     imagePosition,
   };
 }

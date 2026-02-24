@@ -15,7 +15,7 @@ Subheadline here.`,
     type: 'intro',
     label: 'Intro',
     example: `# Section Heading
-<!-- type: intro, image_position: right -->
+<!-- type: intro, image_position: right, image_layout: split -->
 
 Body text goes here.
 
