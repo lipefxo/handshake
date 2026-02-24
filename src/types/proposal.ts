@@ -49,6 +49,8 @@ export interface IntroSlideContent {
   heading: string;
   body: string;
   image?: string;
+  imageEnabled?: boolean;
+  imageLayout?: 'constrained' | 'split' | 'full-width-top' | 'full-width-middle' | 'full-width-bottom';
   imagePosition?: 'left' | 'right';
 }
 

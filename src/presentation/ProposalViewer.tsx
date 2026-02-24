@@ -93,6 +93,7 @@ function ProposalViewerContent() {
   } = useProposalStore();
   const user = useAuthStore((state) => state.user);
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
+  const workspaceLoading = useWorkspaceStore((state) => state.loading);
   const currentWorkspaceBrandTheme = useWorkspaceStore((state) => state.currentWorkspace?.brandTheme);
   const cachedWorkspaceBrandTheme = useWorkspaceStore((state) => state.cachedBrandTheme);
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -138,7 +139,6 @@ function ProposalViewerContent() {
     if (isEmbeddedEditorPreview) return;
 
     let cancelled = false;
-    const isPreviewMode = window.location.hash.includes('preview');
 
     const loadProposal = async () => {
       setLoading(true);
@@ -146,6 +146,12 @@ function ProposalViewerContent() {
       setProposalMeta(null);
       setProposal(null);
       setAccessGranted(false);
+
+      // In standalone preview mode, draft access depends on current workspace
+      // context. Wait for workspace bootstrap to complete before loading.
+      if (isPreviewMode && user && !currentWorkspaceId && workspaceLoading) {
+        return;
+      }
 
       if (slug === DEMO_PROPOSAL_SLUG) {
         setProposalMeta({
@@ -240,7 +246,17 @@ function ProposalViewerContent() {
     return () => {
       cancelled = true;
     };
-  }, [slug, getProposalContentBySlug, getProposalMetaBySlug, getOwnProposalBySlug, isEmbeddedEditorPreview]);
+  }, [
+    slug,
+    getProposalContentBySlug,
+    getProposalMetaBySlug,
+    getOwnProposalBySlug,
+    isEmbeddedEditorPreview,
+    isPreviewMode,
+    user,
+    currentWorkspaceId,
+    workspaceLoading,
+  ]);
 
   useEffect(() => {
     const isPreviewMode = window.location.hash.includes('preview');

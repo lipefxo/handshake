@@ -76,28 +76,122 @@ function getMockItem<T>(items: T[], index: number): T {
 
 const selectClassName = 'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50';
 
+type TextControl = HTMLInputElement | HTMLTextAreaElement;
+
+const DECORATION_PRESETS: Array<{ id: string; label: string; title: string; prefix: string; suffix: string }> = [
+  { id: 'bold', label: 'B', title: 'Bold', prefix: '**', suffix: '**' },
+  { id: 'italic', label: 'I', title: 'Italic', prefix: '*', suffix: '*' },
+  { id: 'underline', label: 'U', title: 'Underline', prefix: '<u>', suffix: '</u>' },
+  { id: 'strike', label: 'S', title: 'Strikethrough', prefix: '~~', suffix: '~~' },
+  { id: 'code', label: '</>', title: 'Inline code', prefix: '`', suffix: '`' },
+];
+
+function setNativeTextControlValue(control: TextControl, value: string) {
+  const prototype = control instanceof HTMLTextAreaElement
+    ? HTMLTextAreaElement.prototype
+    : HTMLInputElement.prototype;
+  const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+  descriptor?.set?.call(control, value);
+}
+
+function applyDecoration(control: TextControl, prefix: string, suffix: string) {
+  const start = control.selectionStart ?? 0;
+  const end = control.selectionEnd ?? start;
+  const selected = control.value.slice(start, end);
+  const decorated = `${prefix}${selected || 'text'}${suffix}`;
+  const nextValue = `${control.value.slice(0, start)}${decorated}${control.value.slice(end)}`;
+  const selectionOffset = start + prefix.length;
+  const selectionLength = (selected || 'text').length;
+
+  setNativeTextControlValue(control, nextValue);
+  control.dispatchEvent(new Event('input', { bubbles: true }));
+  requestAnimationFrame(() => {
+    control.focus();
+    control.setSelectionRange(selectionOffset, selectionOffset + selectionLength);
+  });
+}
+
+function DecorationToolbar({
+  controlRef,
+}: {
+  controlRef: React.RefObject<TextControl | null>;
+}) {
+  return (
+    <div className="pointer-events-auto absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white/95 p-0.5 shadow-sm">
+      {DECORATION_PRESETS.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          className={`inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-[10px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 ${preset.id === 'italic' ? 'italic' : ''}`}
+          title={preset.title}
+          aria-label={preset.title}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            if (!controlRef.current) return;
+            applyDecoration(controlRef.current, preset.prefix, preset.suffix);
+          }}
+        >
+          {preset.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Input({
   maxLength,
   type,
+  className,
+  decorations = false,
   ...props
-}: React.ComponentProps<typeof BaseInput>) {
+}: React.ComponentProps<typeof BaseInput> & { decorations?: boolean }) {
   const defaultMaxLength = type === 'email' || type === 'tel'
     ? FIELD_LIMITS.contactField
     : FIELD_LIMITS.slideHeading;
+
+  if (!decorations) {
+    return (
+      <BaseInput
+        type={type}
+        maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
+        className={className}
+        {...props}
+      />
+    );
+  }
+
+  const controlRef = React.useRef<HTMLInputElement>(null);
   return (
-    <BaseInput
-      type={type}
-      maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
-      {...props}
-    />
+    <div className="relative">
+      <DecorationToolbar controlRef={controlRef} />
+      <BaseInput
+        ref={controlRef}
+        type={type}
+        maxLength={type === 'number' ? undefined : (maxLength ?? defaultMaxLength)}
+        className={`${className ?? ''} pr-28`}
+        {...props}
+      />
+    </div>
   );
 }
 
 function Textarea({
   maxLength = FIELD_LIMITS.slideBody,
+  className,
+  decorations = false,
   ...props
-}: React.ComponentProps<typeof BaseTextarea>) {
-  return <BaseTextarea maxLength={maxLength} {...props} />;
+}: React.ComponentProps<typeof BaseTextarea> & { decorations?: boolean }) {
+  if (!decorations) {
+    return <BaseTextarea className={className} maxLength={maxLength} {...props} />;
+  }
+
+  const controlRef = React.useRef<HTMLTextAreaElement>(null);
+  return (
+    <div className="relative">
+      <DecorationToolbar controlRef={controlRef} />
+      <BaseTextarea ref={controlRef} className={`${className ?? ''} pt-8`} maxLength={maxLength} {...props} />
+    </div>
+  );
 }
 
 export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
@@ -333,7 +427,110 @@ function TitleFields({ content, onChange }: { content: TitleSlideContent; onChan
   );
 }
 
+function IntroImageLayoutPreview({
+  imageUrl,
+  layout,
+  position,
+}: {
+  imageUrl?: string;
+  layout: NonNullable<IntroSlideContent['imageLayout']>;
+  position: NonNullable<IntroSlideContent['imagePosition']>;
+}) {
+  const skeletonText = (
+    <div className="space-y-1.5">
+      <div className="h-2.5 w-2/3 rounded bg-gray-200" />
+      <div className="h-2 w-full rounded bg-gray-100" />
+      <div className="h-2 w-5/6 rounded bg-gray-100" />
+      <div className="h-2 w-4/5 rounded bg-gray-100" />
+    </div>
+  );
+
+  const imageBlock = imageUrl ? (
+    <img
+      src={imageUrl}
+      alt="Intro slide preview"
+      className="h-full w-full rounded-lg border border-gray-200 object-cover"
+    />
+  ) : (
+    <div className="h-full w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center gap-1 text-gray-400">
+      <AppIcon icon="ui.image" className="h-4 w-4" />
+      <span className="text-[10px] font-medium uppercase tracking-wide">Image placeholder</span>
+    </div>
+  );
+
+  if (layout === 'split') {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-2">
+        <div className="grid grid-cols-2 gap-2">
+          {position === 'left' ? (
+            <>
+              <div className="h-20">{imageBlock}</div>
+              <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+            </>
+          ) : (
+            <>
+              <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+              <div className="h-20">{imageBlock}</div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'full-width-top') {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+        <div className="h-16">{imageBlock}</div>
+        <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+      </div>
+    );
+  }
+
+  if (layout === 'full-width-middle') {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+        <div className="h-5 w-2/3 rounded bg-gray-200" />
+        <div className="h-16">{imageBlock}</div>
+        <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+      </div>
+    );
+  }
+
+  if (layout === 'full-width-bottom') {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+        <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+        <div className="h-16">{imageBlock}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-2">
+      <div className={`grid gap-2 ${position === 'left' ? 'grid-cols-[96px_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_96px]'}`}>
+        {position === 'left' ? (
+          <>
+            <div className="h-16">{imageBlock}</div>
+            <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+          </>
+        ) : (
+          <>
+            <div className="rounded-lg border border-gray-100 bg-white p-2">{skeletonText}</div>
+            <div className="h-16">{imageBlock}</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function IntroFields({ content, onChange }: { content: IntroSlideContent; onChange: (u: Record<string, unknown>) => void }) {
+  const imageLayout = content.imageLayout ?? 'constrained';
+  const imagePosition = content.imagePosition === 'left' ? 'left' : 'right';
+  const imageEnabled = Boolean(content.imageEnabled || content.image);
+  const supportsSideControl = imageLayout === 'constrained' || imageLayout === 'split';
+
   return (
     <div className="space-y-4">
       <FieldGroup label="Section Label">
@@ -349,6 +546,7 @@ function IntroFields({ content, onChange }: { content: IntroSlideContent; onChan
       <FieldGroup label="Body">
         <div>
           <Textarea
+            decorations
             value={content.body || ''}
             onChange={(e) => onChange({ body: e.target.value })}
             rows={4}
@@ -357,13 +555,87 @@ function IntroFields({ content, onChange }: { content: IntroSlideContent; onChan
           <CharCounter value={content.body || ''} max={FIELD_LIMITS.introBody} />
         </div>
       </FieldGroup>
-      <FieldGroup label="Image Position">
-        <select className={selectClassName} value={content.imagePosition || 'right'} onChange={(e) => onChange({ imagePosition: e.target.value })}>
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </select>
-      </FieldGroup>
-      <ImageUploader label="Image (optional)" value={content.image} onChange={(url) => onChange({ image: url })} context="slide-image" />
+
+      <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-gray-600">Image</p>
+          {imageEnabled ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange({ imageEnabled: false, image: undefined })}
+              className="h-auto px-1.5 py-0 text-xs text-red-500 hover:text-red-600"
+            >
+              Remove image block
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => onChange({ imageEnabled: true, imageLayout, imagePosition })}
+              className="h-auto p-0 text-xs text-[#d4785c]"
+            >
+              + Add image
+            </Button>
+          )}
+        </div>
+
+        {imageEnabled ? (
+          <>
+            <div>
+              <p className="mb-1 text-[11px] text-gray-500">Placement preview</p>
+              <IntroImageLayoutPreview
+                imageUrl={content.image}
+                layout={imageLayout}
+                position={imagePosition}
+              />
+            </div>
+
+            <FieldGroup label="Image Layout">
+              <select
+                className={selectClassName}
+                value={imageLayout}
+                onChange={(e) => onChange({ imageLayout: e.target.value as IntroSlideContent['imageLayout'] })}
+              >
+                <option value="constrained">Constrained card</option>
+                <option value="split">Split 50 / 50</option>
+                <option value="full-width-top">Full-width at top</option>
+                <option value="full-width-middle">Full-width in middle</option>
+                <option value="full-width-bottom">Full-width at bottom</option>
+              </select>
+            </FieldGroup>
+
+            {supportsSideControl && (
+              <FieldGroup label="Image Side">
+                <select
+                  className={selectClassName}
+                  value={imagePosition}
+                  onChange={(e) => onChange({ imagePosition: e.target.value as IntroSlideContent['imagePosition'] })}
+                >
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </FieldGroup>
+            )}
+
+            <ImageUploader
+              label={content.image ? 'Image' : 'Upload image'}
+              value={content.image}
+              onChange={(url) => onChange({ image: url || undefined, imageEnabled: true })}
+              context="slide-image"
+            />
+            {!content.image && (
+              <p className="text-[11px] text-gray-400">
+                Upload an image to replace the placeholder in this layout.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-gray-400">No image block added yet.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -510,7 +782,7 @@ function FeaturesFields({ content, onChange }: { content: FeaturesSlideContent; 
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Description</label>
-                <Textarea style={{ minHeight: '56px' }} value={feature.description} onChange={(e) => updateFeature(i, 'description', e.target.value)} rows={2} />
+                <Textarea decorations style={{ minHeight: '56px' }} value={feature.description} onChange={(e) => updateFeature(i, 'description', e.target.value)} rows={2} />
               </div>
             </div>
           ))}
@@ -600,6 +872,7 @@ function TestimonialFields({ content, onChange }: { content: TestimonialSlideCon
       <FieldGroup label="Quote">
         <div>
           <Textarea
+            decorations
             value={content.quote || ''}
             onChange={(e) => onChange({ quote: e.target.value })}
             rows={4}
@@ -865,7 +1138,7 @@ function BenefitsFields({ content, onChange }: { content: BenefitsSlideContent; 
                 </div>
                 <div><label className="text-xs text-gray-400 mb-1 block">Title</label><Input value={benefit.title} onChange={(e) => updateBenefit(i, 'title', e.target.value)} /></div>
               </div>
-              <div><label className="text-xs text-gray-400 mb-1 block">Description</label><Textarea style={{ minHeight: '56px' }} value={benefit.description} onChange={(e) => updateBenefit(i, 'description', e.target.value)} rows={2} /></div>
+              <div><label className="text-xs text-gray-400 mb-1 block">Description</label><Textarea decorations style={{ minHeight: '56px' }} value={benefit.description} onChange={(e) => updateBenefit(i, 'description', e.target.value)} rows={2} /></div>
             </div>
           ))}
         </div>
@@ -924,7 +1197,7 @@ function TableFields({ content, onChange }: { content: TableSlideContent; onChan
       </FieldGroup>
 
       <FieldGroup label="Description">
-        <Textarea value={content.description || ''} onChange={(e) => onChange({ description: e.target.value })} rows={2} />
+        <Textarea decorations value={content.description || ''} onChange={(e) => onChange({ description: e.target.value })} rows={2} />
       </FieldGroup>
 
       <div>
@@ -1037,6 +1310,7 @@ function ClosingFields({ content, onChange }: { content: ClosingSlideContent; on
       <FieldGroup label="Subheading">
         <div>
           <Textarea
+            decorations
             value={content.subheading || ''}
             onChange={(e) => onChange({ subheading: e.target.value })}
             rows={2}

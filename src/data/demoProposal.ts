@@ -41,6 +41,7 @@ export const DEMO_PROPOSAL: Proposal = {
       content: {
         heading: 'Context and Opportunity',
         body: 'Northstar has built a premium product and loyal following, but paid traffic conversion and post-purchase retention are underperforming. This proposal outlines a focused 90-day engagement to improve conversion, increase average order value, and create a scalable growth system.',
+        imageLayout: 'constrained',
         imagePosition: 'right',
       },
     },

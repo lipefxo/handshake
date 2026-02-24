@@ -10,11 +10,79 @@ interface IntroSlideProps {
 
 export function IntroSlide({ content }: IntroSlideProps) {
   const hasImage = !!content.image;
+  const imageLayout = content.imageLayout ?? 'constrained';
   const imageRight = content.imagePosition === 'right' || !content.imagePosition;
+  const isSplitLayout = hasImage && imageLayout === 'split';
+  const isFullWidthTop = hasImage && imageLayout === 'full-width-top';
+  const isFullWidthMiddle = hasImage && imageLayout === 'full-width-middle';
+  const isFullWidthBottom = hasImage && imageLayout === 'full-width-bottom';
   const bodyParagraphs = (content.body || '')
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
+  const bodyContent = bodyParagraphs.length > 0 ? bodyParagraphs : [content.body || ''];
+
+  const renderImage = (className: string) => (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.8, delay: 0.3 }}
+    >
+      <OptimizedImage
+        src={content.image}
+        alt={content.heading}
+        className="w-full h-full object-cover rounded-2xl"
+        style={{ border: '1px solid var(--color-border)' }}
+      />
+    </motion.div>
+  );
+
+  const renderTextContent = (
+    className: string,
+    bodyMaxWidth: string,
+    includeMiddleImage = false,
+  ) => (
+    <motion.div
+      className={className}
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+    >
+      <motion.p
+        variants={fadeUpChild}
+        className="text-xs tracking-widest uppercase mb-2 md:mb-4"
+        style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+      >
+        Introduction
+      </motion.p>
+      <motion.h2
+        variants={fadeUpChild}
+        className="text-2xl md:text-6xl mb-3 md:mb-8 leading-tight"
+        style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
+      >
+        {content.heading}
+      </motion.h2>
+      {includeMiddleImage && hasImage && (
+        <motion.div variants={fadeUpChild} className="mb-4 md:mb-8">
+          {renderImage('w-full h-44 md:h-72 lg:h-80')}
+        </motion.div>
+      )}
+      <motion.div
+        variants={fadeUpChild}
+        className="text-sm md:text-lg leading-relaxed space-y-3 md:space-y-4"
+        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', maxWidth: bodyMaxWidth }}
+      >
+        {bodyContent.map((paragraph, index) => (
+          <p key={index} className="whitespace-pre-line">
+            {paragraph}
+          </p>
+        ))}
+      </motion.div>
+    </motion.div>
+  );
 
   return (
     <div
