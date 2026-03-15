@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   BarChart,
@@ -205,7 +205,7 @@ export function ProposalAnalytics() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.slideBreakdown.map((slide, i) => {
+                        {data.slideBreakdown.map((slide) => {
                           const maxViews = Math.max(...data.slideBreakdown.map((s) => s.viewCount));
                           const isMost = slide.viewCount === maxViews && slide.viewCount > 0;
                           return (
@@ -282,7 +282,7 @@ export function ProposalAnalytics() {
                   <div>
                     <SectionTitle>Top locations</SectionTitle>
                     <div className="rounded-xl border border-gray-100 bg-white overflow-hidden">
-                      {data.topCountries.map((c, i) => (
+                      {data.topCountries.map((c) => (
                         <div
                           key={c.country}
                           className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0"

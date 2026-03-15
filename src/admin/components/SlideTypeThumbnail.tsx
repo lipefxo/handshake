@@ -96,6 +96,17 @@ export function SlideTypeThumbnail({ type, isSelected = false, className = '' }:
         <div className={`absolute left-[66%] top-2 bottom-2 w-px ${softFill}`} />
       </>
     ),
+    // Bullet list rows
+    'bullet-list': (
+      <>
+        <div className={`absolute left-2 top-2 h-1 w-1 rounded-full ${fill}`} />
+        <div className={`absolute left-4 right-2 top-2 h-1 rounded ${softFill}`} />
+        <div className={`absolute left-2 top-4.5 h-1 w-1 rounded-full ${fill}`} />
+        <div className={`absolute left-4 right-2 top-4.5 h-1 rounded ${softFill}`} />
+        <div className={`absolute left-2 top-7 h-1 w-1 rounded-full ${fill}`} />
+        <div className={`absolute left-4 right-2 top-7 h-1 rounded ${softFill}`} />
+      </>
+    ),
     // Headline + sub + wide CTA button
     closing: (
       <>

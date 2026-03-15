@@ -20,6 +20,7 @@ export const FIELD_LIMITS = {
   maxFeatures: 6,
   maxBenefits: 6,
   maxMilestones: 6,
+  maxBulletItems: 8,
   maxComparisonItems: 6,
   maxTableColumns: 6,
   maxTableRows: 10,

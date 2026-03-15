@@ -12,6 +12,7 @@ import type {
   BenefitsSlideContent,
   TableSlideContent,
   ClosingSlideContent,
+  BulletListSlideContent,
 } from '../../types/proposal';
 import type { TypedSection } from './slideTypeInferrer';
 import { normalizeIconId } from '../../shared/icons/iconMigration';
@@ -398,6 +399,20 @@ function extractTable(section: TypedSection): TableSlideContent {
   };
 }
 
+function extractBulletList(section: TypedSection): BulletListSlideContent {
+  const clean = stripDirectiveComments(section.raw);
+  const heading = cleanText(extractH1(clean) ?? '');
+  const paragraphs = extractParagraphs(clean);
+  const bullets = extractPlainBullets(clean);
+  const items = bullets.map((b) => cleanText(b[0] ?? ''));
+
+  return {
+    heading,
+    subheading: cleanText(paragraphs[0] ?? ''),
+    items: items.length > 0 ? items : ['Item one', 'Item two', 'Item three'],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
@@ -408,6 +423,7 @@ export function extractContent(section: TypedSection): SlideContent {
     case 'intro':       return extractIntro(section);
     case 'stats':       return extractStats(section);
     case 'features':    return extractFeatures(section);
+    case 'bullet-list': return extractBulletList(section);
     case 'benefits':    return extractBenefits(section);
     case 'testimonial': return extractTestimonial(section);
     case 'comparison':  return extractComparison(section);
@@ -415,5 +431,9 @@ export function extractContent(section: TypedSection): SlideContent {
     case 'media':       return extractMedia(section);
     case 'table':       return extractTable(section);
     case 'closing':     return extractClosing(section);
+    default: {
+      const _exhaustive: never = section.slideType;
+      throw new Error(`Unknown slide type: ${_exhaustive}`);
+    }
   }
 }

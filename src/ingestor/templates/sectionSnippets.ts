@@ -97,6 +97,15 @@ with as much detail as needed.
 
 ---`,
 
+  'bullet-list': `# Key Points
+<!-- type: bullet-list -->
+
+- First bullet item
+- Second bullet item
+- Third bullet item
+
+---`,
+
   closing: `# Let's Get Started
 <!-- type: closing -->
 
@@ -121,5 +130,6 @@ export const SNIPPET_LABELS: Record<SlideType, string> = {
   timeline: 'Timeline',
   media: 'Media',
   table: 'Table',
+  'bullet-list': 'Bullet List',
   closing: 'Closing',
 };

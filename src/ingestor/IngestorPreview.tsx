@@ -16,6 +16,7 @@ const SLIDE_TYPE_ICONS: Record<SlideType, string> = {
   timeline: '◎',
   media: '▣',
   table: '▦',
+  'bullet-list': '•',
   closing: '◉',
 };
 
@@ -30,6 +31,7 @@ const SLIDE_TYPE_LABELS: Record<SlideType, string> = {
   timeline: 'Timeline',
   media: 'Media',
   table: 'Table',
+  'bullet-list': 'Bullet List',
   closing: 'Closing',
 };
 
