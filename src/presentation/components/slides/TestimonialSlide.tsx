@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { TestimonialSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { OptimizedImage } from '../OptimizedImage';
 
 interface TestimonialSlideProps {
@@ -9,6 +10,7 @@ interface TestimonialSlideProps {
 }
 
 export function TestimonialSlide({ content }: TestimonialSlideProps) {
+  const isExport = useExportMode();
   return (
     <div
       className="relative w-full h-full flex items-center justify-center px-6 md:px-8 overflow-hidden"
@@ -19,14 +21,15 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
 
       <motion.div
         className="relative z-10 max-w-3xl mx-auto text-center"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.4 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.4 }}
       >
         {/* Large quote mark */}
         <motion.div
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-6xl md:text-8xl leading-none mb-4 md:mb-6"
           style={{ color: 'var(--color-border)', fontFamily: 'var(--font-display)' }}
         >
@@ -34,14 +37,14 @@ export function TestimonialSlide({ content }: TestimonialSlideProps) {
         </motion.div>
 
         <motion.blockquote
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-xl md:text-3xl leading-relaxed mb-6 md:mb-10 italic"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.quote}
         </motion.blockquote>
 
-        <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-4">
+        <motion.div variants={isExport ? staticChild : fadeUpChild} className="flex items-center justify-center gap-4">
           {content.avatar ? (
             <OptimizedImage
               src={content.avatar}

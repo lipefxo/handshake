@@ -353,8 +353,8 @@ export function ProposalEditor() {
         exportMode: true,
       };
       iframe.contentWindow?.postMessage(exportMessage, window.location.origin);
-      // Wait for all slides to render
-      await new Promise((r) => setTimeout(r, 500));
+      // Wait for all slides to render in export mode (no animations)
+      await new Promise((r) => setTimeout(r, 800));
 
       const container = iframe.contentDocument.querySelector<HTMLElement>('.slide-container');
       if (!container) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'motion/react';
 import { easeOutExpo } from '../utils/helpers';
+import { useExportMode } from '../contexts/ExportModeContext';
 
 interface AnimatedCounterProps {
   value: number;
@@ -11,13 +12,14 @@ interface AnimatedCounterProps {
 }
 
 export function AnimatedCounter({ value, duration = 1500, prefix = '', suffix = '', className }: AnimatedCounterProps) {
-  const [current, setCurrent] = useState(0);
+  const isExport = useExportMode();
+  const [current, setCurrent] = useState(isExport ? value : 0);
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true });
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    if (!isInView || hasAnimated.current) return;
+    if (isExport || !isInView || hasAnimated.current) return;
     hasAnimated.current = true;
 
     const start = Date.now();
@@ -29,7 +31,7 @@ export function AnimatedCounter({ value, duration = 1500, prefix = '', suffix = 
       if (progress < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }, [isInView, value, duration]);
+  }, [isExport, isInView, value, duration]);
 
   return (
     <span ref={ref} className={className}>

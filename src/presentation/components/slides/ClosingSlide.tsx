@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { ClosingSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { AppIcon } from '../../../shared/icons/AppIcon';
 import { sanitizeText, validateUrl } from '../../../shared/utils/validation';
 
@@ -12,6 +13,7 @@ interface ClosingSlideProps {
 }
 
 export function ClosingSlide({ content, companyName, hideBottomBranding = false }: ClosingSlideProps) {
+  const isExport = useExportMode();
   const safeCtaText = sanitizeText(content.ctaText ?? '');
   const safeCtaUrl = content.ctaUrl ? validateUrl(content.ctaUrl) : { value: '', isValid: false };
   const showCtaButton = Boolean(safeCtaText) && safeCtaUrl.isValid;
@@ -31,13 +33,14 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
 
       <motion.div
         className="relative z-10 text-center max-w-2xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.4 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.4 }}
       >
         <motion.p
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-xs tracking-widest uppercase mb-4"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
@@ -45,7 +48,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
         </motion.p>
 
         <motion.h2
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-2xl md:text-6xl leading-tight mb-4 md:mb-6"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
@@ -54,7 +57,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
 
         {content.subheading && (
           <motion.p
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="text-base md:text-lg mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
@@ -63,7 +66,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
         )}
 
         {showCtaButton && (
-          <motion.div variants={fadeUpChild}>
+          <motion.div variants={isExport ? staticChild : fadeUpChild}>
             <a
               href={safeCtaUrl.value}
               target="_blank"
@@ -84,7 +87,7 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
         {/* Contact info */}
         {(content.contactName || content.contactEmail) && (
           <motion.div
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="mt-12 pt-8"
             style={{ borderTop: '1px solid var(--color-border)' }}
           >
@@ -126,10 +129,11 @@ export function ClosingSlide({ content, companyName, hideBottomBranding = false 
       {!hideBottomBranding && (
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 1, duration: 0.8 }}
+          initial={isExport ? { opacity: 1 } : { opacity: 0 }}
+          animate={isExport ? { opacity: 1 } : undefined}
+          whileInView={isExport ? undefined : { opacity: 1 }}
+          viewport={isExport ? undefined : { once: true }}
+          transition={isExport ? undefined : { delay: 1, duration: 0.8 }}
         >
           <span
             className="text-xs tracking-widest uppercase"

@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { TitleSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { OptimizedImage } from '../OptimizedImage';
 
 interface TitleSlideProps {
@@ -12,6 +13,7 @@ interface TitleSlideProps {
 }
 
 export function TitleSlide({ content, partnerName, companyLogo, companyName }: TitleSlideProps) {
+  const isExport = useExportMode();
   const effectivePartnerName = partnerName || content.partnerName || 'Partner';
   const effectiveCompanyLogo = companyLogo || content.secureBagsLogo;
   const effectiveCompanyName = companyName || 'Company';
@@ -30,13 +32,14 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
 
       <motion.div
         className="relative z-10 text-center max-w-3xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.5 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.5 }}
       >
         {/* Logos row */}
-        <motion.div variants={fadeUpChild} className="flex items-center justify-center gap-4 md:gap-6 mb-8 md:mb-12">
+        <motion.div variants={isExport ? staticChild : fadeUpChild} className="flex items-center justify-center gap-4 md:gap-6 mb-8 md:mb-12">
           {effectiveCompanyLogo ? (
             <OptimizedImage src={effectiveCompanyLogo} alt="Company logo" className="h-8 object-contain opacity-90" />
           ) : (
@@ -68,7 +71,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
 
         {/* Main headline */}
         <motion.h1
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-3xl md:text-7xl leading-tight mb-4 md:mb-6"
           style={{
             fontFamily: 'var(--font-display)',
@@ -81,7 +84,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
         {/* Subheadline */}
         {content.subheadline && (
           <motion.p
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="text-base md:text-xl mb-6 md:mb-10"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
@@ -91,7 +94,7 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
 
         {/* Date badge */}
         {content.date && (
-          <motion.div variants={fadeUpChild}>
+          <motion.div variants={isExport ? staticChild : fadeUpChild}>
             <span
               className="inline-block text-xs tracking-widest uppercase px-4 py-2 rounded-full border"
               style={{
@@ -109,10 +112,11 @@ export function TitleSlide({ content, partnerName, companyLogo, companyName }: T
       {/* Bottom decoration */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 1.2, duration: 0.8 }}
+        initial={isExport ? { opacity: 1 } : { opacity: 0 }}
+        animate={isExport ? { opacity: 1 } : undefined}
+        whileInView={isExport ? undefined : { opacity: 1 }}
+        viewport={isExport ? undefined : { once: true }}
+        transition={isExport ? undefined : { delay: 1.2, duration: 0.8 }}
       >
         <div className="w-px h-8" style={{ background: 'linear-gradient(to bottom, var(--color-text-tertiary), transparent)' }} />
         <span className="text-xs tracking-widest uppercase" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-tertiary)' }}>

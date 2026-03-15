@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import type { MediaSlideContent } from '../../../types/proposal';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { useTheme } from '../../../themes/useTheme';
 import { OptimizedImage } from '../OptimizedImage';
 
@@ -8,6 +9,7 @@ interface MediaSlideProps {
 }
 
 export function MediaSlide({ content }: MediaSlideProps) {
+  const isExport = useExportMode();
   const hasMedia = !!content.url;
   const { theme } = useTheme();
 
@@ -28,10 +30,11 @@ export function MediaSlide({ content }: MediaSlideProps) {
           ) : (
             <motion.div
               className="absolute inset-0"
-              initial={{ scale: 1.05 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 8, ease: 'linear' }}
+              initial={isExport ? { scale: 1 } : { scale: 1.05 }}
+              animate={isExport ? { scale: 1 } : undefined}
+              whileInView={isExport ? undefined : { scale: 1 }}
+              viewport={isExport ? undefined : { once: true }}
+              transition={isExport ? undefined : { duration: 8, ease: 'linear' }}
             >
               <OptimizedImage
                 src={content.url}
@@ -60,10 +63,11 @@ export function MediaSlide({ content }: MediaSlideProps) {
         <motion.div
           className="absolute bottom-0 left-0 right-0 px-8 py-6"
           style={{ background: `linear-gradient(to top, ${theme.colors.overlayBg}, transparent)` }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5, duration: 0.6 }}
+          initial={isExport ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          animate={isExport ? { opacity: 1, y: 0 } : undefined}
+          whileInView={isExport ? undefined : { opacity: 1, y: 0 }}
+          viewport={isExport ? undefined : { once: true }}
+          transition={isExport ? undefined : { delay: 0.5, duration: 0.6 }}
         >
           <p className="text-sm text-center" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-primary)' }}>
             {content.caption}

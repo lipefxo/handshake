@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { BenefitsSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { useTheme } from '../../../themes/useTheme';
 import { AppIcon } from '../../../shared/icons/AppIcon';
 
@@ -10,6 +11,7 @@ interface BenefitsSlideProps {
 }
 
 export function BenefitsSlide({ content }: BenefitsSlideProps) {
+  const isExport = useExportMode();
   const { theme } = useTheme();
 
   return (
@@ -22,13 +24,14 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-5xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.2 }}
       >
         <motion.h2
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-2xl md:text-5xl text-center mb-6 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
@@ -39,7 +42,7 @@ export function BenefitsSlide({ content }: BenefitsSlideProps) {
           {content.benefits.map((benefit, i) => (
             <motion.div
               key={i}
-              variants={fadeUpChild}
+              variants={isExport ? staticChild : fadeUpChild}
               className="p-3 md:p-8 flex gap-3 md:gap-5"
               style={{ background: 'var(--color-bg-secondary)' }}
               whileHover={{ backgroundColor: theme.colors.bgSurface }}

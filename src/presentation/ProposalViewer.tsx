@@ -11,7 +11,8 @@ import { TableOfContents } from './components/TableOfContents';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
 import { useAnalyticsTracker } from './hooks/useAnalyticsTracker';
-import { slideVariants } from '../shared/utils/animations';
+import { slideVariants, staticSlideVariants } from '../shared/utils/animations';
+import { ExportModeContext } from '../shared/contexts/ExportModeContext';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
@@ -447,39 +448,42 @@ function ProposalViewerContent() {
             </>
           )}
 
-          <div
-            ref={containerRef}
-            className="slide-container"
-            style={{ backgroundColor: 'var(--color-bg-primary)' }}
-            onClick={handleContainerClick}
-          >
-            {embeddedPreviewSlides.map((slide, index) => {
-              const fp = isPreviewMode ? getContentFingerprint(slide) : '';
-              const slideKey = fp ? `${slide.id}-${fp}` : slide.id;
-              const originalIndex = enabledSlides.findIndex((enabledSlide) => enabledSlide.id === slide.id);
-              return (
-                <motion.section
-                  key={slideKey}
-                  className="slide-section"
-                  style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
-                  variants={slideVariants}
-                  initial={false}
-                  whileInView="visible"
-                  viewport={{ once: false, amount: 0.6 }}
-                >
-                  <SlideRenderer
-                    slide={slide}
-                    index={originalIndex >= 0 ? originalIndex : index}
-                    totalSlides={enabledSlides.length}
-                    proposalPartnerName={proposal.partnerName}
-                    proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
-                    proposalCompanyName={proposal.brandOverrides?.companyName}
-                    footerBrandingEnabled={proposal.brandOverrides?.showFooterBranding !== false}
-                  />
-                </motion.section>
-              );
-            })}
-          </div>
+          <ExportModeContext.Provider value={exportMode}>
+            <div
+              ref={containerRef}
+              className="slide-container"
+              style={{ backgroundColor: 'var(--color-bg-primary)' }}
+              onClick={handleContainerClick}
+            >
+              {embeddedPreviewSlides.map((slide, index) => {
+                const fp = isPreviewMode ? getContentFingerprint(slide) : '';
+                const slideKey = fp ? `${slide.id}-${fp}` : slide.id;
+                const originalIndex = enabledSlides.findIndex((enabledSlide) => enabledSlide.id === slide.id);
+                return (
+                  <motion.section
+                    key={slideKey}
+                    className="slide-section"
+                    style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
+                    variants={exportMode ? staticSlideVariants : slideVariants}
+                    initial={exportMode ? 'visible' : false}
+                    animate={exportMode ? 'visible' : undefined}
+                    whileInView={exportMode ? undefined : 'visible'}
+                    viewport={exportMode ? undefined : { once: false, amount: 0.6 }}
+                  >
+                    <SlideRenderer
+                      slide={slide}
+                      index={originalIndex >= 0 ? originalIndex : index}
+                      totalSlides={enabledSlides.length}
+                      proposalPartnerName={proposal.partnerName}
+                      proposalCompanyLogo={proposal.brandOverrides?.companyLogo}
+                      proposalCompanyName={proposal.brandOverrides?.companyName}
+                      footerBrandingEnabled={proposal.brandOverrides?.showFooterBranding !== false}
+                    />
+                  </motion.section>
+                );
+              })}
+            </div>
+          </ExportModeContext.Provider>
         </>
       )}
     </ThemeProvider>

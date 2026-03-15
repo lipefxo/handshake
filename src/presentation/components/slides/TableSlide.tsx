@@ -1,13 +1,15 @@
 import { motion } from 'motion/react';
 import type { TableSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { fadeUpChild, staggerContainer } from '../../../shared/utils/animations';
+import { fadeUpChild, staggerContainer, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 
 interface TableSlideProps {
   content: TableSlideContent;
 }
 
 export function TableSlide({ content }: TableSlideProps) {
+  const isExport = useExportMode();
   const hasDenseLayout = content.columns.length >= 5 || content.rows.length >= 8;
   const cellPaddingClass = hasDenseLayout ? 'px-2 py-1.5' : 'px-3 py-2';
   const cellTextClass = hasDenseLayout ? 'text-xs' : 'text-sm';
@@ -22,12 +24,13 @@ export function TableSlide({ content }: TableSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-5xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.25 }}
       >
-        <motion.div variants={fadeUpChild} className="mb-6 text-center md:text-left">
+        <motion.div variants={isExport ? staticChild : fadeUpChild} className="mb-6 text-center md:text-left">
           <h2
             className="text-3xl md:text-4xl"
             style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
@@ -68,7 +71,7 @@ export function TableSlide({ content }: TableSlideProps) {
               {content.rows.map((row, rowIndex) => (
                 <motion.tr
                   key={`row-${rowIndex}`}
-                  variants={fadeUpChild}
+                  variants={isExport ? staticChild : fadeUpChild}
                   style={{
                     background: rowIndex % 2 === 0 ? 'var(--color-bg-primary)' : 'var(--color-bg-secondary)',
                   }}

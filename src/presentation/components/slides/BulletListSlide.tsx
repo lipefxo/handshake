@@ -1,13 +1,15 @@
 import { motion } from 'motion/react';
 import type { BulletListSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { fadeUpChild, staggerContainer } from '../../../shared/utils/animations';
+import { fadeUpChild, staggerContainer, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 
 interface BulletListSlideProps {
   content: BulletListSlideContent;
 }
 
 export function BulletListSlide({ content }: BulletListSlideProps) {
+  const isExport = useExportMode();
   const items = content.items.filter((item) => item.trim().length > 0);
 
   return (
@@ -20,20 +22,21 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-5xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.25 }}
       >
         <motion.p
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-xs tracking-widest uppercase mb-2 md:mb-3"
           style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
           {content.label || 'Key points'}
         </motion.p>
         <motion.h2
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-2xl md:text-5xl leading-tight"
           style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
         >
@@ -41,7 +44,7 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
         </motion.h2>
         {content.subheading && (
           <motion.p
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="mt-3 text-sm md:text-lg"
             style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
           >
@@ -49,11 +52,11 @@ export function BulletListSlide({ content }: BulletListSlideProps) {
           </motion.p>
         )}
 
-        <motion.ul className="mt-6 md:mt-10 space-y-3 md:space-y-4" variants={staggerContainer}>
+        <motion.ul className="mt-6 md:mt-10 space-y-3 md:space-y-4" variants={isExport ? staticContainer : staggerContainer}>
           {items.map((item, index) => (
             <motion.li
               key={`${item}-${index}`}
-              variants={fadeUpChild}
+              variants={isExport ? staticChild : fadeUpChild}
               className="flex items-start gap-3 rounded-xl border px-4 py-3 md:px-5 md:py-4"
               style={{
                 borderColor: 'var(--color-border)',

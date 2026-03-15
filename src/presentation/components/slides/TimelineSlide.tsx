@@ -1,13 +1,15 @@
 import { motion } from 'motion/react';
 import type { TimelineSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 
 interface TimelineSlideProps {
   content: TimelineSlideContent;
 }
 
 export function TimelineSlide({ content }: TimelineSlideProps) {
+  const isExport = useExportMode();
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
@@ -18,13 +20,14 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-4xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.2 }}
       >
         <motion.h2
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-2xl md:text-5xl mb-6 md:mb-14 text-center"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
@@ -36,17 +39,18 @@ export function TimelineSlide({ content }: TimelineSlideProps) {
           <motion.div
             className="absolute left-[calc(12.5%-0.5px)] md:left-1/2 top-0 bottom-0 w-px"
             style={{ background: 'var(--color-border)' }}
-            initial={{ scaleY: 0, originY: 0 }}
-            whileInView={{ scaleY: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
+            initial={isExport ? { scaleY: 1, originY: 0 } : { scaleY: 0, originY: 0 }}
+            animate={isExport ? { scaleY: 1 } : undefined}
+            whileInView={isExport ? undefined : { scaleY: 1 }}
+            viewport={isExport ? undefined : { once: true }}
+            transition={isExport ? undefined : { duration: 1.2, delay: 0.5, ease: 'easeOut' }}
           />
 
             <div className="space-y-4 md:space-y-8">
             {content.milestones.map((milestone, i) => (
               <motion.div
                 key={i}
-                variants={fadeUpChild}
+                variants={isExport ? staticChild : fadeUpChild}
                 className="flex items-start gap-8 md:gap-0"
               >
                 {/* Left side (date on desktop, spacer on mobile) */}

@@ -2,13 +2,15 @@ import { motion } from 'motion/react';
 import type { StatsSlideContent } from '../../../types/proposal';
 import { AnimatedCounter } from '../../../shared/components/AnimatedCounter';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 
 interface StatsSlideProps {
   content: StatsSlideContent;
 }
 
 export function StatsSlide({ content }: StatsSlideProps) {
+  const isExport = useExportMode();
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
@@ -19,14 +21,15 @@ export function StatsSlide({ content }: StatsSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-5xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.3 }}
       >
         {content.heading && (
           <motion.p
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="text-center text-sm tracking-widest uppercase mb-8 md:mb-16"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
@@ -38,7 +41,7 @@ export function StatsSlide({ content }: StatsSlideProps) {
           {content.stats.map((stat, i) => (
             <motion.div
               key={i}
-              variants={fadeUpChild}
+              variants={isExport ? staticChild : fadeUpChild}
               className="flex flex-col items-center justify-center p-4 md:p-10 text-center"
               style={{ background: 'var(--color-bg-secondary)' }}
             >

@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { ComparisonSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { AppIcon } from '../../../shared/icons/AppIcon';
 
 interface ComparisonSlideProps {
@@ -9,6 +10,7 @@ interface ComparisonSlideProps {
 }
 
 export function ComparisonSlide({ content }: ComparisonSlideProps) {
+  const isExport = useExportMode();
   return (
     <div
       className="relative w-full h-full flex flex-col items-center justify-center px-6 md:px-8 py-8 md:py-16 overflow-hidden"
@@ -19,20 +21,21 @@ export function ComparisonSlide({ content }: ComparisonSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-4xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.3 }}
       >
         <motion.h2
-          variants={fadeUpChild}
+          variants={isExport ? staticChild : fadeUpChild}
           className="text-2xl md:text-5xl text-center mb-6 md:mb-14"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
         >
           {content.heading}
         </motion.h2>
 
-        <motion.div variants={fadeUpChild} className="grid grid-cols-1 md:grid-cols-2 gap-px">
+        <motion.div variants={isExport ? staticChild : fadeUpChild} className="grid grid-cols-1 md:grid-cols-2 gap-px">
           {/* Before column */}
           <div className="p-4 md:p-8" style={{ background: 'var(--color-bg-primary)' }}>
             <div

@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import type { FeaturesSlideContent } from '../../../types/proposal';
 import { GradientOrb } from '../../../shared/components/GradientOrb';
-import { staggerContainer, fadeUpChild } from '../../../shared/utils/animations';
+import { staggerContainer, fadeUpChild, staticContainer, staticChild } from '../../../shared/utils/animations';
+import { useExportMode } from '../../../shared/contexts/ExportModeContext';
 import { useTheme } from '../../../themes/useTheme';
 import { AppIcon } from '../../../shared/icons/AppIcon';
 
@@ -10,6 +11,7 @@ interface FeaturesSlideProps {
 }
 
 export function FeaturesSlide({ content }: FeaturesSlideProps) {
+  const isExport = useExportMode();
   const { theme } = useTheme();
 
   return (
@@ -22,21 +24,22 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
 
       <motion.div
         className="relative z-10 w-full max-w-5xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        variants={isExport ? staticContainer : staggerContainer}
+        initial={isExport ? 'visible' : 'hidden'}
+        animate={isExport ? 'visible' : undefined}
+        whileInView={isExport ? undefined : 'visible'}
+        viewport={isExport ? undefined : { once: true, amount: 0.2 }}
       >
         <div className="mb-4 md:mb-14 text-center md:text-left">
           <motion.p
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="text-xs tracking-widest uppercase mb-2 md:mb-3"
             style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
           >
             {content.label || 'What we offer'}
           </motion.p>
           <motion.h2
-            variants={fadeUpChild}
+            variants={isExport ? staticChild : fadeUpChild}
             className="text-2xl md:text-5xl"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
           >
@@ -44,7 +47,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
           </motion.h2>
           {content.subheading && (
             <motion.p
-              variants={fadeUpChild}
+              variants={isExport ? staticChild : fadeUpChild}
               className="mt-3 text-lg"
               style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
             >
@@ -57,7 +60,7 @@ export function FeaturesSlide({ content }: FeaturesSlideProps) {
           {content.features.map((feature, i) => (
             <motion.div
               key={i}
-              variants={fadeUpChild}
+              variants={isExport ? staticChild : fadeUpChild}
               className="p-3 md:p-8 group"
               style={{ background: 'var(--color-bg-primary)' }}
               whileHover={{ backgroundColor: theme.colors.bgSecondary }}
