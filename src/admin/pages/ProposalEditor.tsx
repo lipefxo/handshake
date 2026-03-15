@@ -21,7 +21,6 @@ import { checkProposalReadiness, ReadinessCheckDisplay } from '../components/Rea
 import { createUndoRedoManager } from '../../shared/hooks/useUndoRedo';
 import { exportProposalToPdf } from '../../shared/utils/pdfExport';
 import { useCustomTemplateStore } from '../../store/customTemplateStore';
-import { defaultThemeId } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
 import { Button } from '@/components/ui/button';
