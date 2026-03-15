@@ -1,7 +1,5 @@
 export type ThemeId = 'dark-minimal' | 'light-corporate' | 'bold-brand';
 
-export type ThemeSlideTransition = 'fade' | 'slide-up' | 'slide-left' | 'scale' | 'blur';
-
 export interface ThemeDefinition {
   id: ThemeId;
   name: string;
@@ -37,7 +35,6 @@ export interface ThemeDefinition {
   };
   style: {
     borderRadius: string;
-    slideTransitionDefault: ThemeSlideTransition;
     decorativeOpacity: number;
     textShadow?: string;
     navDotStyle: 'filled' | 'outline' | 'dash';

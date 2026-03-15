@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { ClosingSlideContent, SlideConfig, SlideType, TitleSlideContent } from '../types/proposal';
 import type { AppIconId } from '../shared/icons/iconRegistry';
 import type { ThemeId } from '../themes/themeTypes';
-import { themes } from '../themes/themeDefinitions';
 
 export interface ProposalSeedData {
   title?: string;
@@ -142,12 +141,10 @@ export function createDefaultSlide(type: SlideType): SlideConfig {
     type,
     enabled: true,
     content: defaults[type],
-    transition: 'slide-up',
   };
 }
 
 export function createDefaultProposalSlides(seed: ProposalSeedData = {}): SlideConfig[] {
-  const themeTransition = seed.themeId ? themes[seed.themeId]?.style.slideTransitionDefault : undefined;
   const slides = [
     createDefaultSlide('title'),
     createDefaultSlide('stats'),
@@ -182,6 +179,6 @@ export function createDefaultProposalSlides(seed: ProposalSeedData = {}): SlideC
       };
     }
 
-    return themeTransition ? { ...slide, transition: themeTransition } : slide;
+    return slide;
   });
 }

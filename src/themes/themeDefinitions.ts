@@ -38,7 +38,6 @@ export const themes: Record<ThemeId, ThemeDefinition> = {
     },
     style: {
       borderRadius: '8px',
-      slideTransitionDefault: 'fade',
       decorativeOpacity: 0.4,
       textShadow: '0 2px 20px rgba(0, 0, 0, 0.5)',
       navDotStyle: 'outline',
@@ -80,7 +79,6 @@ export const themes: Record<ThemeId, ThemeDefinition> = {
     },
     style: {
       borderRadius: '6px',
-      slideTransitionDefault: 'slide-up',
       decorativeOpacity: 0.25,
       navDotStyle: 'filled',
     },
@@ -121,7 +119,6 @@ export const themes: Record<ThemeId, ThemeDefinition> = {
     },
     style: {
       borderRadius: '12px',
-      slideTransitionDefault: 'scale',
       decorativeOpacity: 0.6,
       textShadow: '0 2px 24px rgba(6, 214, 160, 0.15)',
       navDotStyle: 'dash',

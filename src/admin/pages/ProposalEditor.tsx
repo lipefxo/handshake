@@ -21,7 +21,7 @@ import { checkProposalReadiness, ReadinessCheckDisplay } from '../components/Rea
 import { createUndoRedoManager } from '../../shared/hooks/useUndoRedo';
 import { exportProposalToPdf } from '../../shared/utils/pdfExport';
 import { useCustomTemplateStore } from '../../store/customTemplateStore';
-import { defaultThemeId, themes } from '../../themes/themeDefinitions';
+import { defaultThemeId } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
 import { Button } from '@/components/ui/button';
@@ -340,13 +340,28 @@ export function ProposalEditor() {
   const handleExportPdf = useCallback(async () => {
     if (!proposal || exportingPdf) return;
     const iframe = previewIframeRef.current;
-    const container = iframe?.contentDocument?.querySelector<HTMLElement>('.slide-container');
-    if (!container) {
+    if (!iframe?.contentDocument) {
       showErrorToast('Preview must be visible to export PDF.');
       return;
     }
     setExportingPdf(true);
     try {
+      // Tell preview to render all slides for export
+      const exportMessage = {
+        type: 'handshake-editor-preview-update',
+        proposal,
+        selectedSlideId: selectedSlideId,
+        exportMode: true,
+      };
+      iframe.contentWindow?.postMessage(exportMessage, window.location.origin);
+      // Wait for all slides to render
+      await new Promise((r) => setTimeout(r, 500));
+
+      const container = iframe.contentDocument.querySelector<HTMLElement>('.slide-container');
+      if (!container) {
+        showErrorToast('Preview must be visible to export PDF.');
+        return;
+      }
       const safeName = (proposal.partnerName || proposal.title || 'proposal')
         .replace(/[^a-zA-Z0-9-_ ]/g, '')
         .trim()
@@ -357,9 +372,11 @@ export function ProposalEditor() {
     } catch {
       showErrorToast('Failed to export PDF. Try again.');
     } finally {
+      // Restore single-slide preview mode
+      sendPreviewMessage(proposal, selectedSlideId);
       setExportingPdf(false);
     }
-  }, [proposal, exportingPdf, showSuccessToast, showErrorToast]);
+  }, [proposal, exportingPdf, selectedSlideId, sendPreviewMessage, showSuccessToast, showErrorToast]);
 
   const handleSaveAsTemplate = useCallback(async () => {
     if (!proposal || savingTemplate || !templateName.trim()) return;
@@ -387,8 +404,7 @@ export function ProposalEditor() {
 
   const handleAddSlide = (type: SlideType) => {
     if (!proposal) return;
-    const themeTransition = themes[proposal.themeId ?? defaultThemeId].style.slideTransitionDefault;
-    const newSlide = { ...createDefaultSlide(type), transition: themeTransition };
+    const newSlide = createDefaultSlide(type);
     const slides = [...proposal.slides, newSlide];
     updateLocal({ slides });
     if (!selectedSlideId) {
@@ -903,14 +919,6 @@ export function ProposalEditor() {
                         },
                       ]}
                     />
-                    <button
-                      type="button"
-                      onClick={() => window.open(`/p/${proposal.slug}#preview`, '_blank')}
-                      className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                      title="Preview as recipient (new tab)"
-                    >
-                      <AppIcon icon="ui.external-link" className="h-3.5 w-3.5" />
-                    </button>
                     <button
                       type="button"
                       onClick={() => {

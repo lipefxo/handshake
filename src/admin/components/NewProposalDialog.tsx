@@ -63,6 +63,15 @@ function isValidDateValue(value: string): boolean {
   return !Number.isNaN(new Date(value).getTime());
 }
 
+const CATEGORY_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
+  partnership: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-400' },
+  sales: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-400' },
+  sponsorship: { bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-400' },
+  agency: { bg: 'bg-rose-50', text: 'text-rose-600', dot: 'bg-rose-400' },
+  event: { bg: 'bg-purple-50', text: 'text-purple-600', dot: 'bg-purple-400' },
+  general: { bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-400' },
+};
+
 function TemplateCard({
   template,
   isSelected,
@@ -79,15 +88,16 @@ function TemplateCard({
   const slideCount = template.slides.length;
   const slideTypes = template.slides.map((s) => s.type);
   const uniqueTypes = [...new Set(slideTypes)];
+  const cat = CATEGORY_STYLE[template.category] ?? CATEGORY_STYLE.general;
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`text-left rounded-xl border p-3 transition-all duration-150 relative group ${
+      className={`text-left rounded-xl border p-3.5 transition-all duration-200 relative group flex flex-col gap-2 ${
         isSelected
-          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50'
+          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900 shadow-sm'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
       }`}
     >
       {onDelete && (
@@ -96,28 +106,42 @@ function TemplateCard({
           tabIndex={0}
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onDelete(); } }}
-          className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center justify-center w-5 h-5 rounded-md bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors"
+          className="absolute top-2 right-2 hidden group-hover:flex items-center justify-center w-5 h-5 rounded-md bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors z-10"
           title="Delete template"
         >
           <AppIcon icon="ui.close" className="w-3 h-3" />
         </span>
       )}
+
+      {/* Category + Custom badge row */}
       <div className="flex items-center gap-1.5">
-        <p className={`text-sm font-medium ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
-          {template.name}
-        </p>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cat.bg} ${cat.text}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
+          {template.category}
+        </span>
         {isCustom && (
-          <span className="rounded bg-violet-100 px-1 py-0.5 text-[9px] font-semibold text-violet-600 uppercase">
+          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-600 uppercase tracking-wide">
             Custom
           </span>
         )}
       </div>
-      <p className="mt-0.5 text-xs text-gray-400 line-clamp-2">{template.description}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+
+      {/* Name + description */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-[13px] font-semibold leading-tight ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
+          {template.name}
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-400 line-clamp-2">{template.description}</p>
+      </div>
+
+      {/* Slide metadata */}
+      <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+        <span className="flex items-center gap-1 text-[11px] text-gray-400">
+          <AppIcon icon="slide.type.features" className="w-3 h-3 opacity-50" />
           {slideCount} slides
         </span>
-        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+        <span className="flex items-center gap-1 text-[11px] text-gray-400">
+          <AppIcon icon="slide.type.comparison" className="w-3 h-3 opacity-50" />
           {uniqueTypes.length} types
         </span>
       </div>
@@ -136,21 +160,21 @@ function BlankCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`text-left rounded-xl border p-3 transition-all duration-150 ${
+      className={`text-left rounded-xl border p-3.5 transition-all duration-200 flex flex-col gap-2 ${
         isSelected
-          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-          : 'border-dashed border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50'
+          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900 shadow-sm'
+          : 'border-dashed border-gray-300 bg-white hover:border-gray-400 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
       }`}
     >
-      <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-gray-400">
-          <AppIcon icon="ui.add" className="h-3.5 w-3.5" />
-        </div>
-        <p className={`text-sm font-medium ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
+      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+        <AppIcon icon="ui.add" className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[13px] font-semibold leading-tight ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
           Blank proposal
         </p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-400">Start from scratch with default slides.</p>
       </div>
-      <p className="mt-1 text-xs text-gray-400">Start from scratch with default slides.</p>
     </button>
   );
 }
@@ -235,7 +259,7 @@ export function NewProposalDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !isCreating) onClose(); }}>
-      <DialogContent className="w-[min(52rem,calc(100vw-2rem))]">
+      <DialogContent className="w-[min(64rem,calc(100vw-2rem))] max-h-[calc(100vh-4rem)] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle id="new-proposal-title" className="font-brand-serif">New Proposal</DialogTitle>
@@ -248,7 +272,7 @@ export function NewProposalDialog({
             {/* Template picker */}
             <div className="grid gap-1.5">
               <Label>Start from</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[14rem] overflow-y-auto admin-scroll pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[22rem] overflow-y-auto admin-scroll pr-1">
                 <BlankCard
                   isSelected={values.templateId === null}
                   onSelect={() => handleSelectTemplate(null)}

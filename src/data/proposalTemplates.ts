@@ -55,8 +55,7 @@ const partnershipProposal: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Partner Company',
         headline: 'A Strategic Growth Partnership',
         subheadline: 'Combining strengths to unlock new revenue and reach.',
@@ -64,8 +63,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'The Opportunity',
         body: 'Both organizations serve complementary audiences with aligned values. This partnership combines distribution reach with product depth to accelerate growth for both sides.',
         imageLayout: 'constrained',
@@ -73,8 +71,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'stats', enabled: true,      content: {
         heading: 'Why Now',
         stats: [
           { value: 340, suffix: '%', label: 'Market Growth', description: 'Category expansion over 3 years' },
@@ -85,8 +82,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'features', enabled: true, transition: 'slide-left',
-      content: {
+      id: 'tpl-4', type: 'features', enabled: true,      content: {
         heading: 'What We Bring',
         subheading: 'Our core capabilities and differentiators',
         features: [
@@ -98,8 +94,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'comparison', enabled: true, transition: 'slide-left',
-      content: {
+      id: 'tpl-5', type: 'comparison', enabled: true,      content: {
         heading: 'Independent vs. Together',
         before: {
           label: 'Going Alone',
@@ -122,8 +117,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'benefits', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-6', type: 'benefits', enabled: true,      content: {
         heading: 'What You Get',
         benefits: [
           { title: 'Revenue Share', description: 'Performance-based revenue sharing with transparent reporting.' },
@@ -134,8 +128,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-7', type: 'timeline', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-7', type: 'timeline', enabled: true,      content: {
         heading: 'Partnership Roadmap',
         milestones: [
           { date: 'Month 1', title: 'Alignment & Planning', description: 'Define goals, KPIs, and joint go-to-market strategy.' },
@@ -146,8 +139,7 @@ const partnershipProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-8', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-8', type: 'closing', enabled: true,      content: {
         heading: 'Ready to Partner?',
         subheading: 'Let\'s schedule a call to align on next steps and timelines.',
         ctaText: 'Book a Call',
@@ -167,8 +159,7 @@ const salesProposal: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Client Company',
         headline: 'A Tailored Solution for Your Growth',
         subheadline: 'How we solve your biggest challenges and deliver measurable results.',
@@ -176,8 +167,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'Understanding Your Challenge',
         body: 'After reviewing your current setup and objectives, we\'ve identified key areas where our solution can drive immediate impact. This proposal outlines a targeted approach to address your most pressing needs while building a foundation for long-term growth.',
         imageLayout: 'constrained',
@@ -185,8 +175,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'bullet-list', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'bullet-list', enabled: true,      content: {
         heading: 'Key Challenges We\'ll Solve',
         subheading: 'Based on our discovery conversation',
         items: [
@@ -198,8 +187,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'features', enabled: true, transition: 'slide-left',
-      content: {
+      id: 'tpl-4', type: 'features', enabled: true,      content: {
         heading: 'Our Solution',
         subheading: 'Purpose-built to address your needs',
         features: [
@@ -211,8 +199,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-5', type: 'stats', enabled: true,      content: {
         heading: 'Proven Results',
         stats: [
           { value: 42, suffix: '%', label: 'Efficiency Gain', description: 'Average time saved across client operations' },
@@ -223,8 +210,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'testimonial', enabled: true, transition: 'scale',
-      content: {
+      id: 'tpl-6', type: 'testimonial', enabled: true,      content: {
         quote: 'Within 60 days we saw a measurable improvement in team productivity and a significant reduction in operational overhead. The ROI was clear by month three.',
         author: 'Jordan Mitchell',
         role: 'VP of Operations',
@@ -232,8 +218,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-7', type: 'table', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-7', type: 'table', enabled: true,      content: {
         heading: 'Investment Options',
         description: 'Flexible plans designed to match your scale and goals.',
         columns: ['Plan', 'Includes', 'Timeline', 'Investment'],
@@ -245,8 +230,7 @@ const salesProposal: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-8', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-8', type: 'closing', enabled: true,      content: {
         heading: 'Let\'s Get Started',
         subheading: 'We\'re confident this is the right solution. Let\'s make it happen.',
         ctaText: 'Schedule Demo',
@@ -266,8 +250,7 @@ const sponsorshipDeck: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Sponsor Name',
         headline: 'Sponsorship Opportunity',
         subheadline: 'Reach an engaged audience and build lasting brand affinity.',
@@ -275,8 +258,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'About Us',
         body: 'We\'ve built a highly engaged community of professionals and enthusiasts who trust our platform for discovery, education, and connection. Our sponsorship packages are designed to give brands authentic visibility within this audience.',
         imageLayout: 'constrained',
@@ -284,8 +266,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'stats', enabled: true,      content: {
         heading: 'Audience at a Glance',
         stats: [
           { value: 150, suffix: 'K', label: 'Monthly Active Users', description: 'Across web and mobile' },
@@ -296,8 +277,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'benefits', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-4', type: 'benefits', enabled: true,      content: {
         heading: 'Why Sponsor With Us',
         benefits: [
           { title: 'Targeted Reach', description: 'Access a niche audience that aligns with your brand values and customer profile.' },
@@ -308,8 +288,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'table', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-5', type: 'table', enabled: true,      content: {
         heading: 'Sponsorship Tiers',
         description: 'Choose a level that matches your goals and budget.',
         columns: ['Tier', 'Placement', 'Duration', 'Investment'],
@@ -322,8 +301,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'testimonial', enabled: true, transition: 'scale',
-      content: {
+      id: 'tpl-6', type: 'testimonial', enabled: true,      content: {
         quote: 'Sponsoring this platform gave us direct access to exactly the audience we were trying to reach. The engagement and brand lift exceeded our benchmarks.',
         author: 'Taylor Reed',
         role: 'Head of Brand Marketing',
@@ -331,8 +309,7 @@ const sponsorshipDeck: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-7', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-7', type: 'closing', enabled: true,      content: {
         heading: 'Let\'s Build Something Together',
         subheading: 'We\'d love to craft a sponsorship package that fits your goals.',
         ctaText: 'Discuss Sponsorship',
@@ -352,8 +329,7 @@ const agencyPitch: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Client Name',
         headline: 'Your Growth, Our Expertise',
         subheadline: 'A custom engagement designed to move the needle.',
@@ -361,8 +337,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'Who We Are',
         body: 'We\'re a performance-driven agency that partners with ambitious brands to build scalable growth systems. We don\'t do cookie-cutter strategies — every engagement is built from scratch based on your data, your goals, and your customers.',
         imageLayout: 'constrained',
@@ -370,8 +345,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'stats', enabled: true,      content: {
         heading: 'Our Track Record',
         stats: [
           { value: 120, suffix: '+', label: 'Clients Served', description: 'Across B2B and B2C verticals' },
@@ -382,8 +356,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'features', enabled: true, transition: 'slide-left',
-      content: {
+      id: 'tpl-4', type: 'features', enabled: true,      content: {
         heading: 'Services',
         subheading: 'Full-stack growth capabilities',
         features: [
@@ -395,8 +368,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'timeline', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-5', type: 'timeline', enabled: true,      content: {
         heading: 'Our Process',
         milestones: [
           { date: 'Week 1', title: 'Discovery', description: 'Deep dive into your business, audience, competitive landscape, and data.' },
@@ -407,8 +379,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'testimonial', enabled: true, transition: 'scale',
-      content: {
+      id: 'tpl-6', type: 'testimonial', enabled: true,      content: {
         quote: 'They came in, understood our business fast, and delivered results we hadn\'t been able to achieve internally. The team felt like an extension of ours.',
         author: 'Casey Park',
         role: 'CMO',
@@ -416,8 +387,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-7', type: 'table', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-7', type: 'table', enabled: true,      content: {
         heading: 'Engagement Options',
         description: 'Flexible models to match your needs.',
         columns: ['Model', 'Scope', 'Duration', 'Starting At'],
@@ -429,8 +399,7 @@ const agencyPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-8', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-8', type: 'closing', enabled: true,      content: {
         heading: 'Let\'s Talk Results',
         subheading: 'We\'d love to learn more about your goals and show you what\'s possible.',
         ctaText: 'Book Discovery Call',
@@ -450,8 +419,7 @@ const eventCollaboration: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Partner Name',
         headline: 'Co-Hosted Event Proposal',
         subheadline: 'A shared experience that brings our communities together.',
@@ -459,8 +427,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'The Concept',
         body: 'An exclusive, co-branded event designed to bring together our combined audiences for an experience that drives awareness, engagement, and lasting brand affinity. This is more than an event — it\'s a platform for both brands to connect with high-value attendees.',
         imageLayout: 'constrained',
@@ -468,8 +435,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'stats', enabled: true,      content: {
         heading: 'Expected Reach',
         stats: [
           { value: 500, suffix: '+', label: 'Attendees', description: 'Curated guest list from both communities' },
@@ -480,8 +446,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'bullet-list', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-4', type: 'bullet-list', enabled: true,      content: {
         heading: 'What\'s Included',
         subheading: 'Your partnership covers',
         items: [
@@ -494,8 +459,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'timeline', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-5', type: 'timeline', enabled: true,      content: {
         heading: 'Event Timeline',
         milestones: [
           { date: '8 Weeks Out', title: 'Planning & Branding', description: 'Finalize concept, venue, and co-branded materials.' },
@@ -506,8 +470,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'table', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-6', type: 'table', enabled: true,      content: {
         heading: 'Investment & Responsibilities',
         description: 'Shared costs and ownership.',
         columns: ['Item', 'Your Contribution', 'Our Contribution'],
@@ -520,8 +483,7 @@ const eventCollaboration: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-7', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-7', type: 'closing', enabled: true,      content: {
         heading: 'Let\'s Make It Happen',
         subheading: 'We\'re excited about this collaboration. Let\'s align on timing and details.',
         ctaText: 'Set Up Planning Call',
@@ -541,8 +503,7 @@ const minimalPitch: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Partner Company',
         headline: 'A Proposal',
         subheadline: 'Simple. Clear. Actionable.',
@@ -550,8 +511,7 @@ const minimalPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'The Idea',
         body: 'A brief, focused summary of what we\'re proposing and why it matters. Replace this with your pitch — keep it concise, direct, and compelling.',
         imageLayout: 'constrained',
@@ -559,8 +519,7 @@ const minimalPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'bullet-list', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-3', type: 'bullet-list', enabled: true,      content: {
         heading: 'Key Points',
         items: [
           'The core value proposition in one sentence',
@@ -571,8 +530,7 @@ const minimalPitch: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-4', type: 'closing', enabled: true,      content: {
         heading: 'Interested?',
         subheading: 'Let\'s talk.',
         ctaText: 'Get in Touch',
@@ -592,8 +550,7 @@ const caseStudyShowcase: ProposalTemplate = {
   themeId: 'dark-minimal',
   slides: [
     {
-      id: 'tpl-1', type: 'title', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-1', type: 'title', enabled: true,      content: {
         partnerName: 'Prospect Name',
         headline: 'How We Delivered Results',
         subheadline: 'A real-world example of what\'s possible.',
@@ -601,8 +558,7 @@ const caseStudyShowcase: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-2', type: 'intro', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-2', type: 'intro', enabled: true,      content: {
         heading: 'The Client',
         body: 'A brief profile of the client — their industry, size, and the challenge they came to us with. Set context so the reader can see themselves in this story.',
         imageLayout: 'constrained',
@@ -610,8 +566,7 @@ const caseStudyShowcase: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-3', type: 'comparison', enabled: true, transition: 'slide-left',
-      content: {
+      id: 'tpl-3', type: 'comparison', enabled: true,      content: {
         heading: 'Before & After',
         before: {
           label: 'The Challenge',
@@ -634,8 +589,7 @@ const caseStudyShowcase: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-4', type: 'stats', enabled: true, transition: 'slide-up',
-      content: {
+      id: 'tpl-4', type: 'stats', enabled: true,      content: {
         heading: 'The Numbers',
         stats: [
           { value: 47, suffix: '%', label: 'Conversion Lift', description: 'Within first 90 days' },
@@ -646,8 +600,7 @@ const caseStudyShowcase: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-5', type: 'testimonial', enabled: true, transition: 'scale',
-      content: {
+      id: 'tpl-5', type: 'testimonial', enabled: true,      content: {
         quote: 'The results speak for themselves. What impressed us most was how quickly the team understood our business and delivered a solution that actually worked.',
         author: 'Morgan Blake',
         role: 'CEO',
@@ -655,8 +608,7 @@ const caseStudyShowcase: ProposalTemplate = {
       },
     },
     {
-      id: 'tpl-6', type: 'closing', enabled: true, transition: 'fade',
-      content: {
+      id: 'tpl-6', type: 'closing', enabled: true,      content: {
         heading: 'Ready for Similar Results?',
         subheading: 'Let\'s discuss how we can replicate this success for your business.',
         ctaText: 'Start the Conversation',

@@ -25,7 +25,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-title',
       type: 'title',
       enabled: true,
-      transition: 'fade',
       content: {
         partnerName: 'Northstar Coffee',
         headline: 'A Strategic Digital Experience Partnership',
@@ -37,7 +36,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-intro',
       type: 'intro',
       enabled: true,
-      transition: 'slide-up',
       content: {
         heading: 'Context and Opportunity',
         body: 'Northstar has built a premium product and loyal following, but paid traffic conversion and post-purchase retention are underperforming. This proposal outlines a focused 90-day engagement to improve conversion, increase average order value, and create a scalable growth system.',
@@ -49,7 +47,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-stats',
       type: 'stats',
       enabled: true,
-      transition: 'slide-up',
       content: {
         heading: 'Current Baseline',
         stats: [
@@ -64,7 +61,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-features',
       type: 'features',
       enabled: true,
-      transition: 'slide-left',
       content: {
         heading: 'What We Will Build',
         subheading: 'A complete conversion and retention system',
@@ -92,7 +88,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-comparison',
       type: 'comparison',
       enabled: true,
-      transition: 'slide-left',
       content: {
         heading: 'Before and After Engagement',
         before: {
@@ -119,7 +114,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-benefits',
       type: 'benefits',
       enabled: true,
-      transition: 'slide-up',
       content: {
         heading: 'Business Outcomes for Northstar',
         benefits: [
@@ -146,7 +140,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-table',
       type: 'table',
       enabled: true,
-      transition: 'fade',
       content: {
         heading: 'Engagement Structure',
         description: 'Recommended plan and expected deliverables.',
@@ -162,7 +155,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-testimonial',
       type: 'testimonial',
       enabled: true,
-      transition: 'scale',
       content: {
         quote: 'Handshake gave us a clear roadmap and moved faster than any partner we have worked with. We saw measurable lift by week three.',
         author: 'Maya Jensen',
@@ -174,7 +166,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-timeline',
       type: 'timeline',
       enabled: true,
-      transition: 'slide-up',
       content: {
         heading: '90-Day Delivery Timeline',
         milestones: [
@@ -205,7 +196,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-media',
       type: 'media',
       enabled: true,
-      transition: 'blur',
       content: {
         mediaType: 'image',
         url: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1600&q=80',
@@ -217,7 +207,6 @@ export const DEMO_PROPOSAL: Proposal = {
       id: 'demo-slide-closing',
       type: 'closing',
       enabled: true,
-      transition: 'fade',
       content: {
         heading: 'Ready to Build the Next Chapter?',
         subheading: 'Approve the partnership and we start discovery this week.',

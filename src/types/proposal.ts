@@ -31,7 +31,6 @@ export interface SlideConfig {
   customLabel?: string;
   groupId?: string;
   groupTitle?: string;
-  transition?: 'fade' | 'slide-up' | 'slide-left' | 'scale' | 'blur';
   backgroundOverride?: string;
 }
 

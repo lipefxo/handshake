@@ -757,7 +757,7 @@ function ThemesSection() {
               style={{ backgroundColor: theme.colors.bgSurface, borderRadius: theme.style.borderRadius }}
             >
               <p className="text-sm" style={{ fontFamily: theme.fonts.mono, color: theme.colors.textSecondary }}>
-                border-radius: {theme.style.borderRadius} &nbsp;|&nbsp; transition: {theme.style.slideTransitionDefault} &nbsp;|&nbsp;
+                border-radius: {theme.style.borderRadius} &nbsp;|&nbsp;
                 navDot: {theme.style.navDotStyle} &nbsp;|&nbsp; decorativeOpacity: {theme.style.decorativeOpacity}
               </p>
             </div>

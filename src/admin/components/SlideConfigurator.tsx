@@ -237,38 +237,6 @@ export function SlideConfigurator({ slide, onChange }: SlideConfiguratorProps) {
       {slide.type === 'table' && <TableFields content={slide.content as TableSlideContent} onChange={updateContent} />}
       {slide.type === 'closing' && <ClosingFields content={slide.content as ClosingSlideContent} onChange={updateContent} />}
 
-      {/* Transition picker */}
-      <div className="pt-2 border-t border-gray-100">
-        <p className="text-xs font-medium text-gray-500 mb-2.5">Slide Transition</p>
-        <div className="grid grid-cols-5 gap-1.5">
-          {([
-            { value: 'slide-up', label: 'Slide Up', icon: '↑' },
-            { value: 'fade', label: 'Fade', icon: '◌' },
-            { value: 'slide-left', label: 'Slide Left', icon: '←' },
-            { value: 'scale', label: 'Scale', icon: '⊡' },
-            { value: 'blur', label: 'Blur', icon: '◎' },
-          ] as const).map((opt) => {
-            const isActive = (slide.transition || 'slide-up') === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ transition: opt.value })}
-                className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all duration-150 ${
-                  isActive
-                    ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
-                }`}
-                title={opt.label}
-              >
-                <span className="text-sm leading-none">{opt.icon}</span>
-                <span className={`text-[9px] font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="pt-2 border-t border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-medium text-gray-500">Action Links</p>

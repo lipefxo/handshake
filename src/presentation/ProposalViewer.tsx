@@ -11,7 +11,7 @@ import { TableOfContents } from './components/TableOfContents';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
 import { useAnalyticsTracker } from './hooks/useAnalyticsTracker';
-import { getTransitionVariants } from '../shared/utils/animations';
+import { slideVariants } from '../shared/utils/animations';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
@@ -104,6 +104,7 @@ function ProposalViewerContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [previewSelectedSlideId, setPreviewSelectedSlideId] = useState<string | null>(null);
+  const [exportMode, setExportMode] = useState(false);
   const [accessGranted, setAccessGranted] = useState(false);
   const hasLivePreviewUpdateRef = useRef(false);
   const isPreviewMode = window.location.hash.includes('preview');
@@ -280,6 +281,7 @@ function ProposalViewerContent() {
         setAccessGranted(true);
       }
       setPreviewSelectedSlideId(event.data?.selectedSlideId ?? null);
+      setExportMode(!!event.data?.exportMode);
     };
 
     window.addEventListener('message', handleEditorPreviewUpdate);
@@ -296,9 +298,11 @@ function ProposalViewerContent() {
   useAnalyticsTracker(proposal, current, !isPreviewMode && accessGranted);
   const embeddedPreviewSlides =
     isEmbeddedEditorPreview
-      ? (previewSelectedSlideId
-          ? enabledSlides.filter((slide) => slide.id === previewSelectedSlideId)
-          : enabledSlides.slice(0, 1))
+      ? (exportMode
+          ? enabledSlides
+          : previewSelectedSlideId
+            ? enabledSlides.filter((slide) => slide.id === previewSelectedSlideId)
+            : enabledSlides.slice(0, 1))
       : enabledSlides;
 
   useEffect(() => {
@@ -451,16 +455,14 @@ function ProposalViewerContent() {
           >
             {embeddedPreviewSlides.map((slide, index) => {
               const fp = isPreviewMode ? getContentFingerprint(slide) : '';
-              const slideKey = fp
-                ? `${slide.id}-${slide.transition ?? 'slide-up'}-${fp}`
-                : `${slide.id}-${slide.transition ?? 'slide-up'}`;
+              const slideKey = fp ? `${slide.id}-${fp}` : slide.id;
               const originalIndex = enabledSlides.findIndex((enabledSlide) => enabledSlide.id === slide.id);
               return (
                 <motion.section
                   key={slideKey}
                   className="slide-section"
                   style={{ backgroundColor: slide.backgroundOverride || 'var(--color-bg-primary)' }}
-                  variants={getTransitionVariants(slide.transition)}
+                  variants={slideVariants}
                   initial={false}
                   whileInView="visible"
                   viewport={{ once: false, amount: 0.6 }}
