@@ -9,9 +9,12 @@ interface SlideSortableItemProps {
   slide: SlideConfig;
   isSelected: boolean;
   mergeProgress?: number;
+  isBulkSelected?: boolean;
+  onBulkSelect?: (shiftKey: boolean) => void;
   onSelect: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
   onRename: (label: string) => void;
 }
 
@@ -22,7 +25,10 @@ export function SlideSortableItem({
   onSelect,
   onToggle,
   onDelete,
+  onDuplicate,
   onRename,
+  isBulkSelected,
+  onBulkSelect,
 }: SlideSortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: slide.id,
@@ -69,6 +75,18 @@ export function SlideSortableItem({
         />
       )}
 
+      {/* Bulk select checkbox */}
+      {onBulkSelect && (
+        <input
+          type="checkbox"
+          checked={isBulkSelected ?? false}
+          onChange={(e) => { e.stopPropagation(); onBulkSelect(e.nativeEvent instanceof MouseEvent ? e.nativeEvent.shiftKey : false); }}
+          onClick={(e) => e.stopPropagation()}
+          className="flex-shrink-0 w-3.5 h-3.5 rounded accent-gray-900 cursor-pointer"
+          aria-label="Select slide for bulk action"
+        />
+      )}
+
       {/* Drag handle */}
       <button
         type="button"
@@ -110,6 +128,19 @@ export function SlideSortableItem({
         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform`}
           style={{ left: slide.enabled ? 'calc(100% - 14px)' : '2px' }} />
       </button>
+
+      {/* Duplicate */}
+      {onDuplicate && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+          className="flex-shrink-0 p-1 text-gray-300 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-gray-500 transition-all"
+          aria-label="Duplicate slide"
+          title="Duplicate (Cmd+D)"
+        >
+          <AppIcon icon="ui.copy" className="w-3 h-3" />
+        </button>
+      )}
 
       {/* Delete */}
       <button

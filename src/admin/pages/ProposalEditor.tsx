@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'motion/react';
 import bcrypt from 'bcryptjs';
 import { useProposalStore } from '../../store/proposalStore';
@@ -16,6 +17,10 @@ import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
 import { PublishSuccessModal } from '../components/PublishSuccessModal';
+import { checkProposalReadiness, ReadinessCheckDisplay } from '../components/ReadinessCheck';
+import { createUndoRedoManager } from '../../shared/hooks/useUndoRedo';
+import { exportProposalToPdf } from '../../shared/utils/pdfExport';
+import { useCustomTemplateStore } from '../../store/customTemplateStore';
 import { defaultThemeId, themes } from '../../themes/themeDefinitions';
 import { AppIcon } from '../../shared/icons/AppIcon';
 import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
@@ -88,8 +93,14 @@ export function ProposalEditor() {
   const [versions, setVersions] = useState<ProposalVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const saveCustomTemplate = useCustomTemplateStore((s) => s.saveTemplate);
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const hydratedProposalIdRef = useRef<string | null>(null);
+  const undoRedoRef = useRef(createUndoRedoManager());
   const lastVersionSaveAtRef = useRef(0);
   const editsSinceLastVersionRef = useRef(false);
   const versionSaveInFlightRef = useRef(false);
@@ -242,7 +253,16 @@ export function ProposalEditor() {
     targetWindow?.postMessage(message, window.location.origin);
   }, []);
 
-  const updateLocal = (updates: Partial<Proposal>) => {
+  const pushUndoSnapshot = useCallback(() => {
+    if (!proposal) return;
+    undoRedoRef.current.push({
+      slides: JSON.parse(JSON.stringify(proposal.slides)),
+      selectedSlideId,
+    });
+  }, [proposal, selectedSlideId]);
+
+  const updateLocal = (updates: Partial<Proposal>, { skipUndo = false } = {}) => {
+    if (!skipUndo) pushUndoSnapshot();
     editsSinceLastVersionRef.current = true;
     setProposal((prev) => {
       if (!prev) return prev;
@@ -252,6 +272,34 @@ export function ProposalEditor() {
     });
     setHasUnsavedChanges(true);
   };
+
+  const handleUndo = useCallback(() => {
+    if (!proposal) return;
+    const snapshot = undoRedoRef.current.undo({
+      slides: JSON.parse(JSON.stringify(proposal.slides)),
+      selectedSlideId,
+    });
+    if (!snapshot) return;
+    const restoredSlides = snapshot.slides as SlideConfig[];
+    setProposal((prev) => prev ? { ...prev, slides: restoredSlides } : prev);
+    if (snapshot.selectedSlideId) setSelectedSlideId(snapshot.selectedSlideId);
+    setHasUnsavedChanges(true);
+    editsSinceLastVersionRef.current = true;
+  }, [proposal, selectedSlideId]);
+
+  const handleRedo = useCallback(() => {
+    if (!proposal) return;
+    const snapshot = undoRedoRef.current.redo({
+      slides: JSON.parse(JSON.stringify(proposal.slides)),
+      selectedSlideId,
+    });
+    if (!snapshot) return;
+    const restoredSlides = snapshot.slides as SlideConfig[];
+    setProposal((prev) => prev ? { ...prev, slides: restoredSlides } : prev);
+    if (snapshot.selectedSlideId) setSelectedSlideId(snapshot.selectedSlideId);
+    setHasUnsavedChanges(true);
+    editsSinceLastVersionRef.current = true;
+  }, [proposal, selectedSlideId]);
 
   const updateSlide = (slideId: string, updates: Partial<SlideConfig>) => {
     if (!proposal) return;
@@ -272,6 +320,70 @@ export function ProposalEditor() {
       setSelectedSlideId(slides[0]?.id ?? null);
     }
   };
+
+  const handleDuplicateSlide = useCallback((slideId: string) => {
+    if (!proposal) return;
+    const sourceIndex = proposal.slides.findIndex((s) => s.id === slideId);
+    if (sourceIndex === -1) return;
+    const source = proposal.slides[sourceIndex];
+    const duplicate: SlideConfig = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: uuidv4(),
+      customLabel: source.customLabel ? `${source.customLabel} (copy)` : undefined,
+    };
+    const slides = [...proposal.slides];
+    slides.splice(sourceIndex + 1, 0, duplicate);
+    updateLocal({ slides });
+    setSelectedSlideId(duplicate.id);
+  }, [proposal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleExportPdf = useCallback(async () => {
+    if (!proposal || exportingPdf) return;
+    const iframe = previewIframeRef.current;
+    const container = iframe?.contentDocument?.querySelector<HTMLElement>('.slide-container');
+    if (!container) {
+      showErrorToast('Preview must be visible to export PDF.');
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      const safeName = (proposal.partnerName || proposal.title || 'proposal')
+        .replace(/[^a-zA-Z0-9-_ ]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase();
+      await exportProposalToPdf(container, { filename: `${safeName}.pdf` });
+      showSuccessToast('PDF exported successfully.');
+    } catch {
+      showErrorToast('Failed to export PDF. Try again.');
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [proposal, exportingPdf, showSuccessToast, showErrorToast]);
+
+  const handleSaveAsTemplate = useCallback(async () => {
+    if (!proposal || savingTemplate || !templateName.trim()) return;
+    setSavingTemplate(true);
+    try {
+      const result = await saveCustomTemplate({
+        name: templateName.trim(),
+        description: `Custom template from "${proposal.title}"`,
+        themeId: proposal.themeId,
+        slides: proposal.slides,
+      });
+      if (result) {
+        showSuccessToast(`Template "${templateName.trim()}" saved.`);
+        setShowSaveTemplate(false);
+        setTemplateName('');
+      } else {
+        showErrorToast('Failed to save template.');
+      }
+    } catch {
+      showErrorToast('Failed to save template.');
+    } finally {
+      setSavingTemplate(false);
+    }
+  }, [proposal, savingTemplate, templateName, saveCustomTemplate, showSuccessToast, showErrorToast]);
 
   const handleAddSlide = (type: SlideType) => {
     if (!proposal) return;
@@ -488,13 +600,35 @@ export function ProposalEditor() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
+      const isMod = e.metaKey || e.ctrlKey;
+
+      // Undo/redo works globally (even in inputs)
+      if (isMod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+      if (isMod && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      // Duplicate selected slide
+      if (isMod && e.key === 'd' && selectedSlideId) {
+        e.preventDefault();
+        handleDuplicateSlide(selectedSlideId);
+        return;
+      }
+
       if (e.key === 'ArrowLeft') handleGoToPrevSlide();
       else if (e.key === 'ArrowRight') handleGoToNextSlide();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGoToPrevSlide, handleGoToNextSlide]);
+  }, [handleGoToPrevSlide, handleGoToNextSlide, handleUndo, handleRedo, handleDuplicateSlide, selectedSlideId]);
 
   if (!proposal && proposalsLoading) {
     return (
@@ -561,7 +695,27 @@ export function ProposalEditor() {
           />
         </div>
 
-        <div className="w-[28rem] flex items-center justify-end gap-2">
+        <div className="w-[28rem] flex items-center justify-end gap-1.5">
+          <div className="flex items-center gap-0.5 mr-1">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!undoRedoRef.current.canUndo}
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              title="Undo (Cmd+Z)"
+            >
+              <AppIcon icon="ui.undo" className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!undoRedoRef.current.canRedo}
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              title="Redo (Cmd+Shift+Z)"
+            >
+              <AppIcon icon="ui.redo" className="w-3.5 h-3.5" />
+            </button>
+          </div>
           <VersionDropdown
             versions={versions}
             loading={loadingVersions}
@@ -579,6 +733,31 @@ export function ProposalEditor() {
           >
             <AppIcon icon="ui.file" className="w-3.5 h-3.5" />
             Markdown
+          </Button>
+          <Button
+            onClick={handleExportPdf}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs"
+            disabled={exportingPdf}
+            title="Download proposal as PDF"
+          >
+            {exportingPdf ? (
+              <span className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            ) : (
+              <AppIcon icon="ui.download" className="w-3.5 h-3.5" />
+            )}
+            {exportingPdf ? 'Exporting…' : 'PDF'}
+          </Button>
+          <Button
+            onClick={() => { setTemplateName(proposal.title); setShowSaveTemplate(true); }}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs"
+            title="Save current slides as a reusable template"
+          >
+            <AppIcon icon="ui.copy" className="w-3.5 h-3.5" />
+            Save template
           </Button>
           {canToggleFooterBranding && (
             <Button
@@ -646,10 +825,26 @@ export function ProposalEditor() {
             onReorder={(slides) => updateLocal({ slides })}
             onToggle={handleToggleSlide}
             onDelete={handleDeleteSlide}
+            onDuplicate={handleDuplicateSlide}
             onAdd={handleAddSlide}
             onRenameSlide={handleRenameSlide}
             onRenameGroup={handleRenameGroup}
             onAssignGroup={handleAssignSlideGroup}
+            onBulkDelete={(ids) => {
+              if (!proposal) return;
+              const idSet = new Set(ids);
+              updateLocal({ slides: proposal.slides.filter((s) => !idSet.has(s.id)) });
+              if (selectedSlideId && idSet.has(selectedSlideId)) {
+                setSelectedSlideId(null);
+              }
+            }}
+            onBulkToggle={(ids, enabled) => {
+              if (!proposal) return;
+              const idSet = new Set(ids);
+              updateLocal({
+                slides: proposal.slides.map((s) => idSet.has(s.id) ? { ...s, enabled } : s),
+              });
+            }}
           />
         </div>
 
@@ -708,6 +903,14 @@ export function ProposalEditor() {
                         },
                       ]}
                     />
+                    <button
+                      type="button"
+                      onClick={() => window.open(`/p/${proposal.slug}#preview`, '_blank')}
+                      className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                      title="Preview as recipient (new tab)"
+                    >
+                      <AppIcon icon="ui.external-link" className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -902,6 +1105,23 @@ export function ProposalEditor() {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-1">
+          {proposal && (() => {
+            const issues = checkProposalReadiness(proposal);
+            return issues.length > 0 ? (
+              <ReadinessCheckDisplay
+                issues={issues}
+                onClickSlide={(idx) => {
+                  const slide = proposal.slides[idx];
+                  if (slide) {
+                    setSelectedSlideId(slide.id);
+                    setShowPublishConfirm(false);
+                  }
+                }}
+              />
+            ) : (
+              <ReadinessCheckDisplay issues={[]} />
+            );
+          })()}
           <div className="space-y-2">
             {([
               { value: 'public', label: 'Public', desc: 'Anyone with the link can view.' },
@@ -962,6 +1182,49 @@ export function ProposalEditor() {
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : null}
             Publish
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={showSaveTemplate} onOpenChange={(open) => { if (!savingTemplate) setShowSaveTemplate(open); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-brand-serif">Save as template</DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
+            Save the current slides as a reusable template for future proposals.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Template name</label>
+          <Input
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            placeholder="e.g. Agency pitch"
+            maxLength={60}
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveAsTemplate(); } }}
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowSaveTemplate(false)}
+            disabled={savingTemplate}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSaveAsTemplate}
+            disabled={savingTemplate || !templateName.trim()}
+            className="inline-flex items-center gap-2"
+          >
+            {savingTemplate ? (
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : null}
+            Save template
           </Button>
         </DialogFooter>
       </DialogContent>

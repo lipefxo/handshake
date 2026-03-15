@@ -39,6 +39,10 @@ import {
   StarsIcon,
   SmartPhone02Icon,
   TimelineIcon,
+  UndoIcon,
+  RedoIcon,
+  MoreVerticalIcon,
+  Download01Icon,
 } from '@hugeicons/core-free-icons';
 
 export const APP_ICON_REGISTRY = {
@@ -62,9 +66,13 @@ export const APP_ICON_REGISTRY = {
   'ui.globe': Globe02Icon,
   'ui.help': HelpCircleIcon,
   'ui.refresh': ArrowReloadHorizontalIcon,
+  'ui.undo': UndoIcon,
+  'ui.redo': RedoIcon,
   'ui.history': Clock04Icon,
   'ui.computer': ComputerIcon,
   'ui.smart-phone-02': SmartPhone02Icon,
+  'ui.more': MoreVerticalIcon,
+  'ui.download': Download01Icon,
   'slide.type.title': SparklesIcon,
   'slide.type.intro': StarIcon,
   'slide.type.stats': Chart01Icon,

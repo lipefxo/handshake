@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { useWorkspaceStore } from '../store/workspaceStore';
 import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
+import { TableOfContents } from './components/TableOfContents';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
 import { useAnalyticsTracker } from './hooks/useAnalyticsTracker';
@@ -425,12 +426,21 @@ function ProposalViewerContent() {
             <ProgressBar current={current} total={enabledSlides.length} />
           )}
           {!isEmbeddedEditorPreview && settings.appearance.showNavDots && (
-            <SlideNavigation
-              current={current}
-              total={enabledSlides.length}
-              onNavigate={goTo}
-              backToEditorPath={backToEditorPath}
-            />
+            <>
+              <SlideNavigation
+                current={current}
+                total={enabledSlides.length}
+                onNavigate={goTo}
+                backToEditorPath={backToEditorPath}
+              />
+              {enabledSlides.length > 3 && (
+                <TableOfContents
+                  slides={enabledSlides}
+                  currentIndex={current}
+                  onNavigate={goTo}
+                />
+              )}
+            </>
           )}
 
           <div

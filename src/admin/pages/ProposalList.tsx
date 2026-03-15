@@ -1,20 +1,34 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProposalStore } from '../../store/proposalStore';
 import { useAuthStore } from '../../store/authStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
-import type { Proposal, SlideConfig } from '../../types/proposal';
+import type { Proposal, ProposalOutcome, SlideConfig } from '../../types/proposal';
 import { generateSlug, formatDateTime, formatRelativeTime, copyToClipboard } from '../../shared/utils/helpers';
 import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { NewProposalDialog, type NewProposalFormValues } from '../components/NewProposalDialog';
+import { getTemplateSlidesForProposal } from '../../data/proposalTemplates';
+import { createDefaultProposalSlides } from '../../data/slideDefaults';
+import { useCustomTemplateStore, getCustomTemplateSlidesForProposal } from '../../store/customTemplateStore';
+import { useProposalEngagement } from '../../shared/hooks/useProposalEngagement';
+import { ENGAGEMENT_CONFIG } from '../../shared/utils/engagementScore';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { SegmentedTabs } from '../../shared/components/SegmentedTabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function ProposalList() {
   const {
@@ -23,6 +37,7 @@ export function ProposalList() {
     error,
     fetchProposals,
     createProposal,
+    updateProposal,
     deleteProposal,
     createFromMarkdown,
     clearError,
@@ -37,6 +52,7 @@ export function ProposalList() {
   const [deletedProposalTitle, setDeletedProposalTitle] = useState<string | null>(null);
   const [showNewProposalDialog, setShowNewProposalDialog] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [showActivity, setShowActivity] = useState(false);
   const ingestor = useIngestorState();
 
   const filteredProposals = statusFilter === 'all'
@@ -44,6 +60,12 @@ export function ProposalList() {
     : proposals.filter((p) => p.status === statusFilter);
   const publishedCount = proposals.filter((p) => p.status === 'published').length;
   const draftCount = proposals.filter((p) => p.status === 'draft').length;
+
+  const publishedIds = useMemo(
+    () => proposals.filter((p) => p.status === 'published').map((p) => p.id),
+    [proposals],
+  );
+  const { engagement } = useProposalEngagement(publishedIds);
 
   useEffect(() => {
     fetchProposals();
@@ -71,14 +93,50 @@ export function ProposalList() {
 
     setCreating(true);
     try {
+      let slides: SlideConfig[] = [];
+      let themeId = values.themeId;
+
+      if (values.templateId?.startsWith('custom:')) {
+        const customId = values.templateId.replace('custom:', '');
+        const ct = useCustomTemplateStore.getState().templates.find((t) => t.id === customId);
+        if (ct) {
+          const templateData = getCustomTemplateSlidesForProposal(ct, {
+            title: proposalTitle,
+            partnerName,
+            proposalDate: values.proposalDate,
+            themeId: values.themeId,
+          });
+          slides = templateData.slides;
+          themeId = templateData.themeId;
+        }
+      } else if (values.templateId) {
+        const templateData = getTemplateSlidesForProposal(values.templateId, {
+          title: proposalTitle,
+          partnerName,
+          proposalDate: values.proposalDate,
+          themeId: values.themeId,
+        });
+        if (templateData) {
+          slides = templateData.slides;
+          themeId = templateData.themeId;
+        }
+      } else {
+        slides = createDefaultProposalSlides({
+          title: proposalTitle,
+          partnerName,
+          proposalDate: values.proposalDate,
+          themeId: values.themeId,
+        });
+      }
+
       const createdProposal = await createProposal({
         workspace_id: workspaceId,
         slug: generateSlug(partnerName),
         title: proposalTitle,
         partnerName,
         status: 'draft',
-        slides: [],
-        themeId: values.themeId,
+        slides,
+        themeId,
       });
 
       if (createdProposal) {
@@ -98,6 +156,14 @@ export function ProposalList() {
     await copyToClipboard(url);
     setCopiedId(proposal.id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSetOutcome = async (proposal: Proposal, outcome: ProposalOutcome) => {
+    try {
+      await updateProposal(proposal.id, { outcome });
+    } catch {
+      // error is set in the store
+    }
   };
 
   const handleRequestDelete = (proposal: Proposal) => {
@@ -279,11 +345,64 @@ export function ProposalList() {
                       >
                         {proposal.status === 'published' ? 'Live' : 'Draft'}
                       </Badge>
+                      {proposal.outcome && proposal.outcome !== 'active' && (
+                        <Badge
+                          variant="outline"
+                          className={
+                            proposal.outcome === 'won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            proposal.outcome === 'lost' ? 'bg-red-50 text-red-600 border-red-200' :
+                            'bg-gray-50 text-gray-500 border-gray-200'
+                          }
+                        >
+                          {proposal.outcome === 'won' ? 'Won' :
+                           proposal.outcome === 'lost' ? 'Lost' : 'Archived'}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="mt-0 flex items-center gap-2.5">
+                    <div className="mt-0 flex items-center gap-2.5 flex-wrap">
                       <span className="text-xs text-gray-400">{proposal.partnerName}</span>
                       <span className="text-gray-200">·</span>
                       <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
+                      {(() => {
+                        const eng = engagement[proposal.id];
+                        if (!eng || eng.level === 'none') return null;
+                        const config = ENGAGEMENT_CONFIG[eng.level];
+                        return (
+                          <>
+                            <span className="text-gray-200">·</span>
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium ${config.color}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
+                              {config.label}
+                              <span className="text-gray-400 font-normal">({eng.totalViews} {eng.totalViews === 1 ? 'view' : 'views'})</span>
+                            </span>
+                          </>
+                        );
+                      })()}
+                      {(() => {
+                        if (!proposal.expiresAt) return null;
+                        const expiresAt = new Date(proposal.expiresAt);
+                        const now = new Date();
+                        const daysUntil = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        if (daysUntil < 0) {
+                          return (
+                            <>
+                              <span className="text-gray-200">·</span>
+                              <span className="text-xs font-medium text-red-500">Expired</span>
+                            </>
+                          );
+                        }
+                        if (daysUntil <= 7) {
+                          return (
+                            <>
+                              <span className="text-gray-200">·</span>
+                              <span className="text-xs font-medium text-amber-600">
+                                Expires in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+                              </span>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     <p
                       className="mt-0.5 text-xs text-gray-400"
@@ -327,16 +446,53 @@ export function ProposalList() {
                       </Link>
                     </Button>
 
-                    <Button
-                      onClick={() => handleRequestDelete(proposal)}
-                      disabled={deletingId === proposal.id}
-                      variant="ghost"
-                      size="icon"
-                      title="Delete"
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <AppIcon icon="ui.delete" className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="More actions"
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <AppIcon icon="ui.more" className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal">Outcome</DropdownMenuLabel>
+                        {([
+                          { value: 'active' as const, label: 'Active', className: 'text-gray-700' },
+                          { value: 'won' as const, label: 'Won', className: 'text-emerald-600' },
+                          { value: 'lost' as const, label: 'Lost', className: 'text-red-500' },
+                          { value: 'archived' as const, label: 'Archived', className: 'text-gray-400' },
+                        ]).map((option) => (
+                          <DropdownMenuItem
+                            key={option.value}
+                            onClick={() => handleSetOutcome(proposal, option.value)}
+                            className="gap-2"
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                              option.value === 'won' ? 'bg-emerald-500' :
+                              option.value === 'lost' ? 'bg-red-400' :
+                              option.value === 'archived' ? 'bg-gray-300' :
+                              'bg-blue-400'
+                            }`} />
+                            <span className={option.className}>{option.label}</span>
+                            {(proposal.outcome || 'active') === option.value && (
+                              <AppIcon icon="ui.check" className="w-3.5 h-3.5 ml-auto text-gray-400" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleRequestDelete(proposal)}
+                          disabled={deletingId === proposal.id}
+                          variant="destructive"
+                        >
+                          <AppIcon icon="ui.delete" className="w-4 h-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardContent>
               </Card>
@@ -350,6 +506,29 @@ export function ProposalList() {
                 No {statusFilter === 'published' ? 'published' : 'draft'} proposals.
               </p>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Activity feed */}
+      {!loading && proposals.length > 0 && (
+        <div className="mt-8 border-t border-gray-100 pt-6">
+          <button
+            type="button"
+            onClick={() => setShowActivity(!showActivity)}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <AppIcon icon="ui.chevron-right" className={`w-3.5 h-3.5 transition-transform ${showActivity ? 'rotate-90' : ''}`} />
+            Recent Activity
+          </button>
+          {showActivity && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-3 overflow-hidden"
+            >
+              <ActivityFeed limit={15} />
+            </motion.div>
           )}
         </div>
       )}

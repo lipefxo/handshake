@@ -14,12 +14,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppIcon } from '../../shared/icons/AppIcon';
+import { PROPOSAL_TEMPLATES, type ProposalTemplate } from '../../data/proposalTemplates';
+import { useCustomTemplateStore, customTemplateToProposalTemplate } from '../../store/customTemplateStore';
 
 export interface NewProposalFormValues {
   title: string;
   partnerName: string;
   proposalDate: string;
   themeId: ThemeId;
+  templateId: string | null;
 }
 
 interface NewProposalDialogProps {
@@ -43,6 +46,7 @@ function getInitialFormValues(): NewProposalFormValues {
     partnerName: '',
     proposalDate: getTodayDateValue(),
     themeId: defaultThemeId,
+    templateId: null,
   };
 }
 
@@ -59,6 +63,98 @@ function isValidDateValue(value: string): boolean {
   return !Number.isNaN(new Date(value).getTime());
 }
 
+function TemplateCard({
+  template,
+  isSelected,
+  onSelect,
+  isCustom,
+  onDelete,
+}: {
+  template: ProposalTemplate;
+  isSelected: boolean;
+  onSelect: () => void;
+  isCustom?: boolean;
+  onDelete?: () => void;
+}) {
+  const slideCount = template.slides.length;
+  const slideTypes = template.slides.map((s) => s.type);
+  const uniqueTypes = [...new Set(slideTypes)];
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`text-left rounded-xl border p-3 transition-all duration-150 relative group ${
+        isSelected
+          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50'
+      }`}
+    >
+      {onDelete && (
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onDelete(); } }}
+          className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center justify-center w-5 h-5 rounded-md bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors"
+          title="Delete template"
+        >
+          <AppIcon icon="ui.close" className="w-3 h-3" />
+        </span>
+      )}
+      <div className="flex items-center gap-1.5">
+        <p className={`text-sm font-medium ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
+          {template.name}
+        </p>
+        {isCustom && (
+          <span className="rounded bg-violet-100 px-1 py-0.5 text-[9px] font-semibold text-violet-600 uppercase">
+            Custom
+          </span>
+        )}
+      </div>
+      <p className="mt-0.5 text-xs text-gray-400 line-clamp-2">{template.description}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+          {slideCount} slides
+        </span>
+        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+          {uniqueTypes.length} types
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function BlankCard({
+  isSelected,
+  onSelect,
+}: {
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`text-left rounded-xl border p-3 transition-all duration-150 ${
+        isSelected
+          ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+          : 'border-dashed border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-gray-400">
+          <AppIcon icon="ui.add" className="h-3.5 w-3.5" />
+        </div>
+        <p className={`text-sm font-medium ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
+          Blank proposal
+        </p>
+      </div>
+      <p className="mt-1 text-xs text-gray-400">Start from scratch with default slides.</p>
+    </button>
+  );
+}
+
 export function NewProposalDialog({
   isOpen,
   isCreating,
@@ -68,11 +164,20 @@ export function NewProposalDialog({
   onCreateFromMarkdown,
 }: NewProposalDialogProps) {
   const [values, setValues] = useState<NewProposalFormValues>(getInitialFormValues);
+  const customTemplates = useCustomTemplateStore((s) => s.templates);
+  const fetchCustomTemplates = useCustomTemplateStore((s) => s.fetchTemplates);
+  const deleteCustomTemplate = useCustomTemplateStore((s) => s.deleteTemplate);
+
+  const allTemplates = useMemo(() => {
+    const custom = customTemplates.map(customTemplateToProposalTemplate);
+    return [...custom, ...PROPOSAL_TEMPLATES];
+  }, [customTemplates]);
 
   useEffect(() => {
     if (!isOpen) return;
     setValues(getInitialFormValues());
-  }, [isOpen]);
+    fetchCustomTemplates();
+  }, [isOpen, fetchCustomTemplates]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -115,18 +220,55 @@ export function NewProposalDialog({
     });
   };
 
+  const handleSelectTemplate = (templateId: string | null) => {
+    setValues((prev) => {
+      const updates: Partial<NewProposalFormValues> = { templateId };
+      if (templateId) {
+        const template = allTemplates.find((t) => t.id === templateId);
+        if (template) {
+          updates.themeId = template.themeId;
+        }
+      }
+      return { ...prev, ...updates };
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !isCreating) onClose(); }}>
-      <DialogContent className="w-[min(44rem,calc(100vw-2rem))]">
+      <DialogContent className="w-[min(52rem,calc(100vw-2rem))]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle id="new-proposal-title" className="font-brand-serif">New Proposal</DialogTitle>
             <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
-              Set the global configuration before creating the proposal.
+              Pick a template or start blank, then set your proposal details.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/* Template picker */}
+            <div className="grid gap-1.5">
+              <Label>Start from</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[14rem] overflow-y-auto admin-scroll pr-1">
+                <BlankCard
+                  isSelected={values.templateId === null}
+                  onSelect={() => handleSelectTemplate(null)}
+                />
+                {allTemplates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    isSelected={values.templateId === template.id}
+                    onSelect={() => handleSelectTemplate(template.id)}
+                    isCustom={template.id.startsWith('custom:')}
+                    onDelete={template.id.startsWith('custom:')
+                      ? () => deleteCustomTemplate(template.id.replace('custom:', ''))
+                      : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-3 md:grid-cols-3 md:items-start">
               <div className="grid gap-1.5 md:col-span-2">
                 <Label htmlFor="new-proposal-title-input">

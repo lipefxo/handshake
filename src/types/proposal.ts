@@ -162,6 +162,8 @@ export interface BrandOverrides {
   showFooterBranding?: boolean;
 }
 
+export type ProposalOutcome = 'active' | 'won' | 'lost' | 'archived';
+
 export interface Proposal {
   id: string;
   workspace_id: string;
@@ -173,6 +175,7 @@ export interface Proposal {
   updatedAt: string;
   updatedBy?: string;
   status: 'draft' | 'published';
+  outcome?: ProposalOutcome;
   slides: SlideConfig[];
   themeId: ThemeId;
   // Sharing

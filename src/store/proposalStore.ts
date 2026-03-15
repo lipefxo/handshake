@@ -79,6 +79,7 @@ function dbRowToProposal(row: Record<string, unknown>): Proposal {
     updatedAt: row.updated_at as string,
     updatedBy: row.updated_by as string | undefined,
     status: row.status as 'draft' | 'published',
+    outcome: (row.outcome as Proposal['outcome']) || 'active',
     slides,
     themeId: resolveThemeId(row),
     visibility: (row.visibility as Proposal['visibility']) || 'public',
@@ -351,6 +352,7 @@ export const useProposalStore = create<ProposalStore>((set, get) => ({
     if (sanitizedUpdates.accessPassword !== undefined) dbUpdates.access_password = sanitizedUpdates.accessPassword;
     if (sanitizedUpdates.expiresAt !== undefined) dbUpdates.expires_at = sanitizedUpdates.expiresAt;
     if (sanitizedUpdates.brandOverrides !== undefined) dbUpdates.brand_overrides = sanitizedUpdates.brandOverrides;
+    if (sanitizedUpdates.outcome !== undefined) dbUpdates.outcome = sanitizedUpdates.outcome;
     if (currentUserId) dbUpdates.updated_by = currentUserId;
 
     const { data: updatedRows, error } = await supabase

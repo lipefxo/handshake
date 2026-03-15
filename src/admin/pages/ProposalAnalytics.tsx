@@ -190,10 +190,66 @@ export function ProposalAnalytics() {
                 </div>
               )}
 
-              {/* Slide breakdown */}
+              {/* Slide engagement heatmap */}
               {data.slideBreakdown.length > 0 && (
                 <div>
                   <SectionTitle>Slide engagement</SectionTitle>
+                  {/* Heatmap visualization */}
+                  <div className="rounded-xl border border-gray-100 bg-white p-5 mb-4">
+                    <div className="flex items-end gap-1.5">
+                      {data.slideBreakdown.map((slide) => {
+                        const maxDwell = Math.max(...data.slideBreakdown.map((s) => s.avgDwellMs), 1);
+                        const intensity = slide.avgDwellMs / maxDwell;
+                        const maxViews = Math.max(...data.slideBreakdown.map((s) => s.viewCount), 1);
+                        const viewRatio = slide.viewCount / maxViews;
+                        // Blend view count and dwell time for heat
+                        const heat = (intensity * 0.6 + viewRatio * 0.4);
+                        const hue = 240 - heat * 240; // blue (cold) to red (hot)
+                        const saturation = 60 + heat * 30;
+                        const lightness = 75 - heat * 30;
+                        const barHeight = Math.max(20, heat * 100);
+
+                        return (
+                          <div
+                            key={slide.slideIndex}
+                            className="flex-1 flex flex-col items-center gap-1 group relative"
+                          >
+                            <div
+                              className="w-full rounded-t-md transition-all duration-300"
+                              style={{
+                                height: barHeight,
+                                backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+                                minWidth: 20,
+                              }}
+                            />
+                            <span className="text-[10px] text-gray-400">{slide.slideIndex + 1}</span>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                              <p className="font-medium capitalize">{slide.slideType ?? 'Slide'} #{slide.slideIndex + 1}</p>
+                              <p>{slide.viewCount} views · {formatDuration(slide.avgDwellMs)} avg</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'hsl(240, 60%, 75%)' }} />
+                          Low engagement
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'hsl(30, 80%, 55%)' }} />
+                          Medium
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'hsl(0, 90%, 45%)' }} />
+                          High engagement
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Detail table */}
                   <div className="rounded-xl border border-gray-100 bg-white overflow-hidden">
                     <table className="w-full text-sm">
                       <thead>

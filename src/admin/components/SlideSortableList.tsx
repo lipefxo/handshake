@@ -32,10 +32,13 @@ interface SlideSortableListProps {
   onReorder: (slides: SlideConfig[]) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onAdd: (type: SlideType) => void;
   onRenameSlide: (slideId: string, label: string) => void;
   onRenameGroup: (groupId: string, title: string) => void;
   onAssignGroup: (slideId: string, groupId: string | null) => void;
+  onBulkDelete?: (ids: string[]) => void;
+  onBulkToggle?: (ids: string[], enabled: boolean) => void;
 }
 
 export function SlideSortableList({
@@ -45,13 +48,73 @@ export function SlideSortableList({
   onReorder,
   onToggle,
   onDelete,
+  onDuplicate,
   onAdd,
   onRenameSlide,
   onRenameGroup,
   onAssignGroup,
+  onBulkDelete,
+  onBulkToggle,
 }: SlideSortableListProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const lastBulkClickRef = useRef<string | null>(null);
+
+  const isBulkMode = bulkSelected.size > 0;
+
+  const toggleBulkSelect = useCallback((slideId: string, shiftKey: boolean) => {
+    setBulkSelected((prev) => {
+      const next = new Set(prev);
+      if (shiftKey && lastBulkClickRef.current) {
+        // Range select
+        const lastIdx = slides.findIndex((s) => s.id === lastBulkClickRef.current);
+        const curIdx = slides.findIndex((s) => s.id === slideId);
+        if (lastIdx !== -1 && curIdx !== -1) {
+          const [start, end] = lastIdx < curIdx ? [lastIdx, curIdx] : [curIdx, lastIdx];
+          for (let i = start; i <= end; i++) {
+            next.add(slides[i].id);
+          }
+        }
+      } else if (next.has(slideId)) {
+        next.delete(slideId);
+      } else {
+        next.add(slideId);
+      }
+      lastBulkClickRef.current = slideId;
+      return next;
+    });
+  }, [slides]);
+
+  const clearBulkSelection = useCallback(() => {
+    setBulkSelected(new Set());
+    lastBulkClickRef.current = null;
+  }, []);
+
+  const handleBulkEnable = useCallback(() => {
+    if (onBulkToggle) {
+      onBulkToggle([...bulkSelected], true);
+    }
+    clearBulkSelection();
+  }, [bulkSelected, onBulkToggle, clearBulkSelection]);
+
+  const handleBulkDisable = useCallback(() => {
+    if (onBulkToggle) {
+      onBulkToggle([...bulkSelected], false);
+    }
+    clearBulkSelection();
+  }, [bulkSelected, onBulkToggle, clearBulkSelection]);
+
+  const handleBulkDelete = useCallback(() => {
+    if (onBulkDelete) {
+      onBulkDelete([...bulkSelected]);
+    }
+    clearBulkSelection();
+  }, [bulkSelected, onBulkDelete, clearBulkSelection]);
+
+  const handleSelectAll = useCallback(() => {
+    setBulkSelected(new Set(slides.map((s) => s.id)));
+  }, [slides]);
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
@@ -327,6 +390,58 @@ export function SlideSortableList({
           </p>
         </div>
 
+        {isBulkMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-1.5 mb-2 px-1 py-1.5 rounded-lg bg-gray-900 text-white"
+          >
+            <span className="text-[10px] font-medium px-2">
+              {bulkSelected.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
+            >
+              All
+            </button>
+            <div className="w-px h-3 bg-white/20" />
+            <button
+              type="button"
+              onClick={handleBulkEnable}
+              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors text-green-300"
+              title="Enable selected slides"
+            >
+              Enable
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDisable}
+              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors text-yellow-300"
+              title="Disable selected slides"
+            >
+              Disable
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors text-red-300"
+              title="Delete selected slides"
+            >
+              Delete
+            </button>
+            <div className="flex-1" />
+            <button
+              type="button"
+              onClick={clearBulkSelection}
+              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+          </motion.div>
+        )}
+
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -374,9 +489,12 @@ export function SlideSortableList({
                             <SlideSortableItem
                               slide={slide}
                               isSelected={slide.id === selectedId}
+                              isBulkSelected={bulkSelected.has(slide.id)}
+                              onBulkSelect={(shiftKey) => toggleBulkSelect(slide.id, shiftKey)}
                               onSelect={() => onSelect(slide.id)}
                               onToggle={() => onToggle(slide.id)}
                               onDelete={() => onDelete(slide.id)}
+                              onDuplicate={() => onDuplicate(slide.id)}
                               onRename={(label) => onRenameSlide(slide.id, label)}
                             />
                           </motion.div>
@@ -405,6 +523,8 @@ export function SlideSortableList({
                         slide={slide}
                         isSelected={slide.id === selectedId}
                         mergeProgress={mergeTarget === slide.id ? mergeProgress : undefined}
+                        isBulkSelected={bulkSelected.has(slide.id)}
+                        onBulkSelect={(shiftKey) => toggleBulkSelect(slide.id, shiftKey)}
                         onSelect={() => onSelect(slide.id)}
                         onToggle={() => onToggle(slide.id)}
                         onDelete={() => onDelete(slide.id)}
