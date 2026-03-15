@@ -9,6 +9,7 @@ import { SlideRenderer } from './components/SlideRenderer';
 import { SlideNavigation } from './components/SlideNavigation';
 import { ProgressBar } from '../shared/components/ProgressBar';
 import { useSlideNavigation } from './hooks/useSlideNavigation';
+import { useAnalyticsTracker } from './hooks/useAnalyticsTracker';
 import { getTransitionVariants } from '../shared/utils/animations';
 import { ThemeProvider } from '../themes/ThemeProvider';
 import { defaultThemeId } from '../themes/themeDefinitions';
@@ -92,6 +93,7 @@ function ProposalViewerContent() {
     getOwnProposalBySlug,
   } = useProposalStore();
   const user = useAuthStore((state) => state.user);
+  const authInitialized = useAuthStore((state) => state.initialized);
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
   const workspaceLoading = useWorkspaceStore((state) => state.loading);
   const currentWorkspaceBrandTheme = useWorkspaceStore((state) => state.currentWorkspace?.brandTheme);
@@ -147,8 +149,11 @@ function ProposalViewerContent() {
       setProposal(null);
       setAccessGranted(false);
 
-      // In standalone preview mode, draft access depends on current workspace
-      // context. Wait for workspace bootstrap to complete before loading.
+      // In standalone preview mode, draft access depends on auth + workspace
+      // context. Wait for both to be ready before loading.
+      if (isPreviewMode && !authInitialized) {
+        return;
+      }
       if (isPreviewMode && user && !currentWorkspaceId && workspaceLoading) {
         return;
       }
@@ -254,6 +259,7 @@ function ProposalViewerContent() {
     isEmbeddedEditorPreview,
     isPreviewMode,
     user,
+    authInitialized,
     currentWorkspaceId,
     workspaceLoading,
   ]);
@@ -284,6 +290,9 @@ function ProposalViewerContent() {
 
   const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
   const { current, goTo, next, containerRef } = useSlideNavigation(enabledSlides.length);
+
+  // Track analytics — skip in preview/editor modes
+  useAnalyticsTracker(proposal, current, !isPreviewMode && accessGranted);
   const embeddedPreviewSlides =
     isEmbeddedEditorPreview
       ? (previewSelectedSlideId

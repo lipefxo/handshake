@@ -129,16 +129,17 @@ export function ProposalSettingsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="grid grid-cols-[11rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="grid grid-cols-[17rem_minmax(0,1fr)_22rem] items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
         {/* Tab strip */}
         <SegmentedTabs
           value="settings"
-          className="w-44 flex-shrink-0"
+          className="w-[17rem] flex-shrink-0"
           tabClassName="flex-1"
           indicatorLayoutId="proposal-editor-mode-tabs"
           options={[
             { value: 'slides', label: 'Slides', href: `/admin/proposals/${id}` },
             { value: 'settings', label: 'Settings' },
+            { value: 'analytics', label: 'Analytics', href: `/admin/proposals/${id}/analytics` },
           ]}
         />
 

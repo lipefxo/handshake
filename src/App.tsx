@@ -8,6 +8,7 @@ import { ProposalList } from './admin/pages/ProposalList';
 import { ProposalEditor } from './admin/pages/ProposalEditor';
 import { ProposalSettings } from './admin/pages/ProposalSettings';
 import { ProposalSettingsPage } from './admin/pages/ProposalSettingsPage';
+import { ProposalAnalytics } from './admin/pages/ProposalAnalytics';
 import { ProposalViewer } from './presentation/ProposalViewer';
 import { ShortCodeRedirect } from './presentation/ShortCodeRedirect';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
@@ -68,6 +69,7 @@ export default function App() {
               <Route path="proposals/new" element={<ProposalEditor />} />
               <Route path="proposals/:id" element={<ProposalEditor />} />
               <Route path="proposals/:id/settings" element={<ProposalSettingsPage />} />
+              <Route path="proposals/:id/analytics" element={<ProposalAnalytics />} />
               <Route path="settings" element={<ProposalSettings />} />
             </Route>
 

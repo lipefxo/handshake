@@ -628,6 +628,80 @@ create policy "No public reads on waitlist"
   using (false);
 
 -- ============================================================
+-- Proposal Analytics
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS proposal_views (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  proposal_id uuid REFERENCES proposals(id) ON DELETE CASCADE NOT NULL,
+  visitor_id text NOT NULL,
+  session_id text UNIQUE NOT NULL,
+  device_type text CHECK (device_type IN ('desktop', 'mobile', 'tablet')),
+  browser text,
+  os text,
+  country text,
+  city text,
+  referrer text,
+  user_agent text,
+  slides_total int NOT NULL DEFAULT 0,
+  max_slide_reached int NOT NULL DEFAULT 0,
+  duration_ms int NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_views_proposal_id ON proposal_views(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_views_created_at ON proposal_views(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_proposal_views_visitor_id ON proposal_views(visitor_id);
+
+ALTER TABLE proposal_views ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Workspace members can read proposal views"
+  ON proposal_views FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_views.proposal_id
+        AND public.is_workspace_member(proposals.workspace_id)
+    )
+  );
+
+CREATE TABLE IF NOT EXISTS proposal_slide_events (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  view_id uuid REFERENCES proposal_views(id) ON DELETE CASCADE NOT NULL,
+  proposal_id uuid REFERENCES proposals(id) ON DELETE CASCADE NOT NULL,
+  slide_index int NOT NULL,
+  slide_type text,
+  dwell_time_ms int NOT NULL DEFAULT 0,
+  entered_at timestamptz NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_slide_events_view_id ON proposal_slide_events(view_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_slide_events_proposal_id ON proposal_slide_events(proposal_id);
+
+ALTER TABLE proposal_slide_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Workspace members can read proposal slide events"
+  ON proposal_slide_events FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM proposals
+      WHERE proposals.id = proposal_slide_events.proposal_id
+        AND public.is_workspace_member(proposals.workspace_id)
+    )
+  );
+
+CREATE OR REPLACE FUNCTION public.cleanup_old_proposal_slide_events()
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM proposal_slide_events
+  WHERE entered_at < now() - interval '90 days';
+$$;
+
+-- ============================================================
 -- Storage
 -- ============================================================
 
