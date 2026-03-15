@@ -26,7 +26,7 @@ const SLIDE_TYPE_LABELS: Record<string, string> = {
 
 function getSlideLabel(slide: SlideConfig): string {
   if (slide.customLabel) return slide.customLabel;
-  const content = slide.content as Record<string, unknown>;
+  const content = slide.content as unknown as Record<string, unknown>;
   if (content.heading && typeof content.heading === 'string') return content.heading;
   if (content.headline && typeof content.headline === 'string') return content.headline;
   return SLIDE_TYPE_LABELS[slide.type] || slide.type;

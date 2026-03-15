@@ -66,7 +66,7 @@ export function getCustomTemplateSlidesForProposal(
   return { slides, themeId: seed.themeId ?? ct.themeId };
 }
 
-export const useCustomTemplateStore = create<CustomTemplateStore>((set, get) => ({
+export const useCustomTemplateStore = create<CustomTemplateStore>((set) => ({
   templates: [],
   loading: false,
 

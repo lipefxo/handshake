@@ -24,7 +24,7 @@ export function checkProposalReadiness(proposal: Proposal): ReadinessIssue[] {
     issues.push({ severity: 'error', message: 'Partner name is empty.' });
   }
 
-  enabledSlides.forEach((slide, enabledIndex) => {
+  enabledSlides.forEach((slide) => {
     const globalIndex = proposal.slides.indexOf(slide);
     const slideLabel = slide.customLabel || `Slide ${globalIndex + 1}`;
 

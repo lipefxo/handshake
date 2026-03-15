@@ -147,7 +147,7 @@ export function ActivityFeed({ limit = 20 }: { limit?: number }) {
 
   return (
     <div className="space-y-0">
-      {items.map((item, i) => (
+      {items.map((item) => (
         <div key={item.id} className="flex items-start gap-3 py-2.5 px-1">
           <div className={`flex-shrink-0 mt-0.5 w-6 h-6 rounded-full flex items-center justify-center ${ACTIVITY_COLORS[item.type]}`}>
             <AppIcon icon={ACTIVITY_ICONS[item.type]} className="w-3 h-3" />
