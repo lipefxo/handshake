@@ -212,12 +212,13 @@ export function ProposalList() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="app-section-frame px-6 py-8 md:px-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-brand-serif text-2xl text-gray-900">Proposals</h1>
-          <p className="mt-1 text-sm text-[#6b6b6b]">{proposals.length} total</p>
+          <p className="app-kicker">Workspace</p>
+          <h1 className="mt-2 font-brand-serif text-[2rem] tracking-[-0.04em] text-[var(--app-text-strong)]">Proposals</h1>
+          <p className="mt-1 text-sm text-[var(--app-text-secondary)]">{proposals.length} total</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -235,7 +236,7 @@ export function ProposalList() {
         <SegmentedTabs
           value={statusFilter}
           onValueChange={setStatusFilter}
-          className="mb-5 w-fit border-0 bg-gray-100"
+          className="mb-5 w-fit border border-[var(--app-border-subtle)] bg-[var(--app-bg-elevated)]"
           options={[
             {
               value: 'all',
@@ -277,7 +278,7 @@ export function ProposalList() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--app-border-strong)] border-t-primary" />
         </div>
       )}
 
@@ -286,13 +287,13 @@ export function ProposalList() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl"
+          className="app-panel text-center py-20 border-2 border-dashed rounded-[var(--app-radius-lg)]"
         >
           <div className="mb-4 flex justify-center">
-            <AppIcon icon="ui.home" size={32} className="text-gray-400" />
+            <AppIcon icon="ui.home" size={32} className="text-[var(--app-text-muted)]" />
           </div>
-          <h2 className="font-brand-serif text-base text-gray-700 mb-2">No proposals yet</h2>
-          <p className="mb-6 text-sm text-[#6b6b6b]">Create your first partnership proposal to get started.</p>
+          <h2 className="mb-2 font-brand-serif text-base text-[var(--app-text-primary)]">No proposals yet</h2>
+          <p className="mb-6 text-sm text-[var(--app-text-secondary)]">Create your first partnership proposal to get started.</p>
           <Button
             onClick={handleOpenCreateDialog}
           >
@@ -313,7 +314,7 @@ export function ProposalList() {
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ delay: i * 0.03 }}
               layout
-              className="cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
+              className="cursor-pointer rounded-[var(--app-radius-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
               role="link"
               tabIndex={0}
               onClick={() => navigate(`/admin/proposals/${proposal.id}`)}
@@ -324,10 +325,10 @@ export function ProposalList() {
                 }
               }}
             >
-              <Card className={`transition-all duration-150 hover:shadow-sm ${
+              <Card className={`transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[var(--app-shadow-soft)] ${
                 proposal.status === 'published'
-                  ? 'border-green-100 hover:border-green-200 bg-green-50/30'
-                  : 'hover:border-gray-200'
+                  ? 'border-emerald-200/60 bg-[rgba(79,151,120,0.08)] hover:border-emerald-200'
+                  : 'hover:border-[var(--app-border-strong)]'
               }`}>
                 <CardContent className="flex items-center gap-3 p-4">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -338,7 +339,7 @@ export function ProposalList() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">{proposal.title}</h3>
+                      <h3 className="truncate text-sm font-semibold text-[var(--app-text-strong)]">{proposal.title}</h3>
                       <Badge
                         variant={proposal.status === 'published' ? 'secondary' : 'outline'}
                         className={proposal.status === 'published' ? 'bg-green-100 text-green-700 border-green-200' : ''}
@@ -360,9 +361,9 @@ export function ProposalList() {
                       )}
                     </div>
                     <div className="mt-0 flex items-center gap-2.5 flex-wrap">
-                      <span className="text-xs text-gray-400">{proposal.partnerName}</span>
-                      <span className="text-gray-200">·</span>
-                      <span className="text-xs text-gray-400">{proposal.slides.filter(s => s.enabled).length} slides</span>
+                      <span className="text-xs text-[var(--app-text-muted)]">{proposal.partnerName}</span>
+                      <span className="text-[var(--app-border-strong)]">·</span>
+                      <span className="text-xs text-[var(--app-text-muted)]">{proposal.slides.filter(s => s.enabled).length} slides</span>
                       {(() => {
                         const eng = engagement[proposal.id];
                         if (!eng || eng.level === 'none') return null;
@@ -373,7 +374,7 @@ export function ProposalList() {
                             <span className={`inline-flex items-center gap-1 text-xs font-medium ${config.color}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
                               {config.label}
-                              <span className="text-gray-400 font-normal">({eng.totalViews} {eng.totalViews === 1 ? 'view' : 'views'})</span>
+                              <span className="font-normal text-[var(--app-text-muted)]">({eng.totalViews} {eng.totalViews === 1 ? 'view' : 'views'})</span>
                             </span>
                           </>
                         );
@@ -386,7 +387,7 @@ export function ProposalList() {
                         if (daysUntil < 0) {
                           return (
                             <>
-                              <span className="text-gray-200">·</span>
+                              <span className="text-[var(--app-border-strong)]">·</span>
                               <span className="text-xs font-medium text-red-500">Expired</span>
                             </>
                           );
@@ -394,7 +395,7 @@ export function ProposalList() {
                         if (daysUntil <= 7) {
                           return (
                             <>
-                              <span className="text-gray-200">·</span>
+                              <span className="text-[var(--app-border-strong)]">·</span>
                               <span className="text-xs font-medium text-amber-600">
                                 Expires in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
                               </span>
@@ -405,7 +406,7 @@ export function ProposalList() {
                       })()}
                     </div>
                     <p
-                      className="mt-0.5 text-xs text-gray-400"
+                      className="mt-0.5 text-xs text-[var(--app-text-muted)]"
                       title={formatDateTime(proposal.updatedAt || proposal.createdAt)}
                     >
                       Last updated {formatRelativeTime(proposal.updatedAt || proposal.createdAt)}
@@ -452,13 +453,13 @@ export function ProposalList() {
                           variant="ghost"
                           size="icon"
                           title="More actions"
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)]"
                         >
                           <AppIcon icon="ui.more" className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal">Outcome</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs font-normal text-[var(--app-text-muted)]">Outcome</DropdownMenuLabel>
                         {([
                           { value: 'active' as const, label: 'Active', className: 'text-gray-700' },
                           { value: 'won' as const, label: 'Won', className: 'text-emerald-600' },
@@ -478,7 +479,7 @@ export function ProposalList() {
                             }`} />
                             <span className={option.className}>{option.label}</span>
                             {(proposal.outcome || 'active') === option.value && (
-                              <AppIcon icon="ui.check" className="w-3.5 h-3.5 ml-auto text-gray-400" />
+                              <AppIcon icon="ui.check" className="ml-auto h-3.5 w-3.5 text-[var(--app-text-muted)]" />
                             )}
                           </DropdownMenuItem>
                         ))}
@@ -502,7 +503,7 @@ export function ProposalList() {
 
           {filteredProposals.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[var(--app-text-muted)]">
                 No {statusFilter === 'published' ? 'published' : 'draft'} proposals.
               </p>
             </div>
@@ -512,11 +513,11 @@ export function ProposalList() {
 
       {/* Activity feed */}
       {!loading && proposals.length > 0 && (
-        <div className="mt-8 border-t border-gray-100 pt-6">
+        <div className="mt-8 border-t border-[var(--app-border-subtle)] pt-6">
           <button
             type="button"
             onClick={() => setShowActivity(!showActivity)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-[var(--app-text-muted)] transition-colors hover:text-[var(--app-text-primary)]"
           >
             <AppIcon icon="ui.chevron-right" className={`w-3.5 h-3.5 transition-transform ${showActivity ? 'rotate-90' : ''}`} />
             Recent Activity
@@ -563,10 +564,10 @@ export function ProposalList() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-brand-serif">Delete proposal?</DialogTitle>
-            <DialogDescription className="mt-1 text-sm text-[#6b6b6b]">
+            <DialogTitle>Delete proposal?</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-[var(--app-text-secondary)]">
               This will permanently delete{' '}
-              <span className="font-medium text-gray-700">{deleteTarget?.title}</span>.
+              <span className="font-medium text-[var(--app-text-primary)]">{deleteTarget?.title}</span>.
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

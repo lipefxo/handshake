@@ -1,1648 +1,646 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useInView, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useInView } from 'motion/react';
 import { supabase } from '../supabaseClient';
 import { DEMO_PROPOSAL_SLUG } from '../data/demoProposal';
+import { BrandLogo } from '../shared/components/BrandLogo';
 import { BrandWordmark } from '../shared/components/BrandWordmark';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const C = {
-  bgPrimary: '#FAFAF7',
-  bgSecondary: '#F2F1ED',
-  bgDark: '#0C0C0C',
-  bgDarkAlt: '#111111',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  textOnDark: '#F0EDE8',
-  textMuted: '#9A9590',
-  accent: '#D4785C',
-  accentHover: '#C06A50',
-  border: '#E5E3DE',
-  borderDark: '#2A2A2A',
-} as const;
-
-const serif = "'Libre Baskerville', Georgia, serif";
-const sans = "'DM Sans', system-ui, sans-serif";
-
-// ─── Scroll-reveal hook ───────────────────────────────────────────────────────
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
+  const inView = useInView(ref, { once: true, margin: '-80px' });
   return { ref, inView };
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+const revealUp = {
+  hidden: { opacity: 0, y: 26 },
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, ease: 'easeOut' as const, delay },
+    transition: {
+      duration: 0.58,
+      delay,
+      ease: [0.23, 1, 0.32, 1] as const,
+    },
   }),
 };
 
-// ─── Browser mockup ───────────────────────────────────────────────────────────
-function BrowserMockup() {
-  return (
-    <div
-      style={{
-        background: '#0C0C0C',
-        borderRadius: 12,
-        overflow: 'hidden',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.14)',
-        transform: 'rotate(1.5deg)',
-        border: `1px solid ${C.borderDark}`,
-        maxWidth: 520,
-        width: '100%',
-      }}
-    >
-      {/* Chrome bar */}
-      <div
-        style={{
-          background: '#1a1a1a',
-          padding: '10px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          borderBottom: '1px solid #2a2a2a',
-        }}
-      >
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
-            <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />
-          ))}
-        </div>
-        <div
-          style={{
-            flex: 1,
-            background: '#111',
-            borderRadius: 6,
-            padding: '4px 10px',
-            color: '#555',
-            fontSize: 11,
-            fontFamily: sans,
-            marginLeft: 8,
-          }}
-        >
-          handshake.so/p/acme-partnership-2026
-        </div>
-      </div>
-      {/* Slide content */}
-      <div
-        style={{
-          padding: '40px 36px 36px',
-          minHeight: 280,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Gradient orb */}
-        <div
-          style={{
-            position: 'absolute',
-            top: -60,
-            right: -60,
-            width: 220,
-            height: 220,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${C.accent}28 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          }}
-        />
-        {/* Content */}
-        <div
-          style={{
-            display: 'inline-block',
-            background: `${C.accent}18`,
-            color: C.accent,
-            fontSize: 11,
-            fontFamily: sans,
-            fontWeight: 500,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            padding: '4px 10px',
-            borderRadius: 4,
-            marginBottom: 20,
-            border: `1px solid ${C.accent}30`,
-          }}
-        >
-          Partnership Proposal · 2026
-        </div>
-        <div
-          style={{
-            fontFamily: serif,
-            fontSize: 28,
-            fontWeight: 700,
-            color: C.textOnDark,
-            lineHeight: 1.25,
-            marginBottom: 14,
-          }}
-        >
-          Growing Together
-          <br />
-          with Acme Corp
-        </div>
-        <div
-          style={{
-            fontFamily: sans,
-            fontSize: 14,
-            color: C.textMuted,
-            lineHeight: 1.6,
-            marginBottom: 28,
-            maxWidth: 320,
-          }}
-        >
-          A strategic partnership to expand reach across 12 new markets and drive $4.2M in combined revenue.
-        </div>
-        {/* Fake stats */}
-        <div style={{ display: 'flex', gap: 20 }}>
-          {[{ val: '4.2M', label: 'Revenue' }, { val: '12', label: 'Markets' }, { val: '3x', label: 'ROI' }].map(
-            ({ val, label }) => (
-              <div key={label}>
-                <div
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: C.accent,
-                  }}
-                >
-                  {val}
-                </div>
-                <div style={{ fontFamily: sans, fontSize: 11, color: C.textMuted }}>
-                  {label}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-        {/* Slide indicator dots */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 16,
-            right: 18,
-            display: 'flex',
-            gap: 5,
-          }}
-        >
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              style={{
-                width: i === 1 ? 18 : 6,
-                height: 6,
-                borderRadius: 3,
-                background: i === 1 ? C.accent : '#2a2a2a',
-                transition: 'all 0.3s',
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function scrollToSection(id: string) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  const top = target.getBoundingClientRect().top + window.scrollY - 88;
+  window.scrollTo({ top, behavior: 'smooth' });
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
 function NavBar() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 16);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollTo = (id: string) => {
-    const executeScroll = () => {
-      const target = document.getElementById(id);
-      if (!target) return;
-      const headerOffset = 74;
-      const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
-      window.scrollTo({ top, behavior: 'smooth' });
-    };
-
-    // On mobile, close the animated menu first so scrolling is reliable.
-    if (mobileOpen) {
-      setMobileOpen(false);
-      window.setTimeout(executeScroll, 220);
-      return;
-    }
-
-    executeScroll();
-  };
-  const goToAdmin = () => {
-    setMobileOpen(false);
-    window.location.href = '/admin';
-  };
+  const items = [
+    { id: 'workflow', label: 'Workflow' },
+    { id: 'capabilities', label: 'Capabilities' },
+    { id: 'pricing', label: 'Pricing' },
+    { id: 'faq', label: 'FAQ' },
+  ];
 
   return (
     <header
+      className="fixed inset-x-0 top-0 z-50"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        transition: 'all 0.4s ease',
-        background: scrolled ? 'rgba(250, 250, 247, 0.88)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        borderBottom: scrolled ? `1px solid ${C.border}` : '1px solid transparent',
+        background: scrolled ? 'var(--app-bg-overlay)' : 'transparent',
+        borderBottom: scrolled ? '1px solid var(--app-border-subtle)' : '1px solid transparent',
+        backdropFilter: scrolled ? 'blur(18px)' : 'none',
+        transition: 'all 180ms ease-out',
       }}
     >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '0 32px',
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Wordmark */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          type="button"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 0,
-          }}
-        >
-          <BrandWordmark variant="light" className="h-5 w-auto" aria-label="Handshake" />
-        </button>
+      <div className="app-section-frame flex h-16 items-center justify-between gap-6">
+        <Link to="/" aria-label="Handshake home" className="inline-flex items-center gap-3">
+          <BrandLogo variant="light" className="h-8 w-8" />
+          <BrandWordmark variant="light" className="h-4 w-auto" />
+        </Link>
 
-        {/* Desktop nav */}
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 32,
-          }}
-          className="landing-desktop-nav"
-        >
-          {[
-            { label: 'How it Works', id: 'how-it-works' },
-            { label: 'Features', id: 'features' },
-            { label: 'Pricing', id: 'pricing' },
-            { label: 'FAQ', id: 'faq' },
-          ].map(({ label, id }) => (
+        <nav className="hidden items-center gap-5 md:flex">
+          {items.map((item) => (
             <button
-              key={id}
-              onClick={() => scrollTo(id)}
+              key={item.id}
               type="button"
-              style={{
-                fontFamily: sans,
-                fontSize: 14,
-                fontWeight: 400,
-                color: C.textSecondary,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textPrimary)}
-              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textSecondary)}
+              onClick={() => scrollToSection(item.id)}
+              className="font-brand-mono text-[11px] uppercase tracking-[0.14em] text-[var(--app-text-muted)] transition-colors hover:text-[var(--app-text-primary)]"
             >
-              {label}
+              {item.label}
             </button>
           ))}
-          <button
-            onClick={goToAdmin}
-            type="button"
-            style={{
-              fontFamily: sans,
-              fontSize: 14,
-              fontWeight: 500,
-              color: C.textPrimary,
-              background: 'transparent',
-              border: `1px solid ${C.border}`,
-              cursor: 'pointer',
-              padding: '8px 16px',
-              borderRadius: 8,
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => ((e.target as HTMLElement).style.background = C.bgSecondary)}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.background = 'transparent')}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => scrollTo('waitlist')}
-            type="button"
-            style={{
-              fontFamily: sans,
-              fontSize: 14,
-              fontWeight: 500,
-              color: '#fff',
-              background: C.accent,
-              border: 'none',
-              cursor: 'pointer',
-              padding: '9px 20px',
-              borderRadius: 8,
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={(e) => ((e.target as HTMLElement).style.background = C.accentHover)}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.background = C.accent)}
-          >
-            Get Early Access
-          </button>
         </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          type="button"
-          className="landing-hamburger"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 4,
-            display: 'none',
-            flexDirection: 'column',
-            gap: 5,
-          }}
-          aria-label="Toggle menu"
-        >
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              style={{
-                width: 22,
-                height: 1.5,
-                background: C.textPrimary,
-                transition: 'all 0.3s',
-                transformOrigin: 'center',
-                transform:
-                  mobileOpen && i === 0
-                    ? 'rotate(45deg) translate(4.5px, 4.5px)'
-                    : mobileOpen && i === 1
-                    ? 'scaleX(0)'
-                    : mobileOpen && i === 2
-                    ? 'rotate(-45deg) translate(4.5px, -4.5px)'
-                    : 'none',
-              }}
-            />
-          ))}
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            style={{
-              background: 'rgba(250, 250, 247, 0.97)',
-              backdropFilter: 'blur(12px)',
-              borderTop: `1px solid ${C.border}`,
-              overflow: 'hidden',
-            }}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/login"
+            className="hidden rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] px-3 py-2 text-sm text-[var(--app-text-secondary)] transition-colors hover:text-[var(--app-text-primary)] sm:inline-flex"
           >
-            <div style={{ padding: '16px 32px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                { label: 'How it Works', id: 'how-it-works' },
-                { label: 'Features', id: 'features' },
-                { label: 'Pricing', id: 'pricing' },
-                { label: 'FAQ', id: 'faq' },
-              ].map(({ label, id }) => (
-                <button
-                  key={id}
-                  onClick={() => scrollTo(id)}
-                  type="button"
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 15,
-                    color: C.textSecondary,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    textAlign: 'left',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                onClick={goToAdmin}
-                type="button"
-                style={{
-                  fontFamily: sans,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: C.textPrimary,
-                  background: 'transparent',
-                  border: `1px solid ${C.border}`,
-                  cursor: 'pointer',
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  textAlign: 'center',
-                }}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => scrollTo('waitlist')}
-                type="button"
-                style={{
-                  fontFamily: sans,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: '#fff',
-                  background: C.accent,
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  textAlign: 'center',
-                  marginTop: 4,
-                }}
-              >
-                Get Early Access
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Sign in
+          </Link>
+          <button
+            type="button"
+            onClick={() => scrollToSection('waitlist')}
+            className="rounded-[var(--app-radius-sm)] border border-primary/15 bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[0_10px_22px_rgba(245,78,0,0.14)] transition-transform duration-150 hover:-translate-y-0.5"
+          >
+            Join beta
+          </button>
+        </div>
+      </div>
     </header>
   );
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-function HeroSection() {
-  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-
+function StudioWindow({
+  title,
+  eyebrow,
+  children,
+  dark = false,
+}: {
+  title: string;
+  eyebrow: string;
+  children: React.ReactNode;
+  dark?: boolean;
+}) {
   return (
-    <section
+    <div
+      className="overflow-hidden rounded-[14px] border"
       style={{
-        background: C.bgPrimary,
-        paddingTop: 140,
-        paddingBottom: 100,
-        position: 'relative',
-        overflow: 'hidden',
+        background: dark ? '#181713' : 'rgba(247,247,244,0.88)',
+        borderColor: dark ? 'rgba(247,247,244,0.08)' : 'var(--app-border-subtle)',
+        boxShadow: dark ? '0 24px 60px rgba(0,0,0,0.28)' : 'var(--app-shadow-elevated)',
       }}
     >
-      {/* Grain overlay */}
-      <div className="grain-overlay" />
-
-      {/* Subtle warm gradient */}
       <div
+        className="flex items-center justify-between border-b px-4 py-3"
         style={{
-          position: 'absolute',
-          top: -200,
-          right: -100,
-          width: 700,
-          height: 700,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${C.accent}0C 0%, transparent 65%)`,
-          pointerEvents: 'none',
+          borderColor: dark ? 'rgba(247,247,244,0.08)' : 'var(--app-border-subtle)',
+          color: dark ? 'rgba(247,247,244,0.7)' : 'var(--app-text-muted)',
         }}
-      />
-
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '0 32px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 64,
-          alignItems: 'center',
-        }}
-        className="landing-hero-grid"
       >
-        {/* Text */}
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-[var(--app-accent)]" />
+          <span className="font-brand-mono text-[11px] uppercase tracking-[0.14em]">{eyebrow}</span>
+        </div>
+        <span className="text-xs">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function HeroPreview() {
+  return (
+    <div className="relative mx-auto w-full max-w-[640px]">
+      <motion.div
+        initial={{ opacity: 0, x: 26 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.72, ease: [0.23, 1, 0.32, 1], delay: 0.18 }}
+        className="relative"
+      >
+        <StudioWindow title="Proposal workspace" eyebrow="Studio">
+          <div className="grid gap-0 md:grid-cols-[210px_1fr]">
+            <aside className="border-r border-[var(--app-border-subtle)] bg-[rgba(230,229,224,0.7)] p-4">
+              <div className="mb-4 rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.88)] p-3">
+                <p className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+                  Active proposal
+                </p>
+                <p className="mt-2 font-brand-serif text-lg tracking-[-0.04em] text-[var(--app-text-strong)]">
+                  Acme / Growth Partnership
+                </p>
+              </div>
+              {['Narrative', 'Slides', 'Sharing', 'Analytics'].map((item, index) => (
+                <div
+                  key={item}
+                  className="mb-2 flex items-center justify-between rounded-[var(--app-radius-sm)] px-3 py-2"
+                  style={{
+                    background: index === 1 ? 'var(--app-accent-muted)' : 'transparent',
+                    color: index === 1 ? 'var(--app-text-strong)' : 'var(--app-text-secondary)',
+                  }}
+                >
+                  <span className="text-sm">{item}</span>
+                  <span className="font-brand-mono text-[10px] uppercase tracking-[0.14em]">
+                    0{index + 1}
+                  </span>
+                </div>
+              ))}
+            </aside>
+
+            <div className="grid gap-3 p-4">
+              <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.94)] p-4">
+                <p className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+                  Narrative input
+                </p>
+                <div className="mt-3 space-y-2 font-brand-mono text-[12px] leading-6 text-[var(--app-text-secondary)]">
+                  <div># Partnership proposal</div>
+                  <div>## Opportunity</div>
+                  <div>- 12 target markets</div>
+                  <div>- Shared GTM launch in Q3</div>
+                  <div>- Live pricing + proof points</div>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
+                <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[#171713] p-4 text-[var(--app-text-inverse)]">
+                  <p className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(247,247,244,0.56)]">
+                    Live preview
+                  </p>
+                  <div className="mt-4 rounded-[var(--app-radius-sm)] border border-[rgba(247,247,244,0.08)] bg-[rgba(247,247,244,0.04)] p-4">
+                    <p className="font-brand-serif text-[28px] leading-[1.02] tracking-[-0.05em]">
+                      A proposal your partner actually revisits.
+                    </p>
+                    <div className="mt-5 grid grid-cols-3 gap-2">
+                      {[
+                        ['4.2M', 'pipeline'],
+                        ['12', 'markets'],
+                        ['3x', 'roi'],
+                      ].map(([value, label]) => (
+                        <div key={label} className="rounded-[var(--app-radius-sm)] bg-[rgba(247,247,244,0.06)] p-3">
+                          <div className="font-brand-serif text-xl text-[var(--app-accent)]">{value}</div>
+                          <div className="mt-1 font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(247,247,244,0.56)]">
+                            {label}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.94)] p-4">
+                    <p className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+                      Share
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--app-text-secondary)]">
+                      Link-based review, password gating, short URLs, analytics.
+                    </p>
+                  </div>
+                  <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(230,229,224,0.82)] p-4">
+                    <p className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+                      Always current
+                    </p>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-[var(--app-text-primary)]">
+                      <span className="h-2 w-2 rounded-full bg-[var(--app-success)]" />
+                      Recipients always see the latest version.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </StudioWindow>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.58, ease: [0.23, 1, 0.32, 1], delay: 0.42 }}
+          className="absolute -bottom-10 -left-4 hidden w-[220px] md:block"
+        >
+          <StudioWindow title="Readiness" eyebrow="Signals" dark>
+            <div className="space-y-3 p-4 text-[var(--app-text-inverse)]">
+              {[
+                ['Structure', 'Complete'],
+                ['Branding', 'Applied'],
+                ['Access', 'Protected'],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between border-b border-[rgba(247,247,244,0.08)] pb-2 text-sm last:border-b-0 last:pb-0">
+                  <span className="text-[rgba(247,247,244,0.62)]">{label}</span>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </div>
+          </StudioWindow>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section className="overflow-hidden pt-28 pb-18 md:pt-34 md:pb-24">
+      <div className="app-section-frame grid gap-12 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:items-center">
         <div>
-          <motion.div
+          <motion.p
             initial="hidden"
             animate="visible"
             custom={0}
-            variants={fadeUp}
-            style={{
-              display: 'inline-block',
-              fontFamily: sans,
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: C.accent,
-              marginBottom: 24,
-              padding: '5px 12px',
-              background: `${C.accent}10`,
-              border: `1px solid ${C.accent}25`,
-              borderRadius: 4,
-            }}
+            variants={revealUp}
+            className="app-kicker"
           >
-            Now in private beta
-          </motion.div>
-
+            Warm ivory software studio
+          </motion.p>
           <motion.h1
             initial="hidden"
             animate="visible"
             custom={0.08}
-            variants={fadeUp}
-            style={{
-              fontFamily: serif,
-              fontSize: 'clamp(44px, 5.5vw, 68px)',
-              fontWeight: 700,
-              color: C.textPrimary,
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              marginBottom: 24,
-            }}
+            variants={revealUp}
+            className="app-display mt-4 max-w-[9ch]"
           >
-            Beautiful proposals.
-            <br />
-            Sent in minutes.
+            Proposal software with product-grade presence.
           </motion.h1>
-
           <motion.p
             initial="hidden"
             animate="visible"
-            custom={0.18}
-            variants={fadeUp}
-            style={{
-              fontFamily: sans,
-              fontSize: 20,
-              fontWeight: 300,
-              color: C.textSecondary,
-              lineHeight: 1.65,
-              maxWidth: 480,
-              marginBottom: 40,
-            }}
+            custom={0.16}
+            variants={revealUp}
+            className="app-copy mt-6 max-w-[34rem] text-[1.06rem]"
           >
-            Handshake turns your content into stunning, animated proposal pages
-            your partners will actually remember. No design skills required.
+            Handshake turns working narrative into live proposal pages that feel intentional from the first scroll.
+            Write fast, shape the story, ship a polished link, and keep it current after it lands in someone else&apos;s inbox.
           </motion.p>
 
           <motion.div
             initial="hidden"
             animate="visible"
-            custom={0.28}
-            variants={fadeUp}
-            style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}
+            custom={0.24}
+            variants={revealUp}
+            className="mt-8 flex flex-wrap items-center gap-3"
           >
             <button
-              onClick={() => scrollTo('waitlist')}
-              style={{
-                fontFamily: sans,
-                fontSize: 15,
-                fontWeight: 500,
-                color: '#fff',
-                background: C.accent,
-                border: 'none',
-                cursor: 'pointer',
-                padding: '13px 28px',
-                borderRadius: 9,
-                transition: 'all 0.2s',
-                letterSpacing: '-0.01em',
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.background = C.accentHover;
-                (e.target as HTMLElement).style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.background = C.accent;
-                (e.target as HTMLElement).style.transform = 'none';
-              }}
+              type="button"
+              onClick={() => scrollToSection('waitlist')}
+              className="rounded-[var(--app-radius-sm)] border border-primary/15 bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-[0_16px_28px_rgba(245,78,0,0.18)] transition-transform duration-150 hover:-translate-y-0.5"
             >
-              Get Early Access
+              Join the beta
             </button>
-            <button
-              onClick={() => scrollTo('live-example')}
-              style={{
-                fontFamily: sans,
-                fontSize: 15,
-                fontWeight: 400,
-                color: C.textPrimary,
-                background: 'none',
-                border: `1px solid ${C.border}`,
-                cursor: 'pointer',
-                padding: '13px 28px',
-                borderRadius: 9,
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#c8c5be')}
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.borderColor = C.border)
-              }
+            <a
+              href={`/p/${DEMO_PROPOSAL_SLUG}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-[var(--app-radius-sm)] border border-[var(--app-border-strong)] bg-[rgba(247,247,244,0.88)] px-5 py-3 text-sm text-[var(--app-text-primary)] transition-colors hover:bg-[var(--app-bg-elevated)]"
             >
-              See a Live Example
-              <span style={{ fontSize: 16 }}>→</span>
-            </button>
+              View a live proposal
+              <span aria-hidden="true">→</span>
+            </a>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            custom={0.32}
+            variants={revealUp}
+            className="mt-10 grid gap-3 sm:grid-cols-3"
+          >
+            {[
+              ['Markdown in, structure out', 'Narrative turns into sections, slides, and sharing states.'],
+              ['Share once, update later', 'Every proposal stays live at the same URL.'],
+              ['Built for non-designers', 'Crafted layouts without a deck-builder learning curve.'],
+            ].map(([title, body]) => (
+              <div
+                key={title}
+                className="rounded-[var(--app-radius-md)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.82)] p-4 shadow-[var(--app-shadow-soft)]"
+              >
+                <p className="font-brand-serif text-lg tracking-[-0.03em] text-[var(--app-text-strong)]">
+                  {title}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--app-text-secondary)]">{body}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
 
-        {/* Visual */}
+        <HeroPreview />
+      </div>
+    </section>
+  );
+}
+
+function ProductFramingSection() {
+  const { ref, inView } = useReveal();
+
+  return (
+    <section className="py-20">
+      <div ref={ref} className="app-section-frame grid gap-8 md:grid-cols-[1.1fr_0.9fr]">
         <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
-          className="landing-hero-visual"
-          style={{ display: 'flex', justifyContent: 'center' }}
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0}
+          variants={revealUp}
+          className="rounded-[var(--app-radius-lg)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.8)] p-6 shadow-[var(--app-shadow-elevated)] md:p-8"
         >
-          <BrowserMockup />
+          <p className="app-kicker">Why teams switch</p>
+          <h2 className="app-heading mt-4 max-w-[13ch]">
+            Static attachments flatten work that deserves a real interface.
+          </h2>
+          <p className="app-copy mt-5 max-w-[42rem]">
+            Most proposal workflows end with a dead file. Handshake keeps the speed of document-first creation but turns the final output into a living surface: one link, clean hierarchy, controlled pacing, and a better read for the person on the other side.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.1}
+          variants={revealUp}
+          className="grid gap-3"
+        >
+          {[
+            ['12 markets', 'Modeled launch targets can live next to narrative, not in backup slides.'],
+            ['3x ROI', 'Outcome-heavy proof points stay visible instead of hiding in appendix pages.'],
+            ['Always current', 'Fix pricing, timing, or proof later without resending a deck.'],
+          ].map(([value, body], index) => (
+            <div
+              key={value}
+              className="rounded-[var(--app-radius-md)] border p-5"
+              style={{
+                background: index === 1 ? 'var(--app-bg-elevated)' : 'rgba(247,247,244,0.72)',
+                borderColor: 'var(--app-border-subtle)',
+              }}
+            >
+              <p className="font-brand-serif text-[2rem] leading-none tracking-[-0.05em] text-[var(--app-text-strong)]">
+                {value}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--app-text-secondary)]">{body}</p>
+            </div>
+          ))}
         </motion.div>
       </div>
     </section>
   );
 }
 
-// ─── Social proof bar ─────────────────────────────────────────────────────────
-function SocialProofBar() {
-  return (
-    <div
-      style={{
-        background: C.bgPrimary,
-        borderTop: `1px solid ${C.border}`,
-        borderBottom: `1px solid ${C.border}`,
-        padding: '20px 32px',
-        textAlign: 'center',
-      }}
-    >
-      <p
-        style={{
-          fontFamily: sans,
-          fontSize: 13,
-          color: C.textSecondary,
-          letterSpacing: '0.02em',
-        }}
-      >
-        Built for partnership, sales, and business development teams who are tired of sending PDFs and slide decks.
-      </p>
-    </div>
-  );
-}
-
-// ─── Problem section ──────────────────────────────────────────────────────────
-function ProblemSection() {
+function WorkflowSection() {
   const { ref, inView } = useReveal();
+  const steps = [
+    {
+      id: '01',
+      title: 'Start with working narrative',
+      body: 'Paste markdown, write directly in the editor, or shape a proposal from structured fields. Handshake begins with content, not decoration.',
+    },
+    {
+      id: '02',
+      title: 'Refine the live surface',
+      body: 'Choose the right story rhythm, adjust slides, apply brand controls, and tune sharing settings in one place.',
+    },
+    {
+      id: '03',
+      title: 'Send one durable link',
+      body: 'Recipients open a polished proposal page instead of a static attachment, and future edits are already reflected there.',
+    },
+  ];
 
   return (
-    <section
-      style={{
-        background: C.bgDark,
-        padding: '120px 32px',
-      }}
-    >
-      <div
-        ref={ref}
-        style={{
-          maxWidth: 720,
-          margin: '0 auto',
-        }}
-      >
-        <motion.div
+    <section id="workflow" className="py-20">
+      <div ref={ref} className="app-section-frame">
+        <motion.p
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           custom={0}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 11,
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: C.accent,
-            marginBottom: 28,
-          }}
+          variants={revealUp}
+          className="app-kicker"
         >
-          The problem
-        </motion.div>
-
+          Workflow
+        </motion.p>
         <motion.h2
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           custom={0.08}
-          variants={fadeUp}
-          style={{
-            fontFamily: serif,
-            fontSize: 'clamp(34px, 4vw, 52px)',
-            fontWeight: 700,
-            color: C.textOnDark,
-            lineHeight: 1.15,
-            letterSpacing: '-0.02em',
-            marginBottom: 28,
-          }}
+          variants={revealUp}
+          className="app-heading mt-4 max-w-[12ch]"
         >
-          Your proposals deserve better
-          <br />
-          than a PDF attachment.
+          A proposal workflow designed like a software tool, not a template gallery.
         </motion.h2>
 
-        <motion.div
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0.16}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 18,
-            fontWeight: 300,
-            color: C.textMuted,
-            lineHeight: 1.75,
-          }}
-        >
-          <p style={{ marginBottom: 20 }}>
-            You spend hours crafting the perfect pitch, then send it as a static file that gets lost in an inbox,
-            opened once, and forgotten.
-          </p>
-          <p style={{ color: `${C.textOnDark}cc` }}>
-            What if every proposal you sent felt like opening a beautifully designed website — with animations,
-            transitions, and a link your partners actually revisit?
-          </p>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─── How it works ─────────────────────────────────────────────────────────────
-function HowItWorksSection() {
-  const { ref, inView } = useReveal();
-
-  const steps = [
-    {
-      num: '01',
-      title: 'Write or paste your content',
-      desc: 'Drop in markdown or fill out a simple form. The app structures it into the right slides automatically.',
-      icon: (
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect x="4" y="6" width="24" height="3" rx="1.5" fill={C.accent} opacity="0.3" />
-          <rect x="4" y="13" width="18" height="3" rx="1.5" fill={C.accent} opacity="0.5" />
-          <rect x="4" y="20" width="22" height="3" rx="1.5" fill={C.accent} opacity="0.7" />
-          <circle cx="26" cy="24" r="6" fill={C.accent} opacity="0.15" />
-          <path d="M23 24l2 2 3.5-3.5" stroke={C.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-    {
-      num: '02',
-      title: 'Customize & theme your slides',
-      desc: 'Choose a preset theme, rearrange slides, swap assets. Looks polished in minutes, not hours.',
-      icon: (
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect x="4" y="4" width="24" height="18" rx="3" stroke={C.accent} strokeWidth="1.5" opacity="0.4" />
-          <rect x="8" y="8" width="8" height="6" rx="1.5" fill={C.accent} opacity="0.3" />
-          <rect x="18" y="8" width="6" height="2.5" rx="1" fill={C.accent} opacity="0.5" />
-          <rect x="18" y="12" width="4" height="2.5" rx="1" fill={C.accent} opacity="0.3" />
-          <circle cx="10" cy="26" r="3" fill={C.accent} opacity="0.4" />
-          <circle cx="18" cy="26" r="3" fill={`${C.accent}80`} />
-          <circle cx="26" cy="26" r="3" fill={C.accent} opacity="0.2" />
-        </svg>
-      ),
-    },
-    {
-      num: '03',
-      title: 'Share a link & track views',
-      desc: 'Every proposal gets a unique URL. See who views it, how long they stay, and which slides land.',
-      icon: (
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <circle cx="24" cy="8" r="4" stroke={C.accent} strokeWidth="1.5" opacity="0.6" />
-          <circle cx="8" cy="16" r="4" stroke={C.accent} strokeWidth="1.5" opacity="0.4" />
-          <circle cx="24" cy="24" r="4" stroke={C.accent} strokeWidth="1.5" opacity="0.3" />
-          <path d="M12 14.5l8-5M12 17.5l8 5" stroke={C.accent} strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-        </svg>
-      ),
-    },
-  ];
-
-  return (
-    <section id="how-it-works" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div ref={ref}>
-          <motion.div
-            initial="hidden"
-            animate={inView ? 'visible' : 'hidden'}
-            custom={0}
-            variants={fadeUp}
-            style={{
-              fontFamily: sans,
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.accent,
-              marginBottom: 16,
-            }}
-          >
-            How it works
-          </motion.div>
-          <motion.h2
-            initial="hidden"
-            animate={inView ? 'visible' : 'hidden'}
-            custom={0.08}
-            variants={fadeUp}
-            style={{
-              fontFamily: serif,
-              fontSize: 'clamp(30px, 3.5vw, 46px)',
-              fontWeight: 700,
-              color: C.textPrimary,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              marginBottom: 72,
-              maxWidth: 560,
-            }}
-          >
-            From content to presentation in three steps.
-          </motion.h2>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 48,
-          }}
-          className="landing-steps-grid"
-        >
-          {steps.map(({ num, title, desc, icon }, i) => {
-            const { ref: stepRef, inView: stepInView } = useReveal();
-            return (
-              <motion.div
-                key={num}
-                ref={stepRef}
-                initial="hidden"
-                animate={stepInView ? 'visible' : 'hidden'}
-                custom={i * 0.12}
-                variants={fadeUp}
-                style={{
-                  borderTop: `1px solid ${C.border}`,
-                  paddingTop: 32,
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 48,
-                    fontWeight: 700,
-                    color: `${C.accent}35`,
-                    lineHeight: 1,
-                    marginBottom: 20,
-                    letterSpacing: '-0.03em',
-                  }}
-                >
-                  {num}
-                </div>
-                <div style={{ marginBottom: 16 }}>{icon}</div>
-                <div
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: C.textPrimary,
-                    lineHeight: 1.3,
-                    marginBottom: 12,
-                  }}
-                >
-                  {title}
-                </div>
-                <p
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 15,
-                    fontWeight: 300,
-                    color: C.textSecondary,
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {desc}
-                </p>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Feature mockup helpers ───────────────────────────────────────────────────
-function MarkdownMockup() {
-  const lines = [
-    { type: 'h1', content: '# Partnership Proposal' },
-    { type: 'blank', content: '' },
-    { type: 'h2', content: '## About Us' },
-    { type: 'body', content: 'Acme Corp is a leading B2B...' },
-    { type: 'body', content: 'Founded in 2018 with 200+ clients.' },
-    { type: 'blank', content: '' },
-    { type: 'h2', content: '## Key Metrics' },
-    { type: 'item', content: '- **$4.2M** combined revenue' },
-    { type: 'item', content: '- **12** new markets' },
-    { type: 'item', content: '- **3x** average ROI' },
-  ];
-  return (
-    <div
-      style={{
-        background: '#0f0f0f',
-        borderRadius: 10,
-        overflow: 'hidden',
-        border: `1px solid ${C.borderDark}`,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        fontSize: 12.5,
-        lineHeight: 1.7,
-      }}
-    >
-      <div style={{ background: '#1a1a1a', padding: '10px 14px', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid #2a2a2a' }}>
-        {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
-          <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c }} />
-        ))}
-        <span style={{ color: '#555', marginLeft: 8, fontSize: 11 }}>proposal.md</span>
-      </div>
-      <div style={{ padding: '20px 22px' }}>
-        {lines.map((line, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12 }}>
-            <span style={{ color: '#333', minWidth: 16, userSelect: 'none', fontSize: 11 }}>{i + 1}</span>
-            <span
-              style={{
-                color:
-                  line.type === 'h1' ? '#7dd3fc'
-                  : line.type === 'h2' ? '#93c5fd'
-                  : line.type === 'item' ? '#d4d4d4'
-                  : '#6b7280',
-                fontWeight: line.type.startsWith('h') ? 600 : 400,
-              }}
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <motion.div
+              key={step.id}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              custom={0.1 + index * 0.08}
+              variants={revealUp}
+              className="rounded-[var(--app-radius-lg)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.82)] p-5 shadow-[var(--app-shadow-soft)]"
             >
-              {line.content || '\u00a0'}
-            </span>
-          </div>
-        ))}
-        <div style={{ display: 'flex', gap: 12 }}>
-          <span style={{ color: '#333', minWidth: 16, fontSize: 11 }}>{lines.length + 1}</span>
-          <span style={{ borderRight: '2px solid #d4785c', display: 'inline-block', marginLeft: 1, animation: 'blink 1s step-end infinite' }}>&nbsp;</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AnimatedStatsMockup() {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!inView) return;
-    const end = 42;
-    let start = 0;
-    const duration = 1800;
-    const step = (end / duration) * 16;
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= end) { setCount(end); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [inView]);
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        background: '#0C0C0C',
-        borderRadius: 10,
-        overflow: 'hidden',
-        border: `1px solid ${C.borderDark}`,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-        padding: '32px',
-      }}
-    >
-      <div style={{ fontFamily: sans, fontSize: 11, color: C.textMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 28 }}>
-        Partnership Impact
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {[
-          { prefix: '$', val: count, suffix: 'M', label: 'Combined Revenue' },
-          { prefix: '', val: Math.floor((count / 42) * 12), suffix: '', label: 'New Markets' },
-          { prefix: '', val: Math.floor((count / 42) * 3), suffix: 'x', label: 'Average ROI' },
-          { prefix: '', val: Math.floor((count / 42) * 98), suffix: '%', label: 'Partner Satisfaction' },
-        ].map(({ prefix, val, suffix, label }) => (
-          <div key={label}>
-            <div
-              style={{
-                fontFamily: serif,
-                fontSize: 32,
-                fontWeight: 700,
-                color: C.accent,
-                lineHeight: 1,
-                marginBottom: 6,
-              }}
-            >
-              {prefix}{val}{suffix}
-            </div>
-            <div style={{ fontFamily: sans, fontSize: 12, color: C.textMuted }}>{label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ThemesMockup() {
-  const [active, setActive] = useState(0);
-  const themes = [
-    { name: 'Dark Minimal', bg: '#0C0C0C', text: '#F0EDE8', accent: '#D4785C' },
-    { name: 'Light Corporate', bg: '#FAFAF7', text: '#1A1A1A', accent: '#2563EB' },
-    { name: 'Bold Brand', bg: '#1a0a2e', text: '#f0e6ff', accent: '#a855f7' },
-  ];
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {themes.map((t, i) => (
-        <button
-          key={t.name}
-          onClick={() => setActive(i)}
-          style={{
-            background: t.bg,
-            border: `2px solid ${active === i ? C.accent : C.borderDark}`,
-            borderRadius: 8,
-            padding: '14px 18px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            transition: 'all 0.25s',
-            transform: active === i ? 'scale(1.02)' : 'scale(1)',
-          }}
-        >
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.accent, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontFamily: serif, fontSize: 13, color: t.text, fontWeight: 700, textAlign: 'left' }}>
-              {t.name}
-            </div>
-            <div style={{ fontFamily: sans, fontSize: 11, color: `${t.text}88`, textAlign: 'left', marginTop: 2 }}>
-              Colors · Fonts · Transitions
-            </div>
-          </div>
-          {active === i && (
-            <div style={{ marginLeft: 'auto', color: C.accent, fontSize: 16 }}>✓</div>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function TeamMockup() {
-  const proposals = [
-    { title: 'Acme Corp Partnership', status: 'Published', views: 24, initials: 'AC', color: '#7C3AED' },
-    { title: 'NovaTech Q1 Pitch', status: 'Draft', views: 0, initials: 'NT', color: '#0891B2' },
-    { title: 'Meridian Distribution', status: 'Published', views: 57, initials: 'MD', color: '#059669' },
-  ];
-
-  return (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: 10,
-        overflow: 'hidden',
-        border: `1px solid ${C.border}`,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-      }}
-    >
-      <div style={{ borderBottom: `1px solid ${C.border}`, padding: '14px 18px' }}>
-        <div style={{ fontFamily: sans, fontSize: 13, fontWeight: 500, color: C.textPrimary }}>My Proposals</div>
-      </div>
-      {proposals.map((p) => (
-        <div
-          key={p.title}
-          style={{
-            padding: '14px 18px',
-            borderBottom: `1px solid ${C.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: p.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: sans,
-              fontSize: 11,
-              fontWeight: 600,
-              color: '#fff',
-              flexShrink: 0,
-            }}
-          >
-            {p.initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: sans, fontSize: 13, color: C.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {p.title}
-            </div>
-            <div style={{ fontFamily: sans, fontSize: 11, color: C.textSecondary, marginTop: 2 }}>
-              {p.views > 0 ? `${p.views} views` : 'Not shared yet'}
-            </div>
-          </div>
-          <div
-            style={{
-              fontFamily: sans,
-              fontSize: 10,
-              fontWeight: 500,
-              color: p.status === 'Published' ? '#059669' : C.textSecondary,
-              background: p.status === 'Published' ? '#f0fdf4' : C.bgSecondary,
-              padding: '3px 8px',
-              borderRadius: 4,
-              flexShrink: 0,
-            }}
-          >
-            {p.status}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Live update mockup ───────────────────────────────────────────────────────
-function LiveUpdateMockup() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: false, margin: '-80px' });
-  const [phase, setPhase] = useState<'idle' | 'editing' | 'updated'>('idle');
-  const [displayVal, setDisplayVal] = useState('200+');
-
-  useEffect(() => {
-    if (!inView) { setPhase('idle'); setDisplayVal('200+'); return; }
-    const t1 = setTimeout(() => setPhase('editing'), 800);
-    const t2 = setTimeout(() => { setDisplayVal('300+'); setPhase('updated'); }, 2000);
-    const t3 = setTimeout(() => { setPhase('idle'); setDisplayVal('200+'); }, 5000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [inView]);
-
-  const isEditing = phase === 'editing';
-  const isUpdated = phase === 'updated';
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 0,
-        borderRadius: 12,
-        overflow: 'hidden',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
-        border: `1px solid ${C.borderDark}`,
-      }}
-    >
-      {/* Left: Editor panel */}
-      <div style={{ background: '#1a1a1a', padding: '20px 18px' }}>
-        {/* Editor chrome */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-          {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
-            <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
-          ))}
-          <span style={{ fontFamily: sans, fontSize: 10, color: '#555', marginLeft: 6 }}>
-            Slide Editor
-          </span>
-        </div>
-
-        {/* Slide type label */}
-        <div style={{ fontFamily: sans, fontSize: 10, color: '#444', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          Stats slide
-        </div>
-
-        {/* Stat field being edited */}
-        <div
-          style={{
-            background: '#111',
-            borderRadius: 7,
-            padding: '10px 12px',
-            border: `1px solid ${isEditing ? C.accent : '#2a2a2a'}`,
-            transition: 'border-color 0.3s',
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ fontFamily: sans, fontSize: 9, color: '#555', marginBottom: 4, letterSpacing: '0.04em' }}>
-            STAT VALUE
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                fontFamily: serif,
-                fontSize: 20,
-                fontWeight: 700,
-                color: isEditing ? C.accent : C.textOnDark,
-                transition: 'color 0.3s',
-              }}
-            >
-              {isEditing ? '300+' : displayVal}
-            </span>
-            {isEditing && (
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: 1.5,
-                  height: 18,
-                  background: C.accent,
-                  animation: 'blink 1s step-end infinite',
-                }}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Other fields (decorative) */}
-        {[['LABEL', 'Partners Reached'], ['SUFFIX', 'across 14 markets']].map(([lbl, val]) => (
-          <div
-            key={lbl}
-            style={{
-              background: '#111',
-              borderRadius: 7,
-              padding: '8px 12px',
-              border: '1px solid #222',
-              marginBottom: 8,
-              opacity: 0.5,
-            }}
-          >
-            <div style={{ fontFamily: sans, fontSize: 9, color: '#555', marginBottom: 3, letterSpacing: '0.04em' }}>{lbl}</div>
-            <div style={{ fontFamily: sans, fontSize: 12, color: '#888' }}>{val}</div>
-          </div>
-        ))}
-
-        {/* Save indicator */}
-        <div
-          style={{
-            marginTop: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            opacity: isUpdated ? 1 : 0,
-            transition: 'opacity 0.4s',
-          }}
-        >
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
-          <span style={{ fontFamily: sans, fontSize: 10, color: '#4ade80' }}>Autosaved</span>
-        </div>
-      </div>
-
-      {/* Right: Live proposal view */}
-      <div style={{ background: '#0C0C0C', padding: '20px 18px' }}>
-        {/* Browser URL bar */}
-        <div
-          style={{
-            background: '#161616',
-            borderRadius: 5,
-            padding: '5px 10px',
-            marginBottom: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            border: '1px solid #2a2a2a',
-          }}
-        >
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#28c840', flexShrink: 0 }} />
-          <span style={{ fontFamily: sans, fontSize: 10, color: '#555', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            handshake.so/p/acme-2026
-          </span>
-        </div>
-
-        {/* Proposal content */}
-        <div style={{ fontFamily: sans, fontSize: 9, color: '#444', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          Live · always current
-        </div>
-
-        <div
-          style={{
-            fontFamily: serif,
-            fontSize: 13,
-            fontWeight: 700,
-            color: C.textOnDark,
-            marginBottom: 14,
-            lineHeight: 1.3,
-          }}
-        >
-          Partnership Impact
-        </div>
-
-        {/* Animated stat card */}
-        <div
-          style={{
-            background: `${C.accent}12`,
-            border: `1px solid ${isUpdated ? C.accent : `${C.accent}30`}`,
-            borderRadius: 8,
-            padding: '12px 14px',
-            transition: 'border-color 0.5s',
-            marginBottom: 8,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: serif,
-              fontSize: 28,
-              fontWeight: 700,
-              color: C.accent,
-              lineHeight: 1,
-              marginBottom: 4,
-              transition: 'all 0.4s',
-              transform: isUpdated ? 'scale(1.06)' : 'scale(1)',
-            }}
-          >
-            {displayVal}
-          </div>
-          <div style={{ fontFamily: sans, fontSize: 10, color: C.textMuted }}>Partners Reached</div>
-          {isUpdated && (
-            <div
-              style={{
-                marginTop: 6,
-                fontFamily: sans,
-                fontSize: 9,
-                color: '#4ade80',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80' }} />
-              Just updated
-            </div>
-          )}
-        </div>
-
-        {/* Other stats (decorative) */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          {[['12', 'Markets'], ['3x', 'ROI']].map(([val, lbl]) => (
-            <div
-              key={lbl}
-              style={{
-                flex: 1,
-                background: '#161616',
-                borderRadius: 6,
-                padding: '8px 10px',
-                border: '1px solid #222',
-              }}
-            >
-              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: C.textOnDark }}>{val}</div>
-              <div style={{ fontFamily: sans, fontSize: 9, color: C.textMuted }}>{lbl}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Feature highlights ───────────────────────────────────────────────────────
-function FeaturesSection() {
-  const features = [
-    {
-      bg: C.bgPrimary,
-      textColor: C.textPrimary,
-      bodyColor: C.textSecondary,
-      label: 'Markdown Ingestor',
-      title: 'Paste your content.\nGet a slide deck.',
-      body: 'Write in markdown — or paste from any doc — and Handshake converts it into a fully structured proposal with the right slides, in seconds.',
-      visual: <MarkdownMockup />,
-      reverse: false,
-    },
-    {
-      bg: C.bgDark,
-      textColor: C.textOnDark,
-      bodyColor: C.textMuted,
-      label: 'Animated Presentations',
-      title: 'Proposals that feel\nlike products.',
-      body: 'Build with all 11 slide types and present with five transition styles. Every deck supports keyboard, touch, and scroll navigation so partners can move through your story however they prefer.',
-      visual: <AnimatedStatsMockup />,
-      reverse: true,
-    },
-    {
-      bg: C.bgSecondary,
-      textColor: C.textPrimary,
-      bodyColor: C.textSecondary,
-      label: 'Always Live',
-      title: 'Send once.\nUpdate forever.',
-      body: 'Your proposal isn\'t a file — it\'s a live page. Fix a typo, update pricing, swap a case study, add a new slide — your partner\'s link stays the same and always shows the latest version.\n\nNo resending. No version confusion. No "please see the updated attachment."',
-      visual: <LiveUpdateMockup />,
-      reverse: false,
-    },
-    {
-      bg: C.bgDark,
-      textColor: C.textOnDark,
-      bodyColor: C.textMuted,
-      label: 'Themes & Brand',
-      title: 'Your brand.\nNot a template.',
-      body: 'Start with three polished themes — Dark Minimal, Light Corporate, and Bold Brand — then personalize with workspace logo, company name, brand colors, font pairing, and optional co-branding for partner-facing slides.',
-      visual: <ThemesMockup />,
-      reverse: true,
-    },
-    {
-      bg: C.bgPrimary,
-      textColor: C.textPrimary,
-      bodyColor: C.textSecondary,
-      label: 'Proposal Dashboard',
-      title: 'Everything in\none place.',
-      body: 'Run your proposal pipeline from one dashboard with drag-and-drop ordering, member invites, role-based collaboration, and sharing controls including short links, password protection, email gating, and expiration dates.',
-      visual: <TeamMockup />,
-      reverse: false,
-    },
-  ];
-
-  return (
-    <div id="features">
-        {features.map(({ bg, textColor, bodyColor, label, title, body, visual, reverse }) => {
-        const { ref, inView } = useReveal();
-
-        return (
-          <section key={label} style={{ background: bg, padding: '100px 32px' }}>
-            <div
-              ref={ref}
-              style={{
-                maxWidth: 1100,
-                margin: '0 auto',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 80,
-                alignItems: 'center',
-                direction: reverse ? 'rtl' : 'ltr',
-              }}
-              className="landing-feature-grid"
-            >
-              <div style={{ direction: 'ltr' }}>
-                <motion.div
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 11,
-                    fontWeight: 500,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: C.accent,
-                    marginBottom: 18,
-                  }}
-                >
-                  {label}
-                </motion.div>
-                <motion.h3
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0.08}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 'clamp(28px, 3vw, 40px)',
-                    fontWeight: 700,
-                    color: textColor,
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.02em',
-                    marginBottom: 20,
-                    whiteSpace: 'pre-line',
-                  }}
-                >
-                  {title}
-                </motion.h3>
-                <motion.p
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0.16}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 16,
-                    fontWeight: 300,
-                    color: bodyColor,
-                    lineHeight: 1.7,
-                    maxWidth: 420,
-                    whiteSpace: 'pre-line',
-                  }}
-                >
-                  {body}
-                </motion.p>
+              <div className="flex items-center justify-between">
+                <span className="font-brand-serif text-[2.4rem] leading-none tracking-[-0.05em] text-[rgba(20,20,20,0.18)]">
+                  {step.id}
+                </span>
+                <span className="font-brand-mono text-[10px] uppercase tracking-[0.16em] text-[var(--app-accent)]">
+                  Step
+                </span>
               </div>
-
-              <motion.div
-                style={{ direction: 'ltr' }}
-                initial={{ opacity: 0, y: 24 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
-              >
-                {visual}
-              </motion.div>
-            </div>
-          </section>
-        );
-      })}
-    </div>
+              <h3 className="mt-6 font-brand-serif text-[1.4rem] leading-[1.05] tracking-[-0.04em] text-[var(--app-text-strong)]">
+                {step.title}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-[var(--app-text-secondary)]">{step.body}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-// ─── Live example CTA ─────────────────────────────────────────────────────────
-function LiveExampleCTA() {
+function CapabilityVisualOne() {
+  return (
+    <StudioWindow title="Narrative editor" eyebrow="Compose" dark>
+      <div className="space-y-3 p-4 text-[var(--app-text-inverse)]">
+        <div className="rounded-[var(--app-radius-sm)] bg-[rgba(247,247,244,0.04)] p-4">
+          <div className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(247,247,244,0.48)]">
+            Proposal outline
+          </div>
+          <div className="mt-3 space-y-2 font-brand-mono text-sm text-[rgba(247,247,244,0.82)]">
+            <div># Narrative</div>
+            <div>## Opportunity</div>
+            <div>## Commercial model</div>
+            <div>## Launch timing</div>
+          </div>
+        </div>
+      </div>
+    </StudioWindow>
+  );
+}
+
+function CapabilityVisualTwo() {
+  return (
+    <StudioWindow title="Sharing controls" eyebrow="Ship">
+      <div className="grid gap-3 p-4">
+        <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(230,229,224,0.76)] p-4">
+          <div className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+            Access
+          </div>
+          <div className="mt-3 flex items-center justify-between text-sm text-[var(--app-text-primary)]">
+            <span>Password gate</span>
+            <span className="rounded-full bg-[var(--app-success)]/12 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-[var(--app-success)]">
+              On
+            </span>
+          </div>
+        </div>
+        <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.94)] p-4">
+          <div className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+            Link
+          </div>
+          <div className="mt-3 font-brand-mono text-xs text-[var(--app-text-secondary)]">
+            handshake.design/s/acme-q3-launch
+          </div>
+        </div>
+      </div>
+    </StudioWindow>
+  );
+}
+
+function CapabilityVisualThree() {
+  return (
+    <StudioWindow title="Brand system" eyebrow="Apply">
+      <div className="grid gap-3 p-4">
+        <div className="flex gap-2">
+          {['#f7f7f4', '#e6e5e0', '#262510', '#f54e00'].map((swatch) => (
+            <div
+              key={swatch}
+              className="h-12 flex-1 rounded-[var(--app-radius-sm)] border"
+              style={{ background: swatch, borderColor: 'var(--app-border-subtle)' }}
+            />
+          ))}
+        </div>
+        <div className="rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.92)] p-4">
+          <div className="font-brand-mono text-[10px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
+            Applied across editor and delivery
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <BrandLogo variant="light" className="h-9 w-9" />
+            <BrandWordmark variant="light" className="h-4 w-auto" />
+          </div>
+        </div>
+      </div>
+    </StudioWindow>
+  );
+}
+
+function CapabilitySection() {
   const { ref, inView } = useReveal();
-  const liveDemoHref = `/p/${DEMO_PROPOSAL_SLUG}`;
+  const capabilities = [
+    {
+      label: 'Compose',
+      title: 'Content-first creation with structure baked in.',
+      body: 'The product starts from your working narrative and turns it into proposal architecture. You stay focused on the pitch while Handshake keeps the surface coherent.',
+      visual: <CapabilityVisualOne />,
+    },
+    {
+      label: 'Ship',
+      title: 'Distribution controls that belong inside the tool.',
+      body: 'Sharing is part of the proposal build, not an afterthought. Protect access, shorten links, and keep delivery modes close to the content that needs them.',
+      visual: <CapabilityVisualTwo />,
+    },
+    {
+      label: 'Brand',
+      title: 'A studio-grade visual language without manual deck design.',
+      body: 'Color, type, logo, and page rhythm can stay aligned from editor to final recipient experience, even when the person sending the proposal is not a designer.',
+      visual: <CapabilityVisualThree />,
+    },
+  ];
 
   return (
-    <section
-      id="live-example"
-      style={{
-        background: C.bgDark,
-        padding: '120px 32px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 500,
-          height: 500,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${C.accent}10 0%, transparent 65%)`,
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div ref={ref} style={{ maxWidth: 640, margin: '0 auto', position: 'relative' }}>
-        <motion.h2
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0}
-          variants={fadeUp}
-          style={{
-            fontFamily: serif,
-            fontSize: 'clamp(32px, 4vw, 50px)',
-            fontWeight: 700,
-            color: C.textOnDark,
-            lineHeight: 1.15,
-            letterSpacing: '-0.02em',
-            marginBottom: 20,
-          }}
-        >
-          See it in action.
-        </motion.h2>
+    <section id="capabilities" className="py-20">
+      <div ref={ref} className="app-section-frame space-y-6">
         <motion.p
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          custom={0.1}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 18,
-            fontWeight: 300,
-            color: C.textMuted,
-            lineHeight: 1.65,
-            marginBottom: 40,
-          }}
+          custom={0}
+          variants={revealUp}
+          className="app-kicker"
         >
-          Experience a real Handshake proposal — the same animated, themed, slide-deck pages
-          your team will create.
+          Capabilities
         </motion.p>
-        <motion.a
+        {capabilities.map((capability, index) => (
+          <motion.div
+            key={capability.label}
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            custom={0.08 + index * 0.08}
+            variants={revealUp}
+            className="grid gap-5 rounded-[var(--app-radius-lg)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.8)] p-5 shadow-[var(--app-shadow-soft)] md:grid-cols-[0.9fr_1.1fr] md:items-center md:p-6"
+          >
+            <div>
+              <p className="app-kicker">{capability.label}</p>
+              <h3 className="mt-4 font-brand-serif text-[1.95rem] leading-[1.02] tracking-[-0.05em] text-[var(--app-text-strong)]">
+                {capability.title}
+              </h3>
+              <p className="mt-4 text-sm leading-6 text-[var(--app-text-secondary)]">{capability.body}</p>
+            </div>
+            {capability.visual}
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LiveExampleSection() {
+  const { ref, inView } = useReveal();
+
+  return (
+    <section className="py-20">
+      <div ref={ref} className="app-section-frame">
+        <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          custom={0.2}
-          variants={fadeUp}
-          href={liveDemoHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 10,
-            fontFamily: sans,
-            fontSize: 15,
-            fontWeight: 500,
-            color: C.textPrimary,
-            background: C.textOnDark,
-            border: 'none',
-            cursor: 'pointer',
-            padding: '14px 32px',
-            borderRadius: 9,
-            textDecoration: 'none',
-            transition: 'all 0.2s',
-          }}
-          whileHover={{ scale: 1.02, backgroundColor: '#fff' }}
+          custom={0}
+          variants={revealUp}
+          className="overflow-hidden rounded-[var(--app-radius-lg)] border border-[rgba(247,247,244,0.08)] bg-[#171713] px-6 py-8 text-center text-[var(--app-text-inverse)] shadow-[0_28px_60px_rgba(0,0,0,0.28)] md:px-10"
         >
-          View a Live Proposal
-          <span style={{ fontSize: 18 }}>→</span>
-        </motion.a>
+          <p className="app-kicker">Live example</p>
+          <h2 className="mt-4 font-brand-serif text-[clamp(2.1rem,4vw,3.4rem)] leading-[0.98] tracking-[-0.05em] text-[var(--app-text-inverse)]">
+            See the output in its natural environment.
+          </h2>
+          <p className="mx-auto mt-4 max-w-[38rem] text-sm leading-7 text-[rgba(247,247,244,0.72)] md:text-base">
+            Open a real Handshake proposal and move through the same page structure your recipients will see. No static mockup, no reduced demo shell.
+          </p>
+          <a
+            href={`/p/${DEMO_PROPOSAL_SLUG}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 inline-flex items-center gap-2 rounded-[var(--app-radius-sm)] border border-[rgba(247,247,244,0.1)] bg-[rgba(247,247,244,0.06)] px-5 py-3 text-sm text-[var(--app-text-inverse)] transition-colors hover:bg-[rgba(247,247,244,0.1)]"
+          >
+            Open the live proposal
+            <span aria-hidden="true">↗</span>
+          </a>
+        </motion.div>
       </div>
     </section>
   );
@@ -1650,921 +648,264 @@ function LiveExampleCTA() {
 
 type PricingTier = 'free' | 'pro' | 'team';
 
-function FeatureComparisonTable() {
-  const sections: Array<{
-    category: string;
-    rows: Array<{ feature: string; free: boolean; pro: boolean; team: boolean }>;
-  }> = [
-    {
-      category: 'Editor',
-      rows: [
-        { feature: 'All 11 slide types', free: true, pro: true, team: true },
-        { feature: 'Markdown ingestor', free: true, pro: true, team: true },
-        { feature: 'Form editor with drag-and-drop ordering', free: true, pro: true, team: true },
-        { feature: 'Live editing, autosave, keyboard shortcuts, undo/redo', free: true, pro: true, team: true },
-        { feature: 'Duplicate proposal', free: false, pro: true, team: true },
-        { feature: 'Version history', free: false, pro: true, team: true },
-      ],
-    },
-    {
-      category: 'Themes & Branding',
-      rows: [
-        { feature: 'Dark Minimal theme', free: true, pro: true, team: true },
-        { feature: 'All 3 preset themes', free: false, pro: true, team: true },
-        { feature: 'Workspace branding (logo, colors, font pairing)', free: false, pro: true, team: true },
-        { feature: 'Co-branding (partner logo)', free: false, pro: true, team: true },
-      ],
-    },
-    {
-      category: 'Sharing & Access',
-      rows: [
-        { feature: 'Public shareable URLs', free: true, pro: true, team: true },
-        { feature: 'Short links', free: true, pro: true, team: true },
-        { feature: 'Password-protected proposals', free: false, pro: true, team: true },
-        { feature: 'Email-gated proposals (lead capture)', free: false, pro: false, team: true },
-        { feature: 'Proposal expiration dates', free: false, pro: true, team: true },
-        { feature: 'Embed snippets', free: false, pro: true, team: true },
-        { feature: 'Custom embed snippets', free: false, pro: false, team: true },
-      ],
-    },
-    {
-      category: 'Analytics & Tracking',
-      rows: [
-        { feature: 'Proposal status workflow', free: false, pro: true, team: true },
-        { feature: 'Proposal analytics (views, time/slide, depth, device, geo)', free: false, pro: true, team: true },
-        { feature: 'Lead capture', free: false, pro: false, team: true },
-      ],
-    },
-    {
-      category: 'Collaboration',
-      rows: [
-        { feature: 'Workspace with shared proposals', free: false, pro: false, team: true },
-        { feature: 'Team comments on slides', free: false, pro: false, team: true },
-        { feature: 'Template library', free: false, pro: false, team: true },
-        { feature: 'Slide block library', free: false, pro: false, team: true },
-        { feature: 'Asset library', free: false, pro: false, team: true },
-        { feature: 'Search, filters, and bulk operations', free: false, pro: false, team: true },
-      ],
-    },
-    {
-      category: 'Integrations',
-      rows: [
-        { feature: 'Email delivery', free: false, pro: true, team: true },
-        { feature: 'AI copy assistant', free: false, pro: false, team: true },
-        { feature: 'Slack notifications', free: false, pro: false, team: true },
-        { feature: 'Webhook events API', free: false, pro: false, team: true },
-      ],
-    },
-    {
-      category: 'Support',
-      rows: [
-        { feature: 'Community support', free: true, pro: true, team: true },
-        { feature: 'Priority email support', free: false, pro: true, team: true },
-        { feature: 'Dedicated onboarding call (5+ seats)', free: false, pro: false, team: true },
-      ],
-    },
-    {
-      category: 'Branding',
-      rows: [
-        { feature: 'Handshake badge on closing slide', free: true, pro: false, team: false },
-      ],
-    },
-  ];
-
-  const tiers: PricingTier[] = ['free', 'pro', 'team'];
-  const tierLabels: Record<PricingTier, string> = { free: 'Free', pro: 'Pro', team: 'Team' };
-
-  const renderCell = (included: boolean) => (
-    <span
-      style={{
-        width: 20,
-        height: 20,
-        borderRadius: '50%',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: included ? `${C.accent}18` : 'transparent',
-        border: included ? `1px solid ${C.accent}44` : `1px solid ${C.border}`,
-        color: included ? C.accent : C.textMuted,
-        fontSize: 12,
-        fontWeight: 600,
-      }}
-    >
-      {included ? '✓' : '–'}
-    </span>
-  );
-
-  return (
-    <div style={{ marginTop: 56 }}>
-      <div
-        style={{
-          fontFamily: serif,
-          fontSize: 'clamp(26px, 3vw, 36px)',
-          fontWeight: 700,
-          color: C.textPrimary,
-          letterSpacing: '-0.02em',
-          marginBottom: 14,
-        }}
-      >
-        Compare features by tier.
-      </div>
-      <p
-        style={{
-          fontFamily: sans,
-          fontSize: 15,
-          color: C.textSecondary,
-          lineHeight: 1.6,
-          marginBottom: 22,
-        }}
-      >
-        Grouped by workflow so your team can quickly see what unlocks as you scale.
-      </p>
-
-      <div
-        className="landing-comparison-wrap"
-        style={{
-          background: '#fff',
-          border: `1px solid ${C.border}`,
-          borderRadius: 14,
-          overflow: 'hidden',
-          boxShadow: '0 10px 32px rgba(0,0,0,0.05)',
-        }}
-      >
-        <div className="landing-comparison-scroll" style={{ overflowX: 'auto' }}>
-          <table className="landing-comparison-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '16px 20px',
-                    fontFamily: sans,
-                    fontSize: 12,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: C.textSecondary,
-                    background: C.bgSecondary,
-                    borderBottom: `1px solid ${C.border}`,
-                    width: '46%',
-                  }}
-                >
-                  Feature
-                </th>
-                {tiers.map((tier) => (
-                  <th
-                    key={tier}
-                    style={{
-                      textAlign: 'center',
-                      padding: '16px 12px',
-                      fontFamily: sans,
-                      fontSize: 12,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: C.textSecondary,
-                      background: C.bgSecondary,
-                      borderBottom: `1px solid ${C.border}`,
-                    }}
-                  >
-                    {tierLabels[tier]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            {sections.map((section) => (
-              <tbody key={section.category}>
-                <tr>
-                  <td
-                    colSpan={4}
-                    style={{
-                      padding: '12px 20px',
-                      fontFamily: sans,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: C.textSecondary,
-                      background: C.bgSecondary,
-                      borderTop: `1px solid ${C.border}`,
-                      borderBottom: `1px solid ${C.border}`,
-                    }}
-                  >
-                    {section.category}
-                  </td>
-                </tr>
-                {section.rows.map((row, rowIndex) => (
-                  <tr key={`${section.category}-${row.feature}`}>
-                    <td
-                      style={{
-                        padding: '14px 20px',
-                        fontFamily: sans,
-                        fontSize: 14,
-                        color: C.textPrimary,
-                        borderBottom: `1px solid ${C.border}`,
-                        background: rowIndex % 2 === 0 ? '#fff' : C.bgPrimary,
-                      }}
-                    >
-                      {row.feature}
-                    </td>
-                    {tiers.map((tier) => (
-                      <td
-                        key={`${row.feature}-${tier}`}
-                        style={{
-                          textAlign: 'center',
-                          padding: '14px 12px',
-                          borderBottom: `1px solid ${C.border}`,
-                          background: rowIndex % 2 === 0 ? '#fff' : C.bgPrimary,
-                        }}
-                      >
-                        {renderCell(row[tier])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            ))}
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Pricing ──────────────────────────────────────────────────────────────────
 function PricingSection() {
   const { ref, inView } = useReveal();
   const [annualBilling, setAnnualBilling] = useState(true);
 
-  const plans = [
+  const plans: Array<{
+    tier: PricingTier;
+    name: string;
+    highlight?: boolean;
+    audience: string;
+    price: { monthly: string; annual: string };
+    notes: { monthly: string; annual: string };
+    bullets: string[];
+  }> = [
     {
+      tier: 'free',
       name: 'Free',
-      tier: 'free' as const,
-      featured: false,
-      who: 'Solo users testing Handshake, freelancers with occasional proposal needs, and first-time senders.',
-      price: { annual: '$0', monthly: '$0' },
-      period: 'forever',
-      limits: [
-        '1 user (no workspace)',
-        '3 active proposals',
-        '1 theme (Dark Minimal only)',
-        'Public links only',
-      ],
-      included: [
-        'All 11 slide types with full animations',
-        'Markdown ingestor',
-        'Form editor with drag-and-drop',
-        'Live editing, autosave, keyboard shortcuts, undo/redo',
-        'Unique shareable URLs',
-        'Handshake badge on closing slide',
-      ],
-      cta: 'Get Early Access',
+      audience: 'For solo operators testing the workflow and sending early proposals.',
+      price: { monthly: '$0', annual: '$0' },
+      notes: {
+        monthly: '3 active proposals, one user, public links.',
+        annual: '3 active proposals, one user, public links.',
+      },
+      bullets: ['Markdown ingest', 'All slide types', 'Live links', 'Built-in Handshake branding'],
     },
     {
+      tier: 'pro',
       name: 'Pro',
-      tier: 'pro' as const,
-      featured: true,
-      who: 'Individual BD/sales professionals and small teams sending proposals regularly.',
-      price: { annual: '$16', monthly: '$19' },
-      period: '/user/month',
-      billingNoteAnnual: '$192 per user billed annually (16% off monthly)',
-      billingNoteMonthly: '$19 per user monthly, no commitment',
-      included: [
-        'Everything in Free',
-        'Unlimited active proposals',
-        'All 3 preset themes',
-        'Workspace branding and co-branding',
-        'Proposal analytics',
-        'Status workflow and expiration dates',
-        'Password-protected proposals',
-        'Email delivery',
-        'Duplicate proposal and version history',
-        'No Handshake badge',
-        'Priority email support',
-      ],
-      cta: 'Get Early Access',
+      highlight: true,
+      audience: 'For people who send proposals often and need brand control plus analytics.',
+      price: { monthly: '$19', annual: '$16' },
+      notes: {
+        monthly: 'Per user, billed monthly.',
+        annual: '$192 per user, billed annually.',
+      },
+      bullets: ['Unlimited proposals', 'Workspace branding', 'Analytics + sharing controls', 'No Handshake badge'],
     },
     {
+      tier: 'team',
       name: 'Team',
-      tier: 'team' as const,
-      featured: false,
-      who: 'Growing sales and BD teams that need collaboration, shared resources, and lead intelligence.',
-      price: { annual: '$29', monthly: '$35' },
-      period: '/user/month',
-      billingNoteAnnual: '$348 per user billed annually',
-      billingNoteMonthly: '$35 per user monthly',
-      included: [
-        'Everything in Pro',
-        'Shared workspaces with team-wide proposal access',
-        'Team comments and internal review',
-        'Email-gated proposals and lead capture',
-        'Template, slide block, and asset libraries',
-        'AI copy assistant',
-        'Search, filter, and bulk operations',
-        'Custom embed snippets',
-        'Slack notifications and webhook events API',
-        'Dedicated onboarding call (5+ seats)',
-      ],
-      cta: 'Get Early Access',
+      audience: 'For teams coordinating pipeline, access, templates, and shared review.',
+      price: { monthly: '$35', annual: '$29' },
+      notes: {
+        monthly: 'Per user, billed monthly.',
+        annual: '$348 per user, billed annually.',
+      },
+      bullets: ['Shared workspace', 'Lead capture', 'Template systems', 'Team review + collaboration'],
     },
   ];
 
   return (
-    <section id="pricing" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
-      <div style={{ maxWidth: 1160, margin: '0 auto' }}>
-        <div ref={ref}>
-          <motion.div
-            initial="hidden"
-            animate={inView ? 'visible' : 'hidden'}
-            custom={0}
-            variants={fadeUp}
-            style={{
-              fontFamily: sans,
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.accent,
-              marginBottom: 16,
-            }}
-          >
-            Pricing
-          </motion.div>
-          <motion.h2
-            initial="hidden"
-            animate={inView ? 'visible' : 'hidden'}
-            custom={0.08}
-            variants={fadeUp}
-            style={{
-              fontFamily: serif,
-              fontSize: 'clamp(30px, 3.5vw, 46px)',
-              fontWeight: 700,
-              color: C.textPrimary,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              marginBottom: 16,
-            }}
-          >
-            Pick the plan that matches your stage.
-          </motion.h2>
-          <motion.p
-            initial="hidden"
-            animate={inView ? 'visible' : 'hidden'}
-            custom={0.16}
-            variants={fadeUp}
-            style={{
-              fontFamily: sans,
-              fontSize: 16,
-              color: C.textSecondary,
-              lineHeight: 1.65,
-              maxWidth: 760,
-              marginBottom: 28,
-            }}
-          >
-            Start free, upgrade as proposal volume grows, and keep every tier aligned to real
-            workflows instead of feature bloat.
-          </motion.p>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: 34,
-          }}
+    <section id="pricing" className="py-20">
+      <div ref={ref} className="app-section-frame">
+        <motion.p
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0}
+          variants={revealUp}
+          className="app-kicker"
         >
-          <div
-            className="landing-billing-shell"
-            style={{
-              position: 'relative',
-              width: 'min(320px, 100%)',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: sans,
-                fontSize: 11,
-                fontWeight: 600,
-                color: '#fff',
-                background: C.accent,
-                borderRadius: 999,
-                padding: '4px 10px',
-                letterSpacing: '0.02em',
-                position: 'absolute',
-                top: -10,
-                right: 14,
-                zIndex: 2,
-                boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-              }}
+          Pricing
+        </motion.p>
+        <motion.h2
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.08}
+          variants={revealUp}
+          className="app-heading mt-4 max-w-[10ch]"
+        >
+          Three plans, one product posture.
+        </motion.h2>
+        <motion.p
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.16}
+          variants={revealUp}
+          className="app-copy mt-5 max-w-[42rem]"
+        >
+          The pricing stays visible, but the page no longer turns into a giant procurement table. Choose the workflow stage you&apos;re in and move.
+        </motion.p>
+
+        <motion.div
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          custom={0.2}
+          variants={revealUp}
+          className="mt-8 flex justify-center"
+        >
+          <div className="relative grid w-full max-w-[320px] grid-cols-2 rounded-full border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.88)] p-1">
+            <motion.div
+              animate={{ x: annualBilling ? '100%' : '0%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+              className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-[var(--app-bg-elevated)]"
+            />
+            <button
+              type="button"
+              onClick={() => setAnnualBilling(false)}
+              className={`relative z-10 rounded-full px-4 py-2 text-sm ${annualBilling ? 'text-[var(--app-text-muted)]' : 'text-[var(--app-text-primary)]'}`}
             >
-              Save 16%
-            </span>
-            <div
-              className="landing-billing-toggle"
-              style={{
-                position: 'relative',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                width: '100%',
-                background: '#fff',
-                border: `1px solid ${C.border}`,
-                borderRadius: 999,
-                padding: 4,
-              }}
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnnualBilling(true)}
+              className={`relative z-10 rounded-full px-4 py-2 text-sm ${annualBilling ? 'text-[var(--app-text-primary)]' : 'text-[var(--app-text-muted)]'}`}
             >
-              <motion.div
-                animate={{ left: annualBilling ? 'calc(50% + 2px)' : '4px' }}
-                transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  bottom: 4,
-                  width: 'calc(50% - 6px)',
-                  borderRadius: 999,
-                  background: C.bgSecondary,
-                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.02)',
-                }}
-              />
-              <button
-                onClick={() => setAnnualBilling(false)}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 999,
-                  padding: '9px 18px',
-                  fontFamily: sans,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: annualBilling ? C.textSecondary : C.textPrimary,
-                  background: 'transparent',
-                  transition: 'color 0.2s ease',
-                }}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setAnnualBilling(true)}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 999,
-                  padding: '9px 18px',
-                  fontFamily: sans,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: annualBilling ? C.textPrimary : C.textSecondary,
-                  background: 'transparent',
-                  transition: 'color 0.2s ease',
-                }}
-              >
-                Annual
-              </button>
-            </div>
+              Annual
+            </button>
           </div>
-        </div>
+        </motion.div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 24,
-          }}
-          className="landing-pricing-grid"
-        >
-          {plans.map((plan, i) => {
-            const { ref: cardRef, inView: cardInView } = useReveal();
-            const price = plan.name === 'Free' ? plan.price.annual : annualBilling ? plan.price.annual : plan.price.monthly;
-            const limits = plan.limits ?? [];
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {plans.map((plan, index) => {
+            const price = annualBilling ? plan.price.annual : plan.price.monthly;
+            const note = annualBilling ? plan.notes.annual : plan.notes.monthly;
+
             return (
               <motion.div
                 key={plan.tier}
-                className="landing-pricing-card"
-                ref={cardRef}
                 initial="hidden"
-                animate={cardInView ? 'visible' : 'hidden'}
-                custom={i * 0.1}
-                variants={fadeUp}
+                animate={inView ? 'visible' : 'hidden'}
+                custom={0.24 + index * 0.08}
+                variants={revealUp}
+                className="flex h-full flex-col rounded-[var(--app-radius-lg)] border p-5 shadow-[var(--app-shadow-soft)]"
                 style={{
-                  background: plan.featured ? C.bgDark : '#fff',
-                  border: plan.featured ? `1.5px solid ${C.accent}` : `1px solid ${C.border}`,
-                  borderRadius: 14,
-                  padding: '36px 28px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  transition: 'transform 0.2s',
+                  background: plan.highlight ? '#171713' : 'rgba(247,247,244,0.82)',
+                  borderColor: plan.highlight ? 'rgba(245,78,0,0.22)' : 'var(--app-border-subtle)',
+                  color: plan.highlight ? 'var(--app-text-inverse)' : 'var(--app-text-primary)',
                 }}
-                whileHover={{ scale: 1.015 }}
               >
-                {plan.featured && (
-                  <div
-                    className="landing-pricing-badge"
-                    style={{
-                      position: 'absolute',
-                      top: -12,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: C.accent,
-                      color: '#fff',
-                      fontFamily: sans,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      padding: '4px 14px',
-                      borderRadius: 20,
-                    }}
-                  >
-                    Primary Tier
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: plan.featured ? C.textMuted : C.textSecondary,
-                    letterSpacing: '0.04em',
-                    marginBottom: 12,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {plan.name}
+                <div className="flex items-center justify-between">
+                  <span className="font-brand-mono text-[11px] uppercase tracking-[0.14em] opacity-70">{plan.name}</span>
+                  {plan.highlight && (
+                    <span className="rounded-full bg-[rgba(245,78,0,0.16)] px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-[var(--app-accent)]">
+                      Core tier
+                    </span>
+                  )}
                 </div>
-                <p
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 14,
-                    lineHeight: 1.55,
-                    color: plan.featured ? `${C.textOnDark}ba` : C.textSecondary,
-                    marginBottom: 20,
-                  }}
-                >
-                  {plan.who}
-                </p>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 10 }}>
-                  <span
-                    style={{
-                      fontFamily: serif,
-                      fontSize: 42,
-                      fontWeight: 700,
-                      color: plan.featured ? C.textOnDark : C.textPrimary,
-                      letterSpacing: '-0.03em',
-                    }}
-                  >
-                    {price}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 13,
-                      color: plan.featured ? C.textMuted : C.textSecondary,
-                    }}
-                  >
-                    {plan.period}
-                  </span>
+                <p className="mt-4 text-sm leading-6 opacity-75">{plan.audience}</p>
+                <div className="mt-6 flex items-end gap-2">
+                  <span className="font-brand-serif text-[3rem] leading-none tracking-[-0.06em]">{price}</span>
+                  <span className="pb-1 text-sm opacity-70">/ user</span>
                 </div>
-
-                {plan.name !== 'Free' && (
-                  <div
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                      color: plan.featured ? `${C.textMuted}e6` : C.textSecondary,
-                      marginBottom: 20,
-                    }}
-                  >
-                    {annualBilling ? plan.billingNoteAnnual : plan.billingNoteMonthly}
-                  </div>
-                )}
-
-                {plan.name === 'Free' && (
-                  <div
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                      color: plan.featured ? `${C.textMuted}e6` : C.textSecondary,
-                      marginBottom: 20,
-                    }}
-                  >
-                    Built for growth: each free proposal markets Handshake.
-                  </div>
-                )}
-
-                {limits.length > 0 && (
-                  <>
-                    <div
-                      style={{
-                        fontFamily: sans,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: plan.featured ? C.textMuted : C.textSecondary,
-                        marginBottom: 8,
-                      }}
-                    >
-                      Limits
-                    </div>
-                    <ul
-                      style={{
-                        listStyle: 'none',
-                        padding: 0,
-                        margin: '0 0 18px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 8,
-                      }}
-                    >
-                      {limits.map((limit) => (
-                        <li
-                          key={limit}
-                          style={{
-                            fontFamily: sans,
-                            fontSize: 13,
-                            color: plan.featured ? `${C.textOnDark}cc` : C.textSecondary,
-                            lineHeight: 1.45,
-                          }}
-                        >
-                          {limit}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-
-                <div
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: plan.featured ? C.textMuted : C.textSecondary,
-                    marginBottom: 8,
-                  }}
-                >
-                  Includes
-                </div>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '0 0 28px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                    flex: 1,
-                  }}
-                >
-                  {plan.included.map((item) => (
-                    <li
-                      key={item}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 10,
-                        fontFamily: sans,
-                        fontSize: 14,
-                        color: plan.featured ? `${C.textOnDark}d4` : C.textSecondary,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: '50%',
-                          background: plan.featured ? `${C.accent}25` : `${C.accent}15`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          fontSize: 10,
-                          color: C.accent,
-                          marginTop: 2,
-                        }}
-                      >
-                        ✓
-                      </span>
-                      {item}
+                <p className="mt-2 text-sm opacity-70">{note}</p>
+                <ul className="mt-6 space-y-3 text-sm leading-6">
+                  {plan.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-3">
+                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--app-accent)]" />
+                      <span>{bullet}</span>
                     </li>
                   ))}
                 </ul>
-
                 <button
-                  onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: plan.featured ? '#fff' : C.textPrimary,
-                    background: plan.featured ? C.accent : 'transparent',
-                    border: plan.featured ? 'none' : `1px solid ${C.border}`,
-                    cursor: 'pointer',
-                    padding: '11px 20px',
-                    borderRadius: 8,
-                    width: '100%',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (plan.featured) (e.currentTarget as HTMLElement).style.background = C.accentHover;
-                    else (e.currentTarget as HTMLElement).style.borderColor = '#c8c5be';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (plan.featured) (e.currentTarget as HTMLElement).style.background = C.accent;
-                    else (e.currentTarget as HTMLElement).style.borderColor = C.border;
-                  }}
+                  type="button"
+                  onClick={() => scrollToSection('waitlist')}
+                  className={`mt-8 rounded-[var(--app-radius-sm)] px-4 py-3 text-sm font-medium transition-transform duration-150 hover:-translate-y-0.5 ${
+                    plan.highlight
+                      ? 'bg-primary text-primary-foreground'
+                      : 'border border-[var(--app-border-strong)] bg-[rgba(247,247,244,0.88)] text-[var(--app-text-primary)]'
+                  }`}
                 >
-                  {plan.cta}
+                  Join the waitlist
                 </button>
               </motion.div>
             );
           })}
         </div>
-        <FeatureComparisonTable />
       </div>
     </section>
   );
 }
 
-// ─── FAQ ──────────────────────────────────────────────────────────────────────
 function FAQSection() {
   const { ref, inView } = useReveal();
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState(0);
 
   const faqs = [
     {
-      question: 'What is Handshake and who is it for?',
+      question: 'What kind of team is Handshake for?',
       answer:
-        'Handshake is a proposal builder for partnership, BD, and sales teams. It turns your content into animated, shareable proposal pages that are easier to read than PDF decks.',
+        'Handshake is built for partnership, BD, and sales teams that want proposals to feel more like a living product page than a static attachment.',
     },
     {
-      question: 'Can I update a proposal after I send it?',
+      question: 'Can I update a proposal after sharing it?',
       answer:
-        'Yes. Every proposal is live at a unique URL, so you can edit content anytime and recipients always see the latest version without a resend.',
+        'Yes. The proposal lives at one durable URL, so edits made later are reflected without sending a replacement file.',
     },
     {
-      question: 'How does access control work?',
+      question: 'Do I need a designer to get a polished result?',
       answer:
-        'You can share proposals publicly, protect them with passwords, or gate access by email capture (Team tier). You can also set expiration dates for time-limited access.',
+        'No. The product is designed for people who work fast from narrative and need a clean delivery surface without spending time in presentation software.',
     },
     {
-      question: 'Does Handshake support team collaboration?',
+      question: 'What sharing controls exist?',
       answer:
-        'Yes. Team tier includes shared workspaces, team comments, reusable templates and slide blocks, shared assets, and workflow tools like search, filters, and bulk actions.',
-    },
-    {
-      question: 'What is included in the Free plan?',
-      answer:
-        'Free includes 3 active proposals, Dark Minimal theme, all slide types, markdown ingestor, drag-and-drop editing, live updates, and shareable links.',
-    },
-    {
-      question: 'Can I switch between monthly and annual billing?',
-      answer:
-        'Yes. Pro and Team support monthly or annual billing. Annual pricing gives a 16% discount compared with monthly pricing.',
-    },
-    {
-      question: 'Do I need design skills to create polished proposals?',
-      answer:
-        'No. Handshake is designed for non-designers with built-in themes, animated slide layouts, and structured editors to help you ship professional proposals quickly.',
+        'Public links, short links, password protection, and gated access are all part of the product surface, not bolted on after the fact.',
     },
   ];
 
   return (
-    <section id="faq" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
-      <div ref={ref} style={{ maxWidth: 900, margin: '0 auto' }}>
-        <motion.div
+    <section id="faq" className="py-20">
+      <div ref={ref} className="app-section-frame">
+        <motion.p
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           custom={0}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 11,
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: C.accent,
-            marginBottom: 16,
-          }}
+          variants={revealUp}
+          className="app-kicker"
         >
           FAQ
-        </motion.div>
+        </motion.p>
         <motion.h2
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           custom={0.08}
-          variants={fadeUp}
-          style={{
-            fontFamily: serif,
-            fontSize: 'clamp(30px, 3.5vw, 44px)',
-            fontWeight: 700,
-            color: C.textPrimary,
-            lineHeight: 1.2,
-            letterSpacing: '-0.02em',
-            marginBottom: 18,
-          }}
+          variants={revealUp}
+          className="app-heading mt-4 max-w-[11ch]"
         >
-          Common questions, answered.
+          A few questions teams usually ask before switching.
         </motion.h2>
-        <motion.p
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0.14}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 16,
-            color: C.textSecondary,
-            lineHeight: 1.65,
-            marginBottom: 32,
-            maxWidth: 680,
-          }}
-        >
-          Everything teams usually ask before switching from static decks to live proposals.
-        </motion.p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {faqs.map((item, index) => {
+        <div className="mt-8 space-y-3">
+          {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
               <motion.div
-                key={item.question}
-                initial={{ opacity: 0, y: 12 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.05 + index * 0.05 }}
-                style={{
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 12,
-                  background: '#fff',
-                  overflow: 'hidden',
-                }}
+                key={faq.question}
+                initial="hidden"
+                animate={inView ? 'visible' : 'hidden'}
+                custom={0.14 + index * 0.05}
+                variants={revealUp}
+                className="overflow-hidden rounded-[var(--app-radius-md)] border border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.82)] shadow-[var(--app-shadow-soft)]"
               >
                 <button
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '18px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 16,
-                  }}
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                 >
-                  <span
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 16,
-                      fontWeight: 500,
-                      color: C.textPrimary,
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    {item.question}
+                  <span className="font-brand-serif text-[1.2rem] leading-[1.12] tracking-[-0.03em] text-[var(--app-text-strong)]">
+                    {faq.question}
                   </span>
                   <span
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 20,
-                      color: C.accent,
-                      lineHeight: 1,
-                      transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease',
-                    }}
+                    className="text-[var(--app-accent)] transition-transform"
+                    style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
                   >
                     +
                   </span>
                 </button>
+
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.24, ease: 'easeOut' }}
-                      style={{ overflow: 'hidden' }}
+                      transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
                     >
-                      <div
-                        style={{
-                          padding: '0 20px 20px',
-                          fontFamily: sans,
-                          fontSize: 15,
-                          color: C.textSecondary,
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        {item.answer}
+                      <div className="px-5 pb-5 text-sm leading-7 text-[var(--app-text-secondary)]">
+                        {faq.answer}
                       </div>
                     </motion.div>
                   )}
@@ -2578,20 +919,20 @@ function FAQSection() {
   );
 }
 
-// ─── Email capture / Waitlist ─────────────────────────────────────────────────
 function WaitlistSection() {
   const { ref, inView } = useReveal();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     if (!email || !email.includes('@')) {
-      setErrorMsg('Please enter a valid email address.');
       setStatus('error');
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
+
     setStatus('loading');
     try {
       const { error } = await supabase
@@ -2601,397 +942,128 @@ function WaitlistSection() {
       if (error && error.code !== '23505') {
         throw error;
       }
+
       setStatus('success');
     } catch {
-      setErrorMsg('Something went wrong. Please try again.');
       setStatus('error');
+      setErrorMsg('Something went wrong. Please try again.');
     }
   };
 
   return (
-    <section
-      id="waitlist"
-      style={{
-        background: C.bgDark,
-        padding: '140px 32px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Decorative gradient orb */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: -120,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 600,
-          height: 400,
-          borderRadius: '50%',
-          background: `radial-gradient(ellipse, ${C.accent}12 0%, transparent 65%)`,
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div ref={ref} style={{ maxWidth: 580, margin: '0 auto', position: 'relative' }}>
-        <motion.p
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 11,
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: C.accent,
-            marginBottom: 20,
-          }}
-        >
-          Join the waitlist
-        </motion.p>
-
-        <motion.h2
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0.08}
-          variants={fadeUp}
-          style={{
-            fontFamily: serif,
-            fontSize: 'clamp(32px, 4.5vw, 52px)',
-            fontWeight: 700,
-            color: C.textOnDark,
-            lineHeight: 1.15,
-            letterSpacing: '-0.02em',
-            marginBottom: 18,
-          }}
-        >
-          Ready to stop sending PDFs?
-        </motion.h2>
-
-        <motion.p
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0.16}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 17,
-            fontWeight: 300,
-            color: C.textMuted,
-            lineHeight: 1.65,
-            marginBottom: 44,
-          }}
-        >
-          Join the waitlist and be the first to create proposals your partners actually remember.
-        </motion.p>
-
+    <section id="waitlist" className="py-20">
+      <div ref={ref} className="app-section-frame">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          custom={0.24}
-          variants={fadeUp}
+          custom={0}
+          variants={revealUp}
+          className="overflow-hidden rounded-[var(--app-radius-lg)] border border-[rgba(247,247,244,0.08)] bg-[#171713] px-6 py-8 text-center text-[var(--app-text-inverse)] shadow-[0_28px_60px_rgba(0,0,0,0.28)] md:px-10 md:py-10"
         >
-          <AnimatePresence mode="wait">
-            {status === 'success' ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                style={{
-                  background: `${C.accent}15`,
-                  border: `1px solid ${C.accent}40`,
-                  borderRadius: 12,
-                  padding: '24px 32px',
-                  fontFamily: sans,
-                  fontSize: 16,
-                  color: C.textOnDark,
-                  lineHeight: 1.5,
-                }}
-              >
-                <div style={{ fontSize: 24, marginBottom: 8 }}>✓</div>
-                <strong style={{ display: 'block', marginBottom: 6 }}>You're on the list.</strong>
-                <span style={{ color: C.textMuted, fontSize: 14 }}>We'll be in touch soon.</span>
-              </motion.div>
-            ) : (
-              <motion.form
-                key="form"
-                onSubmit={handleSubmit}
-                style={{
-                  display: 'flex',
-                  gap: 10,
-                  flexDirection: 'column',
-                }}
-              >
-                <div style={{ display: 'flex', gap: 10 }} className="landing-form-row">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setStatus('idle'); }}
-                    placeholder="your@workemail.com"
-                    required
-                    style={{
-                      flex: 1,
-                      fontFamily: sans,
-                      fontSize: 15,
-                      color: C.textOnDark,
-                      background: '#161616',
-                      border: `1px solid ${status === 'error' ? '#f87171' : C.borderDark}`,
-                      borderRadius: 9,
-                      padding: '13px 18px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      minWidth: 0,
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = C.accent)}
-                    onBlur={(e) => (e.target.style.borderColor = status === 'error' ? '#f87171' : C.borderDark)}
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    style={{
-                      fontFamily: sans,
-                      fontSize: 15,
-                      fontWeight: 500,
-                      color: '#fff',
-                      background: status === 'loading' ? C.accentHover : C.accent,
-                      border: 'none',
-                      cursor: status === 'loading' ? 'wait' : 'pointer',
-                      padding: '13px 24px',
-                      borderRadius: 9,
-                      whiteSpace: 'nowrap',
-                      transition: 'background 0.2s',
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={(e) => { if (status !== 'loading') (e.currentTarget as HTMLElement).style.background = C.accentHover; }}
-                    onMouseLeave={(e) => { if (status !== 'loading') (e.currentTarget as HTMLElement).style.background = C.accent; }}
-                  >
-                    {status === 'loading' ? 'Joining…' : 'Get Early Access'}
-                  </button>
-                </div>
-                {status === 'error' && (
-                  <p style={{ fontFamily: sans, fontSize: 13, color: '#f87171', textAlign: 'left' }}>{errorMsg}</p>
-                )}
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </motion.div>
+          <p className="app-kicker">Join the waitlist</p>
+          <h2 className="mt-4 font-brand-serif text-[clamp(2rem,4vw,3.5rem)] leading-[0.98] tracking-[-0.05em] text-[var(--app-text-inverse)]">
+            Ready to stop shipping dead files?
+          </h2>
+          <p className="mx-auto mt-4 max-w-[36rem] text-sm leading-7 text-[rgba(247,247,244,0.72)] md:text-base">
+            Join the beta and be the first to use Handshake with the new studio-style experience across the app.
+          </p>
 
-        <motion.p
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          custom={0.32}
-          variants={fadeUp}
-          style={{
-            fontFamily: sans,
-            fontSize: 13,
-            color: `${C.textMuted}99`,
-            marginTop: 20,
-          }}
-        >
-          No credit card required. Free plan available at launch.
-        </motion.p>
+          <div className="mx-auto mt-8 max-w-[620px]">
+            <AnimatePresence mode="wait">
+              {status === 'success' ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  className="rounded-[var(--app-radius-md)] border border-[rgba(79,151,120,0.36)] bg-[rgba(79,151,120,0.1)] px-6 py-5"
+                >
+                  <div className="font-brand-serif text-2xl tracking-[-0.04em]">You&apos;re on the list.</div>
+                  <div className="mt-2 text-sm text-[rgba(247,247,244,0.72)]">We&apos;ll reach out as soon as access opens.</div>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-3"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        setStatus('idle');
+                        setErrorMsg('');
+                      }}
+                      placeholder="you@company.com"
+                      className="min-w-0 flex-1 rounded-[var(--app-radius-sm)] border border-[rgba(247,247,244,0.14)] bg-[rgba(247,247,244,0.06)] px-4 py-3 text-sm text-[var(--app-text-inverse)] outline-none placeholder:text-[rgba(247,247,244,0.42)] focus:border-[rgba(255,105,48,0.48)]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={status === 'loading'}
+                      className="rounded-[var(--app-radius-sm)] bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-transform duration-150 hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-80"
+                    >
+                      {status === 'loading' ? 'Joining…' : 'Get early access'}
+                    </button>
+                  </div>
+                  {status === 'error' && (
+                    <p className="text-left text-sm text-[#ffb3a1]">{errorMsg}</p>
+                  )}
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <p className="mt-4 font-brand-mono text-[11px] uppercase tracking-[0.16em] text-[rgba(247,247,244,0.42)]">
+            No credit card required at launch
+          </p>
+        </motion.div>
       </div>
     </section>
   );
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer
-      style={{
-        background: C.bgDark,
-        borderTop: `1px solid ${C.borderDark}`,
-        padding: '32px',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16,
-        }}
-      >
-        <BrandWordmark variant="dark" className="h-4 w-auto" aria-label="Handshake" />
-
-        <div
-          style={{
-            fontFamily: sans,
-            fontSize: 12,
-            color: C.textMuted,
-            textAlign: 'center',
-          }}
-        >
-          © 2026 Handshake. All rights reserved. Built by Grafite Design Ltda.
+    <footer className="border-t border-[var(--app-border-subtle)] py-8">
+      <div className="app-section-frame flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <BrandLogo variant="light" className="h-7 w-7" />
+          <BrandWordmark variant="light" className="h-4 w-auto" />
         </div>
-
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {[
-            { label: 'Terms', to: '/terms' },
-            { label: 'Privacy', to: '/privacy' },
-          ].map(({ label, to }) => (
-            <Link
-              key={label}
-              to={to}
-              style={{
-                fontFamily: sans,
-                fontSize: 13,
-                color: C.textMuted,
-                textDecoration: 'none',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textOnDark)}
-              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="text-sm text-[var(--app-text-muted)]">© 2026 Handshake. All rights reserved.</div>
+        <div className="flex items-center gap-5 text-sm text-[var(--app-text-muted)]">
+          <Link to="/terms" className="transition-colors hover:text-[var(--app-text-primary)]">
+            Terms
+          </Link>
+          <Link to="/privacy" className="transition-colors hover:text-[var(--app-text-primary)]">
+            Privacy
+          </Link>
         </div>
       </div>
     </footer>
   );
 }
 
-// ─── Landing page CSS ─────────────────────────────────────────────────────────
-const landingStyles = `
-  html, body {
-    background: ${C.bgDark};
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  .landing-hero-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .landing-steps-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .landing-feature-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .landing-pricing-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .landing-comparison-scroll {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .landing-comparison-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
-  .landing-form-row {
-    flex-direction: row;
-  }
-
-  .landing-desktop-nav {
-    display: flex !important;
-  }
-
-  .landing-hamburger {
-    display: none !important;
-  }
-
-  @media (max-width: 768px) {
-    .landing-hero-grid {
-      grid-template-columns: 1fr !important;
-    }
-    .landing-hero-visual {
-      display: none !important;
-    }
-    .landing-steps-grid {
-      grid-template-columns: 1fr !important;
-    }
-    .landing-feature-grid {
-      grid-template-columns: 1fr !important;
-      direction: ltr !important;
-    }
-    .landing-pricing-grid {
-      grid-template-columns: 1fr !important;
-    }
-    .landing-billing-toggle {
-      width: 100%;
-      justify-content: center;
-      flex-wrap: wrap;
-      border-radius: 14px !important;
-    }
-    .landing-comparison-table {
-      min-width: 680px !important;
-    }
-    .landing-form-row {
-      flex-direction: column !important;
-    }
-    .landing-desktop-nav {
-      display: none !important;
-    }
-    .landing-hamburger {
-      display: flex !important;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .landing-steps-grid {
-      grid-template-columns: 1fr !important;
-    }
-    .landing-pricing-grid {
-      grid-template-columns: 1fr !important;
-      max-width: 680px;
-      margin: 0 auto;
-      gap: 18px !important;
-    }
-    .landing-pricing-card {
-      padding: 30px 22px !important;
-    }
-    .landing-pricing-badge {
-      top: 12px !important;
-      left: auto !important;
-      right: 14px !important;
-      transform: none !important;
-      font-size: 10px !important;
-    }
-    .landing-comparison-table {
-      min-width: 720px !important;
-    }
-    .landing-feature-grid {
-      gap: 48px !important;
-    }
-  }
-`;
-
-// ─── Root component ───────────────────────────────────────────────────────────
 export function LandingPage() {
   return (
-    <>
-      <style>{landingStyles}</style>
-      <div style={{ fontFamily: sans, overflowX: 'hidden' }}>
-        <NavBar />
+    <div className="app-shell">
+      <NavBar />
+      <main>
         <HeroSection />
-        <SocialProofBar />
-        <ProblemSection />
-        <HowItWorksSection />
-        <FeaturesSection />
-        <LiveExampleCTA />
+        <ProductFramingSection />
+        <WorkflowSection />
+        <CapabilitySection />
+        <LiveExampleSection />
         <PricingSection />
         <FAQSection />
         <WaitlistSection />
-        <Footer />
-      </div>
-    </>
+      </main>
+      <Footer />
+    </div>
   );
 }

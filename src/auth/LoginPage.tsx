@@ -19,15 +19,12 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [infoMessage, setInfoMessage] = useState('');
+  const [infoMessage] = useState(() => sessionStorage.getItem('authMessage') ?? '');
 
   useEffect(() => {
-    const message = sessionStorage.getItem('authMessage');
-    if (message) {
-      setInfoMessage(message);
-      sessionStorage.removeItem('authMessage');
-    }
-  }, []);
+    if (!infoMessage) return;
+    sessionStorage.removeItem('authMessage');
+  }, [infoMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,10 +61,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-admin flex items-center justify-center p-4">
+    <div className="app-shell relative flex min-h-screen items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-[#d4785c]/20 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-[#d4785c]/12 blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/8 blur-3xl" />
       </div>
 
       <motion.div
@@ -77,23 +74,28 @@ export function LoginPage() {
         className="relative w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <h1 className="mb-1.5 inline-flex items-center justify-center gap-2">
-            <BrandLogo variant="light" className="h-9 w-9 translate-y-[1px]" aria-label="Handshake logo" />
-            <BrandWordmark variant="light" className="h-8 w-auto" aria-label="Handshake" />
-          </h1>
+          <div className="mb-3 inline-flex items-center justify-center gap-3 rounded-full border border-[var(--app-border-subtle)] bg-[var(--app-bg-canvas)]/75 px-4 py-2 shadow-[var(--app-shadow-soft)]">
+            <BrandLogo variant="light" className="h-8 w-8" aria-label="Handshake logo" />
+            <BrandWordmark variant="light" className="h-5 w-auto" aria-label="Handshake" />
+          </div>
+          <p className="font-brand-mono text-[11px] uppercase tracking-[0.16em] text-[var(--app-text-muted)]">
+            Proposal Studio
+          </p>
         </div>
 
-        <Card className="rounded-2xl border-[#e5e3de] shadow-xl shadow-black/5">
+        <Card className="rounded-[var(--app-radius-lg)] border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.82)] shadow-[var(--app-shadow-elevated)]">
           {!sent ? (
             <>
               <CardHeader className="px-6 pt-6 pb-0">
-                <CardTitle className="font-brand-serif text-xl text-gray-900">Sign in</CardTitle>
-                <CardDescription className="mt-1 text-sm text-[#6b6b6b]">We'll send a magic link to your email.</CardDescription>
+                <CardTitle className="text-[1.35rem] text-[var(--app-text-strong)]">Sign in</CardTitle>
+                <CardDescription className="mt-1 text-sm text-[var(--app-text-secondary)]">
+                  We&apos;ll send a magic link to your email.
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="email" className="text-xs font-medium text-gray-600">
+                    <Label htmlFor="email" className="font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">
                       Email address
                     </Label>
                     <Input
@@ -108,12 +110,12 @@ export function LoginPage() {
                   </div>
 
                   {error && (
-                    <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                    <p className="rounded-[var(--app-radius-sm)] border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                       {error}
                     </p>
                   )}
                   {infoMessage && (
-                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                    <p className="rounded-[var(--app-radius-sm)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
                       {infoMessage}
                     </p>
                   )}
@@ -143,7 +145,7 @@ export function LoginPage() {
                     </Button>
                   )}
                   {import.meta.env.DEV && (
-                    <p className="text-[11px] text-gray-500 text-center">
+                    <p className="text-center text-[11px] text-[var(--app-text-muted)]">
                       Local development shortcut (disabled in production)
                     </p>
                   )}
@@ -160,16 +162,16 @@ export function LoginPage() {
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AppIcon icon="ui.check" className="w-6 h-6 text-green-600" />
                 </div>
-                <h3 className="font-brand-serif text-lg text-gray-900 mb-1.5">Check your inbox</h3>
-                <p className="text-sm text-[#6b6b6b]">
-                  We sent a magic link to <strong className="text-gray-700">{email}</strong>.
+                <h3 className="font-brand-serif text-lg text-[var(--app-text-strong)] mb-1.5">Check your inbox</h3>
+                <p className="text-sm text-[var(--app-text-secondary)]">
+                  We sent a magic link to <strong className="text-[var(--app-text-primary)]">{email}</strong>.
                   Click it to sign in.
                 </p>
                 <Button
                   variant="link"
                   type="button"
                   onClick={() => setSent(false)}
-                  className="mt-3 h-auto p-0 text-xs text-gray-500"
+                  className="mt-3 text-xs text-[var(--app-text-muted)]"
                 >
                   Use a different email
                 </Button>

@@ -50,13 +50,13 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-auto gap-2 px-3 py-1.5">
+        <Button variant="ghost" className="h-auto gap-2 px-3 py-1.5 text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)]">
           <Avatar className="h-7 w-7">
-            <AvatarFallback className="bg-[#1a1a1a] text-xs font-semibold text-[#f0ede8]">
+            <AvatarFallback className="bg-[var(--app-text-strong)] text-xs font-semibold text-[var(--app-text-inverse)]">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="max-w-32 truncate text-sm text-[#6b6b6b]">{user?.email}</span>
+          <span className="max-w-32 truncate text-sm">{user?.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

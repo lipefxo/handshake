@@ -2,21 +2,21 @@ import { Link } from 'react-router-dom';
 import { BrandWordmark } from '../shared/components/BrandWordmark';
 
 const C = {
-  bgDark: '#0C0C0C',
-  textOnDark: '#F0EDE8',
-  textMuted: '#9A9590',
-  accent: '#D4785C',
-  accentHover: '#C06A50',
-  borderDark: '#2A2A2A',
+  bg: 'var(--app-bg-canvas)',
+  text: 'var(--app-text-strong)',
+  textSecondary: 'var(--app-text-secondary)',
+  textMuted: 'var(--app-text-muted)',
+  accent: 'var(--app-accent)',
+  border: 'var(--app-border-subtle)',
 } as const;
 
-const serif = "'Libre Baskerville', Georgia, serif";
-const sans = "'DM Sans', system-ui, sans-serif";
+const serif = 'var(--font-brand-serif)';
+const sans = 'var(--font-brand-sans)';
 
 const sectionHeadingStyle: React.CSSProperties = {
   fontFamily: serif,
   fontSize: 22,
-  color: C.textOnDark,
+  color: C.text,
   marginTop: 48,
   marginBottom: 16,
   lineHeight: 1.4,
@@ -38,7 +38,7 @@ const listStyle: React.CSSProperties = {
 
 export function TermsPage() {
   return (
-    <div style={{ background: C.bgDark, minHeight: '100vh' }}>
+    <div className="app-shell" style={{ minHeight: '100vh' }}>
       <nav
         style={{
           maxWidth: 800,
@@ -50,7 +50,7 @@ export function TermsPage() {
         }}
       >
         <Link to="/" aria-label="Back to home">
-          <BrandWordmark variant="dark" style={{ height: 16, width: 'auto' }} />
+          <BrandWordmark variant="light" style={{ height: 16, width: 'auto' }} />
         </Link>
         <Link
           to="/"
@@ -61,7 +61,7 @@ export function TermsPage() {
             textDecoration: 'none',
             transition: 'color 0.2s',
           }}
-          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accent)}
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
           onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
         >
           ← Back to home
@@ -73,7 +73,7 @@ export function TermsPage() {
           style={{
             fontFamily: serif,
             fontSize: 36,
-            color: C.textOnDark,
+            color: C.text,
             marginBottom: 12,
             lineHeight: 1.3,
           }}
@@ -84,7 +84,7 @@ export function TermsPage() {
           Last updated: February 22, 2026
         </p>
 
-        <div style={{ borderTop: `1px solid ${C.borderDark}`, paddingTop: 32 }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 32 }}>
           <h2 style={sectionHeadingStyle}>1. Acceptance of Terms</h2>
           <p style={paragraphStyle}>
             By accessing or using Handshake ("the Service"), operated at handshake.design, you agree
@@ -200,7 +200,7 @@ export function TermsPage() {
             <a
               href="mailto:hello@handshake.design"
               style={{ color: C.accent, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accentHover)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.accent)}
             >
               hello@handshake.design
@@ -310,7 +310,7 @@ export function TermsPage() {
             <a
               href="mailto:hello@handshake.design"
               style={{ color: C.accent, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accentHover)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.accent)}
             >
               hello@handshake.design
@@ -322,7 +322,8 @@ export function TermsPage() {
 
       <footer
         style={{
-          borderTop: `1px solid ${C.borderDark}`,
+          borderTop: `1px solid ${C.border}`,
+          background: 'transparent',
           padding: '24px',
         }}
       >
@@ -338,13 +339,13 @@ export function TermsPage() {
           }}
         >
           <div style={{ fontFamily: sans, fontSize: 12, color: C.textMuted }}>
-            © 2026 Handshake. All rights reserved. Built by Grafite Design Ltda.
+            © 2026 Handshake. All rights reserved.
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link
               to="/privacy"
               style={{ fontFamily: sans, fontSize: 13, color: C.textMuted, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textOnDark)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
             >
               Privacy Policy
