@@ -15,7 +15,7 @@ No real Supabase secrets are required for CI, Playwright smoke tests, or Lightho
 Merge the workflow files after a PR run is green:
 
 - `CI / Lint, Test, And Build`
-- `Security / Dependency Review`
+- `Security / Dependency Review Advisory`
 - `Security / Direct Dependency Audit`
 - `Security / CodeQL`
 - `Security / Supabase Edge Functions`
@@ -27,8 +27,10 @@ Do not require the checks before the first green run exists on GitHub.
 
 After the first green run:
 
+- Enable Dependency graph at `Settings > Code security and analysis > Dependency graph`.
 - Enable branch protection on `main`.
-- Require the CI, security, and performance checks listed above.
+- Require the CI, direct audit, CodeQL, Supabase function, and performance checks listed above.
+- After Dependency graph is enabled and `Dependency Review Advisory` succeeds, remove `continue-on-error` from that workflow step and make dependency review required.
 - Require branches to be up to date before merging.
 - Enable Dependabot alerts and Dependabot security updates.
 - Enable secret scanning and push protection where available.
