@@ -2,21 +2,21 @@ import { Link } from 'react-router-dom';
 import { BrandWordmark } from '../shared/components/BrandWordmark';
 
 const C = {
-  bg: 'var(--app-bg-canvas)',
-  text: 'var(--app-text-strong)',
-  textSecondary: 'var(--app-text-secondary)',
-  textMuted: 'var(--app-text-muted)',
-  accent: 'var(--app-accent)',
-  border: 'var(--app-border-subtle)',
+  bgDark: '#0C0C0C',
+  textOnDark: '#F0EDE8',
+  textMuted: '#9A9590',
+  accent: '#D4785C',
+  accentHover: '#C06A50',
+  borderDark: '#2A2A2A',
 } as const;
 
-const serif = 'var(--font-brand-serif)';
-const sans = 'var(--font-brand-sans)';
+const serif = "'Libre Baskerville', Georgia, serif";
+const sans = "'DM Sans', system-ui, sans-serif";
 
 const sectionHeadingStyle: React.CSSProperties = {
   fontFamily: serif,
   fontSize: 22,
-  color: C.text,
+  color: C.textOnDark,
   marginTop: 48,
   marginBottom: 16,
   lineHeight: 1.4,
@@ -38,7 +38,7 @@ const listStyle: React.CSSProperties = {
 
 export function PrivacyPage() {
   return (
-    <div className="app-shell" style={{ minHeight: '100vh' }}>
+    <div style={{ background: C.bgDark, minHeight: '100vh' }}>
       <nav
         style={{
           maxWidth: 800,
@@ -50,7 +50,7 @@ export function PrivacyPage() {
         }}
       >
         <Link to="/" aria-label="Back to home">
-          <BrandWordmark variant="light" style={{ height: 16, width: 'auto' }} />
+          <BrandWordmark variant="dark" style={{ height: 16, width: 'auto' }} />
         </Link>
         <Link
           to="/"
@@ -61,7 +61,7 @@ export function PrivacyPage() {
             textDecoration: 'none',
             transition: 'color 0.2s',
           }}
-          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accent)}
           onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
         >
           ← Back to home
@@ -73,7 +73,7 @@ export function PrivacyPage() {
           style={{
             fontFamily: serif,
             fontSize: 36,
-            color: C.text,
+            color: C.textOnDark,
             marginBottom: 12,
             lineHeight: 1.3,
           }}
@@ -84,7 +84,7 @@ export function PrivacyPage() {
           Last updated: February 22, 2026
         </p>
 
-        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 32 }}>
+        <div style={{ borderTop: `1px solid ${C.borderDark}`, paddingTop: 32 }}>
           <h2 style={sectionHeadingStyle}>1. Introduction</h2>
           <p style={paragraphStyle}>
             Handshake ("we", "us", or "our") operates the handshake.design website and the
@@ -103,7 +103,7 @@ export function PrivacyPage() {
             style={{
               fontFamily: serif,
               fontSize: 17,
-              color: C.text,
+              color: C.textOnDark,
               marginTop: 28,
               marginBottom: 12,
               lineHeight: 1.4,
@@ -116,19 +116,19 @@ export function PrivacyPage() {
           </p>
           <ul style={listStyle}>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Account information:</strong> Your email
+              <strong style={{ color: C.textOnDark }}>Account information:</strong> Your email
               address, used for magic link authentication and account identification
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Profile information:</strong> Your name,
+              <strong style={{ color: C.textOnDark }}>Profile information:</strong> Your name,
               company name, or other details you choose to provide in your workspace settings
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Proposal content:</strong> Text, images,
+              <strong style={{ color: C.textOnDark }}>Proposal content:</strong> Text, images,
               media, and configuration data you create and upload while building proposals
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Communications:</strong> Any messages or
+              <strong style={{ color: C.textOnDark }}>Communications:</strong> Any messages or
               feedback you send to us directly
             </li>
           </ul>
@@ -137,7 +137,7 @@ export function PrivacyPage() {
             style={{
               fontFamily: serif,
               fontSize: 17,
-              color: C.text,
+              color: C.textOnDark,
               marginTop: 28,
               marginBottom: 12,
               lineHeight: 1.4,
@@ -151,15 +151,15 @@ export function PrivacyPage() {
           </p>
           <ul style={listStyle}>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Usage data:</strong> Pages visited, features
+              <strong style={{ color: C.textOnDark }}>Usage data:</strong> Pages visited, features
               used, time spent on the Service, and interaction patterns
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Device information:</strong> Browser type,
+              <strong style={{ color: C.textOnDark }}>Device information:</strong> Browser type,
               operating system, screen resolution, and device identifiers
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Log data:</strong> IP addresses, access times,
+              <strong style={{ color: C.textOnDark }}>Log data:</strong> IP addresses, access times,
               referring URLs, and error logs
             </li>
           </ul>
@@ -168,7 +168,7 @@ export function PrivacyPage() {
             style={{
               fontFamily: serif,
               fontSize: 17,
-              color: C.text,
+              color: C.textOnDark,
               marginTop: 28,
               marginBottom: 12,
               lineHeight: 1.4,
@@ -182,11 +182,11 @@ export function PrivacyPage() {
           </p>
           <ul style={listStyle}>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Essential cookies:</strong> Required for
+              <strong style={{ color: C.textOnDark }}>Essential cookies:</strong> Required for
               authentication and core functionality (e.g., session tokens managed by Supabase)
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Analytics cookies:</strong> Help us understand
+              <strong style={{ color: C.textOnDark }}>Analytics cookies:</strong> Help us understand
               usage patterns and improve the Service
             </li>
           </ul>
@@ -231,23 +231,23 @@ export function PrivacyPage() {
           </p>
           <ul style={listStyle}>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>With proposal recipients:</strong> When you
+              <strong style={{ color: C.textOnDark }}>With proposal recipients:</strong> When you
               publish a proposal with a public URL, the content of that proposal is accessible to
               anyone with the link
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>With service providers:</strong> We use
+              <strong style={{ color: C.textOnDark }}>With service providers:</strong> We use
               third-party services to operate the platform, including Supabase (database,
               authentication, and file storage) and Vercel (hosting and deployment). These providers
               only access your data as necessary to perform their services
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>With workspace members:</strong> If you are
+              <strong style={{ color: C.textOnDark }}>With workspace members:</strong> If you are
               part of a workspace, other members of that workspace may have access to shared
               proposals and workspace settings
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>For legal reasons:</strong> We may disclose
+              <strong style={{ color: C.textOnDark }}>For legal reasons:</strong> We may disclose
               information if required by law, court order, or governmental regulation, or if we
               believe disclosure is necessary to protect our rights, your safety, or the safety of
               others
@@ -287,27 +287,27 @@ export function PrivacyPage() {
           </p>
           <ul style={listStyle}>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Access:</strong> Request a copy of the
+              <strong style={{ color: C.textOnDark }}>Access:</strong> Request a copy of the
               personal data we hold about you
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Correction:</strong> Request correction of
+              <strong style={{ color: C.textOnDark }}>Correction:</strong> Request correction of
               inaccurate or incomplete personal data
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Deletion:</strong> Request deletion of your
+              <strong style={{ color: C.textOnDark }}>Deletion:</strong> Request deletion of your
               personal data, subject to certain exceptions
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Portability:</strong> Request your data in a
+              <strong style={{ color: C.textOnDark }}>Portability:</strong> Request your data in a
               structured, commonly used, and machine-readable format
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Objection:</strong> Object to the processing
+              <strong style={{ color: C.textOnDark }}>Objection:</strong> Object to the processing
               of your personal data for certain purposes
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong style={{ color: C.text }}>Withdraw consent:</strong> Where processing
+              <strong style={{ color: C.textOnDark }}>Withdraw consent:</strong> Where processing
               is based on consent, you may withdraw it at any time
             </li>
           </ul>
@@ -316,7 +316,7 @@ export function PrivacyPage() {
             <a
               href="mailto:hello@handshake.design"
               style={{ color: C.accent, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accentHover)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.accent)}
             >
               hello@handshake.design
@@ -356,7 +356,7 @@ export function PrivacyPage() {
             <a
               href="mailto:hello@handshake.design"
               style={{ color: C.accent, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.accentHover)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.accent)}
             >
               hello@handshake.design
@@ -368,7 +368,7 @@ export function PrivacyPage() {
 
       <footer
         style={{
-          borderTop: `1px solid ${C.border}`,
+          borderTop: `1px solid ${C.borderDark}`,
           padding: '24px',
         }}
       >
@@ -384,13 +384,13 @@ export function PrivacyPage() {
           }}
         >
           <div style={{ fontFamily: sans, fontSize: 12, color: C.textMuted }}>
-            © 2026 Handshake. All rights reserved.
+            © 2026 Handshake. All rights reserved. Built by Grafite Design Ltda.
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link
               to="/terms"
               style={{ fontFamily: sans, fontSize: 13, color: C.textMuted, textDecoration: 'none' }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.text)}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = C.textOnDark)}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = C.textMuted)}
             >
               Terms of Service

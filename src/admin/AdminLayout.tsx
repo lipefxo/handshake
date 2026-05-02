@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
@@ -17,15 +17,20 @@ export function AdminLayout() {
   const location = useLocation();
   const workspaceName = useWorkspaceStore((state) => state.currentWorkspace?.name);
   const isProposalEditorView = /^\/admin\/proposals\/[^/]+$/.test(location.pathname);
-  const [isSidebarPinned, setIsSidebarPinned] = useState(() => !isProposalEditorView);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => !isProposalEditorView);
   const showTopProposalsLink = location.pathname !== '/admin';
-  const isSidebarExpanded = isProposalEditorView ? false : isSidebarPinned;
+
+  useEffect(() => {
+    if (isProposalEditorView) {
+      setIsSidebarExpanded(false);
+    }
+  }, [isProposalEditorView]);
 
   return (
-    <div className="app-shell dark:bg-[var(--app-bg-canvas)] flex h-screen overflow-hidden">
+    <div className="flex h-screen bg-admin overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`flex shrink-0 flex-col border-r border-light bg-[var(--app-bg-canvas)]/94 backdrop-blur transition-all duration-200 ${
+        className={`flex-shrink-0 border-r border-light bg-[#fafaf7] flex flex-col transition-all duration-200 ${
           isSidebarExpanded ? 'w-56' : 'w-16'
         }`}
       >
@@ -44,10 +49,10 @@ export function AdminLayout() {
             )}
             <Button
               type="button"
-              onClick={() => setIsSidebarPinned((prev) => !prev)}
+              onClick={() => setIsSidebarExpanded((prev) => !prev)}
               variant="ghost"
               size="icon"
-              className={`shrink-0 text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] ${isSidebarExpanded ? 'ml-auto h-7 w-7' : 'h-6 w-6'}`}
+              className={`text-[#6b6b6b] hover:text-[#1a1a1a] shrink-0 ${isSidebarExpanded ? 'ml-auto h-7 w-7' : 'h-6 w-6'}`}
               aria-label={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               title={isSidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >
@@ -63,8 +68,8 @@ export function AdminLayout() {
         <nav className={`flex-1 py-4 ${isSidebarExpanded ? 'px-3' : 'px-2'}`}>
           {isSidebarExpanded && (
             <div className="px-2 mb-2">
-              <p className="font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">Workspace</p>
-              <p className="mt-1 truncate text-xs text-[var(--app-text-secondary)]">{workspaceName ?? 'Loading...'}</p>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Workspace</p>
+              <p className="text-xs text-gray-500 truncate mt-0.5">{workspaceName ?? 'Loading...'}</p>
             </div>
           )}
           {navItems.map((item) => (
@@ -74,10 +79,10 @@ export function AdminLayout() {
               end={item.end}
               title={isSidebarExpanded ? undefined : item.label}
               className={({ isActive }) =>
-                `mb-1 flex items-center rounded-[var(--app-radius-sm)] text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1 ${isSidebarExpanded ? 'justify-start gap-2.5 px-2.5 py-2' : 'justify-center px-2 py-2.5'} ${
+                `flex items-center ${isSidebarExpanded ? 'gap-2.5 px-2.5 py-2 justify-start' : 'justify-center px-2 py-2.5'} rounded-lg text-sm transition-colors duration-150 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-1 ${
                   isActive
-                    ? 'bg-[var(--app-accent-muted)] text-[var(--app-text-strong)] shadow-[inset_0_0_0_1px_rgba(245,78,0,0.12)]'
-                    : 'text-[var(--app-text-muted)] hover:bg-[var(--accent)] hover:text-[var(--app-text-primary)]'
+                    ? 'bg-[#f2f1ed] text-[#1a1a1a] font-medium'
+                    : 'text-[#6b6b6b] hover:bg-white hover:text-[#1a1a1a]'
                 }`
               }
             >
@@ -92,12 +97,12 @@ export function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-light bg-[var(--app-bg-overlay)] px-6 backdrop-blur">
+        <header className="h-14 border-b border-light bg-white/95 backdrop-blur flex items-center justify-between px-6 flex-shrink-0">
           <div>
             {showTopProposalsLink && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1.5 rounded-[var(--app-radius-sm)] px-1.5 py-1 text-sm text-[var(--app-text-muted)] transition-colors duration-150 hover:text-[var(--app-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+                className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors duration-150 flex items-center gap-1.5 rounded-md px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
               >
                 <AppIcon icon="ui.sidebar-toggle" className="w-4 h-4" />
                 Proposals

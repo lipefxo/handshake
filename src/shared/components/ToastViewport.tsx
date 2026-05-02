@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const variantStyles: Record<ToastMessage['variant'], string> = {
-  success: 'border-emerald-200/80 bg-[rgba(79,151,120,0.12)] text-emerald-950',
-  error: 'border-red-200/80 bg-[rgba(224,111,93,0.12)] text-red-950',
-  info: 'border-[var(--app-border-subtle)] bg-[rgba(247,247,244,0.86)] text-[var(--app-text-primary)]',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+  error: 'border-red-200 bg-red-50 text-red-900',
+  info: 'border-slate-200 bg-white text-slate-900',
 };
 
 export function ToastViewport() {
@@ -19,7 +19,7 @@ export function ToastViewport() {
         <div
           key={toast.id}
           className={cn(
-            'pointer-events-auto rounded-[var(--app-radius-md)] border px-3 py-2 shadow-[var(--app-shadow-soft)] backdrop-blur-sm',
+            'pointer-events-auto rounded-lg border px-3 py-2 shadow-sm backdrop-blur-sm',
             variantStyles[toast.variant],
           )}
           role="status"

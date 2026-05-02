@@ -46,12 +46,12 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
-  const processFile = useCallback((file: File) => {
+  const processFile = (file: File) => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => onLogoChange(e.target?.result as string);
     reader.readAsDataURL(file);
-  }, [onLogoChange]);
+  };
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -60,7 +60,7 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       const file = e.dataTransfer.files[0];
       if (file) processFile(file);
     },
-    [processFile],
+    [],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +82,7 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
           onClick={() => onLogoChange(null)}
           variant="ghost"
           size="sm"
-          className="h-auto px-0 py-0 text-xs text-[var(--app-text-muted)] hover:text-red-500"
+          className="h-auto px-0 py-0 text-xs text-gray-500 hover:text-red-500"
           title="Remove logo"
         >
           Remove logo
@@ -105,17 +105,17 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       }}
       role="button"
       tabIndex={0}
-      className="group w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+      className="group w-full cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4785c]/50 focus-visible:ring-offset-2"
       style={{
-        borderColor: dragging ? 'var(--app-accent)' : 'var(--app-border-subtle)',
-        background: dragging ? 'var(--app-accent-muted)' : 'var(--app-bg-canvas)',
+        borderColor: dragging ? '#d4785c' : '#e5e3de',
+        background: dragging ? 'rgba(212,120,92,0.06)' : '#fafaf7',
       }}
     >
-      <AppIcon icon="ui.image" className="mx-auto mb-1.5 h-6 w-6 text-[var(--app-text-muted)] transition-transform duration-200 group-hover:scale-105 group-hover:text-[var(--app-text-secondary)]" />
-      <p className="text-xs font-medium text-[var(--app-text-secondary)] transition-colors duration-200 group-hover:text-[var(--app-text-primary)]">
+      <AppIcon icon="ui.image" className="mx-auto mb-1.5 h-6 w-6 text-gray-300 transition-transform duration-200 group-hover:scale-105 group-hover:text-gray-400" />
+      <p className="text-xs font-medium text-gray-600 transition-colors duration-200 group-hover:text-gray-700">
         {dragging ? 'Drop to upload' : 'Click or drag to upload logo'}
       </p>
-      <p className="mt-0.5 text-xs text-[var(--app-text-muted)] transition-colors duration-200 group-hover:text-[var(--app-text-secondary)]">
+      <p className="mt-0.5 text-xs text-gray-400 transition-colors duration-200 group-hover:text-gray-500">
         PNG, JPG, SVG · Recommended 256×256
       </p>
       <input
@@ -145,26 +145,36 @@ export function ProposalSettings() {
     refreshMembers,
     clearError,
   } = useWorkspaceStore();
-  const [companyNameDraft, setCompanyNameDraft] = useState<string | null>(null);
-  const [emailDraft, setEmailDraft] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState('');
+  const [email, setEmail] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [companyNameTouched, setCompanyNameTouched] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
-  const [workspaceNameDraft, setWorkspaceNameDraft] = useState<string | null>(null);
+  const [workspaceName, setWorkspaceName] = useState('');
   const [renamingWorkspace, setRenamingWorkspace] = useState(false);
   const [resendingMemberId, setResendingMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const isOwner = currentUserRole === 'owner';
   const { executeWithFeedback } = useActionFeedback();
-  const companyName = companyNameDraft ?? currentWorkspace?.companyName ?? '';
-  const email = emailDraft ?? user?.email ?? '';
-  const workspaceName = workspaceNameDraft ?? currentWorkspace?.name ?? '';
+
+  useEffect(() => {
+    if (email || !user?.email) return;
+    setEmail(user.email);
+  }, [email, user?.email]);
 
   useEffect(() => {
     if (!currentWorkspace?.id) return;
     void refreshMembers();
   }, [currentWorkspace?.id, refreshMembers]);
+
+  useEffect(() => {
+    setWorkspaceName(currentWorkspace?.name ?? '');
+  }, [currentWorkspace?.name]);
+
+  useEffect(() => {
+    setCompanyName(currentWorkspace?.companyName ?? '');
+  }, [currentWorkspace?.companyName]);
 
   const [savingCompanyName, setSavingCompanyName] = useState(false);
   const companyNameDirty = companyName !== (currentWorkspace?.companyName ?? '');
@@ -241,15 +251,14 @@ export function ProposalSettings() {
   };
 
   return (
-    <div className="app-section-frame px-6 py-8">
+    <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-8 items-start">
         <SettingsNav sections={SETTINGS_SECTIONS.map((section) => ({ ...section }))} />
 
         <div>
           <div className="mb-8">
-            <p className="app-kicker">Workspace</p>
-            <h1 className="mt-2 font-brand-serif text-[2rem] tracking-[-0.04em] text-[var(--app-text-strong)]">Settings</h1>
-            <p className="mt-1 text-sm text-[var(--app-text-secondary)]">Global settings for your proposal workspace.</p>
+            <h1 className="font-brand-serif text-2xl text-gray-900">Settings</h1>
+            <p className="mt-1 text-sm text-[#6b6b6b]">Global settings for your proposal workspace.</p>
           </div>
 
           <motion.div
@@ -258,24 +267,24 @@ export function ProposalSettings() {
             className="space-y-6"
           >
         {/* Brand */}
-        <Card id="brand" className="scroll-mt-6 rounded-[var(--app-radius-lg)] border-[var(--app-border-subtle)]">
+        <Card id="brand" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
-            <CardTitle className="text-base text-[var(--app-text-strong)]">Brand</CardTitle>
-            <CardDescription className="mt-1 text-xs text-[var(--app-text-secondary)]">
+            <CardTitle className="font-brand-serif text-base text-gray-900">Brand</CardTitle>
+            <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
               Configure your company's identity for proposals.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Logo */}
             <div>
-              <label className="mb-2 block font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">Company logo</label>
+              <label className="block text-xs font-medium text-gray-600 mb-2">Company logo</label>
               <LogoUpload logo={logo} onLogoChange={setLogo} />
             </div>
 
             {/* Company name */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">
+                <label className="text-xs font-medium text-gray-600">
                   Company name
                   <span className="text-red-500 ml-0.5">*</span>
                 </label>
@@ -287,12 +296,12 @@ export function ProposalSettings() {
                 placeholder="Your company name"
                 maxLength={LIMITS.companyName}
                 required
-                  onChange={(e) => setCompanyNameDraft(e.target.value)}
-                  onBlur={() => setCompanyNameTouched(true)}
+                onChange={(e) => setCompanyName(e.target.value)}
+                onBlur={() => setCompanyNameTouched(true)}
               />
               {savingCompanyName && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-[var(--app-text-muted)]">
-                  <span className="h-2.5 w-2.5 animate-spin rounded-full border border-[var(--app-border-strong)] border-t-[var(--app-text-secondary)]" />
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
                   Saving…
                 </p>
               )}
@@ -304,7 +313,7 @@ export function ProposalSettings() {
             {/* Email */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">Default contact email</label>
+                <label className="text-xs font-medium text-gray-600">Default contact email</label>
                 <CharCounter value={email} max={LIMITS.email} />
               </div>
               <Input
@@ -312,7 +321,7 @@ export function ProposalSettings() {
                 placeholder={user?.email ?? 'you@acmecorp.com'}
                 value={email}
                 maxLength={LIMITS.email}
-                onChange={(e) => setEmailDraft(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -323,7 +332,7 @@ export function ProposalSettings() {
               disabled={!isOwner}
             />
             {!isOwner && (
-              <p className="text-xs text-[var(--app-text-muted)]">
+              <p className="text-xs text-gray-500">
                 Only workspace owners can edit brand theme settings.
               </p>
             )}
@@ -331,20 +340,20 @@ export function ProposalSettings() {
         </Card>
 
             {/* Team */}
-            <Card id="team" className="scroll-mt-6 rounded-[var(--app-radius-lg)] border-[var(--app-border-subtle)]">
+            <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">
           <CardHeader>
-            <CardTitle className="text-base text-[var(--app-text-strong)]">Team</CardTitle>
-            <CardDescription className="mt-1 text-xs text-[var(--app-text-secondary)]">
+            <CardTitle className="font-brand-serif text-base text-gray-900">Team</CardTitle>
+            <CardDescription className="mt-1 text-xs text-[#6b6b6b]">
               Invite teammates to access and manage proposals in this workspace.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form
               onSubmit={handleRenameWorkspace}
-              className="space-y-2 rounded-[var(--app-radius-md)] border border-[var(--app-border-subtle)] bg-[var(--app-bg-muted)] px-3 py-3"
+              className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3 space-y-2"
             >
               <div className="flex items-center justify-between gap-3">
-                <label htmlFor="workspace-name" className="font-brand-mono text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-muted)]">
+                <label htmlFor="workspace-name" className="text-xs font-medium text-gray-700">
                   Workspace name
                 </label>
                 <CharCounter value={workspaceName} max={LIMITS.workspaceName} />
@@ -353,7 +362,7 @@ export function ProposalSettings() {
                 <Input
                   id="workspace-name"
                   value={workspaceName}
-                  onChange={(e) => setWorkspaceNameDraft(e.target.value)}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
                   maxLength={LIMITS.workspaceName}
                   disabled={!isOwner || renamingWorkspace || !currentWorkspace}
                   placeholder="My Workspace"
@@ -373,7 +382,7 @@ export function ProposalSettings() {
             </form>
 
             {workspaceError && (
-              <div className="flex items-center justify-between gap-2 rounded-[var(--app-radius-sm)] border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
                 <span>{workspaceError}</span>
                 <Button
                   type="button"
@@ -388,7 +397,7 @@ export function ProposalSettings() {
             )}
 
             <form onSubmit={handleInviteMember} className="flex items-center gap-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--app-border-subtle)] bg-[var(--app-bg-canvas)] text-[var(--app-text-muted)]">
+              <div className="h-9 w-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500">
                 <AppIcon icon="ui.mail-send" className="h-3.5 w-3.5" />
               </div>
               <Input
@@ -403,12 +412,12 @@ export function ProposalSettings() {
               </Button>
             </form>
             {!isOwner && (
-              <p className="text-xs text-[var(--app-text-muted)]">Only workspace owners can invite and remove members.</p>
+              <p className="text-xs text-gray-500">Only workspace owners can invite and remove members.</p>
             )}
 
             <div className="space-y-2">
               {members.length === 0 ? (
-                <p className="text-xs text-[var(--app-text-muted)]">No team members yet.</p>
+                <p className="text-xs text-gray-500">No team members yet.</p>
               ) : (
                 members.map((member) => {
                   const isSelf = member.userId === user?.id;
@@ -416,10 +425,10 @@ export function ProposalSettings() {
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between rounded-[var(--app-radius-sm)] border border-[var(--app-border-subtle)] px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm text-[var(--app-text-primary)]">{member.email}</p>
+                        <p className="text-sm text-gray-800 truncate">{member.email}</p>
                         <div className="mt-1 flex items-center gap-2">
                           <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
                             {member.role}
@@ -433,7 +442,7 @@ export function ProposalSettings() {
                         </div>
                         {isPending && (
                           <p
-                            className="mt-1 text-[11px] text-[var(--app-text-muted)]"
+                            className="mt-1 text-[11px] text-gray-500"
                             title={formatDateTime(member.invitedAt)}
                           >
                             Invite sent {formatRelativeTime(member.invitedAt)}
@@ -448,7 +457,7 @@ export function ProposalSettings() {
                             size="sm"
                             disabled={!isOwner || resendingMemberId === member.id}
                             onClick={() => handleResendInvite(member.id, member.email)}
-                            className="text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)]"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             {resendingMemberId === member.id ? 'Resending...' : 'Resend'}
                           </Button>
@@ -459,7 +468,7 @@ export function ProposalSettings() {
                           size="sm"
                           disabled={!isOwner || isSelf || removingMemberId === member.id}
                           onClick={() => handleRemoveMember(member.id)}
-                          className="text-[var(--app-text-muted)] hover:text-red-500"
+                          className="text-gray-500 hover:text-red-500"
                         >
                           {removingMemberId === member.id ? 'Removing...' : 'Remove'}
                         </Button>

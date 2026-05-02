@@ -47,12 +47,10 @@ export function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="app-shell flex min-h-screen items-center justify-center">
+    <div className="flex items-center justify-center min-h-screen bg-admin">
       <div className="text-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[var(--app-border-strong)] border-t-primary" />
-        <p className="font-brand-mono text-[11px] uppercase tracking-[0.14em] text-[var(--app-text-muted)]">
-          Signing you in
-        </p>
+        <div className="w-8 h-8 border-2 border-[#e5e3de] border-t-[#d4785c] rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-[#6b6b6b]">Signing you in…</p>
       </div>
     </div>
   );
