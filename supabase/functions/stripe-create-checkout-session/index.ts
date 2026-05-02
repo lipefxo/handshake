@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
+const STRIPE_API_VERSION = '2025-09-30.clover' as unknown as Stripe.LatestApiVersion;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const stripe = new Stripe(stripeSecret, { apiVersion: '2025-09-30.clover' });
+    const stripe = new Stripe(stripeSecret, { apiVersion: STRIPE_API_VERSION });
 
     const { data: existingSub, error: subLoadError } = await adminClient
       .from('workspace_subscriptions')
