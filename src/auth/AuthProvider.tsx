@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuthStore } from '../store/authStore';
 import { useWorkspaceStore } from '../store/workspaceStore';
+import { useBillingStore } from '../store/billingStore';
 import { IdleTimeout } from './IdleTimeout';
 import type { AppUser } from '../types/auth';
 
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const appUser = mapSessionUser(sessionUser);
       setUser(appUser);
       await initializeWorkspace(appUser);
+      void useBillingStore.getState().refresh();
       setLoading(false);
       setInitialized(true);
     };
@@ -62,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         sessionStorage.removeItem(DEV_AUTH_BYPASS_KEY);
         setUser(null);
         clearWorkspaceState();
+        useBillingStore.getState().clearBillingState();
         setLoading(false);
         setInitialized(true);
         sessionStorage.setItem('authMessage', 'Your session expired. Please sign in again.');
@@ -70,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         initializedFromListener = true;
         setUser(getDevBypassUser());
         clearWorkspaceState();
+        useBillingStore.getState().clearBillingState();
         setLoading(false);
         setInitialized(true);
       }
@@ -85,6 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         setUser(getDevBypassUser());
         clearWorkspaceState();
+        useBillingStore.getState().clearBillingState();
         setLoading(false);
         setInitialized(true);
       }
