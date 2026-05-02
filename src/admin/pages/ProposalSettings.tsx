@@ -12,6 +12,7 @@ import { formatDateTime, formatRelativeTime } from '../../shared/utils/helpers';
 import { useActionFeedback } from '@/shared/hooks/useActionFeedback';
 import { BrandThemeConfigurator } from '../components/settings/BrandThemeConfigurator';
 import { SettingsNav } from '../components/settings/SettingsNav';
+import { BillingPanel } from '../components/settings/BillingPanel';
 
 const LIMITS = {
   companyName: 50,
@@ -21,6 +22,7 @@ const LIMITS = {
 
 const SETTINGS_SECTIONS = [
   { id: 'brand', label: 'Brand' },
+  { id: 'billing', label: 'Billing' },
   { id: 'team', label: 'Team' },
 ] as const;
 
@@ -338,6 +340,19 @@ export function ProposalSettings() {
             )}
           </CardContent>
         </Card>
+
+            {/* Billing */}
+            <Card id="billing" className="scroll-mt-6 rounded-[var(--app-radius-lg)] border-[var(--app-border-subtle)]">
+              <CardHeader>
+                <CardTitle className="text-base text-[var(--app-text-strong)]">Billing</CardTitle>
+                <CardDescription className="mt-1 text-xs text-[var(--app-text-secondary)]">
+                  Manage your workspace subscription, invoices, and payment method.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BillingPanel isOwner={isOwner} />
+              </CardContent>
+            </Card>
 
             {/* Team */}
             <Card id="team" className="rounded-2xl border-gray-100 scroll-mt-6">

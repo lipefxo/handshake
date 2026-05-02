@@ -141,3 +141,57 @@ src/
 ## Supabase Schema
 
 See `supabase/schema.sql` for the full database schema, RLS policies, and storage bucket configuration.
+
+---
+
+## Billing (Stripe)
+
+Workspace subscriptions (Free / Pro / Team) are billed through Stripe. The integration uses Stripe-hosted Checkout for upgrades and Stripe Customer Portal for self-serve management.
+
+### One-time setup
+
+1. **Create products in Stripe** — `Handshake Pro` and `Handshake Team`, each with monthly + annual prices. Copy the four `price_…` IDs.
+
+2. **Set client env vars** (`.env.local` and Vercel — Production + Preview):
+
+   ```
+   VITE_STRIPE_PRICE_PRO_MONTHLY=price_…
+   VITE_STRIPE_PRICE_PRO_YEARLY=price_…
+   VITE_STRIPE_PRICE_TEAM_MONTHLY=price_…
+   VITE_STRIPE_PRICE_TEAM_YEARLY=price_…
+   ```
+
+3. **Set function secrets** (Supabase):
+
+   ```bash
+   supabase secrets set \
+     STRIPE_SECRET_KEY=sk_… \
+     STRIPE_WEBHOOK_SECRET=whsec_… \
+     STRIPE_PRICE_PRO_MONTHLY=price_… \
+     STRIPE_PRICE_PRO_YEARLY=price_… \
+     STRIPE_PRICE_TEAM_MONTHLY=price_… \
+     STRIPE_PRICE_TEAM_YEARLY=price_… \
+     APP_URL=https://www.handshake.design
+   ```
+
+4. **Deploy edge functions:**
+
+   ```bash
+   supabase functions deploy stripe-create-checkout-session stripe-create-portal-session
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+
+5. **Register the webhook endpoint** in Stripe Dashboard → Developers → Webhooks → Add endpoint:
+   - URL: `https://<project-ref>.supabase.co/functions/v1/stripe-webhook`
+   - Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
+   - Reveal the signing secret and set it as `STRIPE_WEBHOOK_SECRET` (above).
+
+### Local development
+
+```bash
+brew install stripe/stripe-cli/stripe
+stripe login
+stripe listen --forward-to http://localhost:54321/functions/v1/stripe-webhook
+```
+
+The CLI prints a `whsec_…` secret on startup — paste it into your local function secrets for the duration of the session.
