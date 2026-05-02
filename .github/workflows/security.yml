@@ -84,7 +84,7 @@ jobs:
           cache: true
 
       - name: Lint edge functions
-        run: deno lint supabase/functions
+        run: deno lint --config supabase/functions/deno.json supabase/functions
 
       - name: Typecheck edge functions
-        run: deno check supabase/functions/*/index.ts
+        run: deno check --config supabase/functions/deno.json supabase/functions/*/index.ts

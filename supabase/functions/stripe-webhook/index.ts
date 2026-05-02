@@ -1,5 +1,5 @@
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import Stripe from 'npm:stripe@^17';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
 
 interface PriceTierMap {
   [priceId: string]: 'pro' | 'team';
