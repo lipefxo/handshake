@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const defaultSections = [
   { id: 'general', label: 'General' },
@@ -13,16 +13,11 @@ interface SettingsNavProps {
 
 export function SettingsNav({ sections = defaultSections }: SettingsNavProps) {
   const [activeId, setActiveId] = useState(sections[0]?.id ?? '');
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  useEffect(() => {
-    setActiveId(sections[0]?.id ?? '');
-  }, [sections]);
 
   useEffect(() => {
     const sectionEls = sections.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
 
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         // Find the first section whose top is in view
         const visible = entries.filter((e) => e.isIntersecting);
@@ -36,9 +31,9 @@ export function SettingsNav({ sections = defaultSections }: SettingsNavProps) {
       { threshold: 0.3 }
     );
 
-    sectionEls.forEach((el) => observerRef.current?.observe(el));
-    return () => observerRef.current?.disconnect();
-  }, []);
+    sectionEls.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();

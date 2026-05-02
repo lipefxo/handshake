@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { UserMenu } from '../auth/UserMenu';
 import { AppIcon } from '../shared/icons/AppIcon';
@@ -17,14 +17,9 @@ export function AdminLayout() {
   const location = useLocation();
   const workspaceName = useWorkspaceStore((state) => state.currentWorkspace?.name);
   const isProposalEditorView = /^\/admin\/proposals\/[^/]+$/.test(location.pathname);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => !isProposalEditorView);
+  const [sidebarPreference, setSidebarPreference] = useState(true);
+  const isSidebarExpanded = isProposalEditorView ? false : sidebarPreference;
   const showTopProposalsLink = location.pathname !== '/admin';
-
-  useEffect(() => {
-    if (isProposalEditorView) {
-      setIsSidebarExpanded(false);
-    }
-  }, [isProposalEditorView]);
 
   return (
     <div className="flex h-screen bg-admin overflow-hidden">
@@ -49,7 +44,7 @@ export function AdminLayout() {
             )}
             <Button
               type="button"
-              onClick={() => setIsSidebarExpanded((prev) => !prev)}
+              onClick={() => setSidebarPreference((prev) => !prev)}
               variant="ghost"
               size="icon"
               className={`text-[#6b6b6b] hover:text-[#1a1a1a] shrink-0 ${isSidebarExpanded ? 'ml-auto h-7 w-7' : 'h-6 w-6'}`}

@@ -19,15 +19,13 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [infoMessage, setInfoMessage] = useState('');
+  const [infoMessage] = useState(() => sessionStorage.getItem('authMessage') ?? '');
 
   useEffect(() => {
-    const message = sessionStorage.getItem('authMessage');
-    if (message) {
-      setInfoMessage(message);
+    if (infoMessage) {
       sessionStorage.removeItem('authMessage');
     }
-  }, []);
+  }, [infoMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ImgHTMLAttributes } from 'react';
+import { useCallback, useState, type ImgHTMLAttributes } from 'react';
 
 interface OptimizedImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   priority?: boolean;
@@ -13,12 +13,11 @@ export function OptimizedImage({
   onLoad,
   ...imgProps
 }: OptimizedImageProps) {
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (imgRef.current?.complete) {
-      setIsLoaded(true);
+  const [loadedSrc, setLoadedSrc] = useState<ImgHTMLAttributes<HTMLImageElement>['src']>(undefined);
+  const isLoaded = loadedSrc === imgProps.src;
+  const imageRef = useCallback((node: HTMLImageElement | null) => {
+    if (node?.complete) {
+      setLoadedSrc(imgProps.src);
     }
   }, [imgProps.src]);
 
@@ -26,14 +25,14 @@ export function OptimizedImage({
 
   return (
     <img
-      ref={imgRef}
+      ref={imageRef}
       {...imgProps}
       className={mergedClassName}
       loading={loading ?? (priority ? 'eager' : 'lazy')}
       fetchPriority={fetchPriority ?? (priority ? 'high' : 'auto')}
       decoding={decoding ?? 'async'}
       onLoad={(event) => {
-        setIsLoaded(true);
+        setLoadedSrc(imgProps.src);
         onLoad?.(event);
       }}
     />

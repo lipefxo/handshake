@@ -48,12 +48,12 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
-  const processFile = (file: File) => {
+  const processFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => onLogoChange(e.target?.result as string);
     reader.readAsDataURL(file);
-  };
+  }, [onLogoChange]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -62,7 +62,7 @@ function LogoUpload({ logo, onLogoChange }: LogoUploadProps) {
       const file = e.dataTransfer.files[0];
       if (file) processFile(file);
     },
-    [],
+    [processFile],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +162,8 @@ export function ProposalSettings() {
 
   useEffect(() => {
     if (email || !user?.email) return;
-    setEmail(user.email);
+    const timer = window.setTimeout(() => setEmail(user.email), 0);
+    return () => window.clearTimeout(timer);
   }, [email, user?.email]);
 
   useEffect(() => {
@@ -171,11 +172,13 @@ export function ProposalSettings() {
   }, [currentWorkspace?.id, refreshMembers]);
 
   useEffect(() => {
-    setWorkspaceName(currentWorkspace?.name ?? '');
+    const timer = window.setTimeout(() => setWorkspaceName(currentWorkspace?.name ?? ''), 0);
+    return () => window.clearTimeout(timer);
   }, [currentWorkspace?.name]);
 
   useEffect(() => {
-    setCompanyName(currentWorkspace?.companyName ?? '');
+    const timer = window.setTimeout(() => setCompanyName(currentWorkspace?.companyName ?? ''), 0);
+    return () => window.clearTimeout(timer);
   }, [currentWorkspace?.companyName]);
 
   const [savingCompanyName, setSavingCompanyName] = useState(false);

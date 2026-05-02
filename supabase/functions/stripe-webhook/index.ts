@@ -1,5 +1,7 @@
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import Stripe from 'npm:stripe@^17';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
+
+const STRIPE_API_VERSION = '2025-09-30.clover' as unknown as Stripe.LatestApiVersion;
 
 interface PriceTierMap {
   [priceId: string]: 'pro' | 'team';
@@ -181,7 +183,7 @@ Deno.serve(async (req) => {
   // Must read raw body BEFORE any JSON parse — signature verification depends on it.
   const rawBody = await req.text();
 
-  const stripe = new Stripe(stripeSecret, { apiVersion: '2025-09-30.clover' });
+  const stripe = new Stripe(stripeSecret, { apiVersion: STRIPE_API_VERSION });
 
   let event: Stripe.Event;
   try {

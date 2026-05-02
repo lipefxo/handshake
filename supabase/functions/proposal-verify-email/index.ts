@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,7 +28,7 @@ function getIpAddress(req: Request): string {
 }
 
 async function logAttempt(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: SupabaseClient,
   details: {
     proposalId: string;
     success: boolean;

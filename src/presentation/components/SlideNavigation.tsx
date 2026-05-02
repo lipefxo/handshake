@@ -18,8 +18,6 @@ export function SlideNavigation({ current, total, onNavigate, backToEditorPath }
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setFocusedDot(null);
-
     const activeElement = document.activeElement;
     if (
       activeElement instanceof HTMLElement &&

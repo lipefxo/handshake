@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabaseClient';
@@ -870,64 +870,74 @@ function HowItWorksSection() {
           }}
           className="landing-steps-grid"
         >
-          {steps.map(({ num, title, desc, icon }, i) => {
-            const { ref: stepRef, inView: stepInView } = useReveal();
-            return (
-              <motion.div
-                key={num}
-                ref={stepRef}
-                initial="hidden"
-                animate={stepInView ? 'visible' : 'hidden'}
-                custom={i * 0.12}
-                variants={fadeUp}
-                style={{
-                  borderTop: `1px solid ${C.border}`,
-                  paddingTop: 32,
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 48,
-                    fontWeight: 700,
-                    color: `${C.accent}35`,
-                    lineHeight: 1,
-                    marginBottom: 20,
-                    letterSpacing: '-0.03em',
-                  }}
-                >
-                  {num}
-                </div>
-                <div style={{ marginBottom: 16 }}>{icon}</div>
-                <div
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: C.textPrimary,
-                    lineHeight: 1.3,
-                    marginBottom: 12,
-                  }}
-                >
-                  {title}
-                </div>
-                <p
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 15,
-                    fontWeight: 300,
-                    color: C.textSecondary,
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {desc}
-                </p>
-              </motion.div>
-            );
-          })}
+          {steps.map((step, i) => (
+            <HowItWorksStep key={step.num} step={step} index={i} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function HowItWorksStep({
+  step,
+  index,
+}: {
+  step: { num: string; title: string; desc: string; icon: ReactNode };
+  index: number;
+}) {
+  const { ref, inView } = useReveal();
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={inView ? 'visible' : 'hidden'}
+      custom={index * 0.12}
+      variants={fadeUp}
+      style={{
+        borderTop: `1px solid ${C.border}`,
+        paddingTop: 32,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: serif,
+          fontSize: 48,
+          fontWeight: 700,
+          color: `${C.accent}35`,
+          lineHeight: 1,
+          marginBottom: 20,
+          letterSpacing: '-0.03em',
+        }}
+      >
+        {step.num}
+      </div>
+      <div style={{ marginBottom: 16 }}>{step.icon}</div>
+      <div
+        style={{
+          fontFamily: serif,
+          fontSize: 20,
+          fontWeight: 700,
+          color: C.textPrimary,
+          lineHeight: 1.3,
+          marginBottom: 12,
+        }}
+      >
+        {step.title}
+      </div>
+      <p
+        style={{
+          fontFamily: sans,
+          fontSize: 15,
+          fontWeight: 300,
+          color: C.textSecondary,
+          lineHeight: 1.65,
+        }}
+      >
+        {step.desc}
+      </p>
+    </motion.div>
   );
 }
 
@@ -1183,7 +1193,13 @@ function LiveUpdateMockup() {
   const [displayVal, setDisplayVal] = useState('200+');
 
   useEffect(() => {
-    if (!inView) { setPhase('idle'); setDisplayVal('200+'); return; }
+    if (!inView) {
+      const resetTimer = window.setTimeout(() => {
+        setPhase('idle');
+        setDisplayVal('200+');
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
+    }
     const t1 = setTimeout(() => setPhase('editing'), 800);
     const t2 = setTimeout(() => { setDisplayVal('300+'); setPhase('updated'); }, 2000);
     const t3 = setTimeout(() => { setPhase('idle'); setDisplayVal('200+'); }, 5000);
@@ -1460,92 +1476,109 @@ function FeaturesSection() {
 
   return (
     <div id="features">
-        {features.map(({ bg, textColor, bodyColor, label, title, body, visual, reverse }) => {
-        const { ref, inView } = useReveal();
-
-        return (
-          <section key={label} style={{ background: bg, padding: '100px 32px' }}>
-            <div
-              ref={ref}
-              style={{
-                maxWidth: 1100,
-                margin: '0 auto',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 80,
-                alignItems: 'center',
-                direction: reverse ? 'rtl' : 'ltr',
-              }}
-              className="landing-feature-grid"
-            >
-              <div style={{ direction: 'ltr' }}>
-                <motion.div
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 11,
-                    fontWeight: 500,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: C.accent,
-                    marginBottom: 18,
-                  }}
-                >
-                  {label}
-                </motion.div>
-                <motion.h3
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0.08}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: serif,
-                    fontSize: 'clamp(28px, 3vw, 40px)',
-                    fontWeight: 700,
-                    color: textColor,
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.02em',
-                    marginBottom: 20,
-                    whiteSpace: 'pre-line',
-                  }}
-                >
-                  {title}
-                </motion.h3>
-                <motion.p
-                  initial="hidden"
-                  animate={inView ? 'visible' : 'hidden'}
-                  custom={0.16}
-                  variants={fadeUp}
-                  style={{
-                    fontFamily: sans,
-                    fontSize: 16,
-                    fontWeight: 300,
-                    color: bodyColor,
-                    lineHeight: 1.7,
-                    maxWidth: 420,
-                    whiteSpace: 'pre-line',
-                  }}
-                >
-                  {body}
-                </motion.p>
-              </div>
-
-              <motion.div
-                style={{ direction: 'ltr' }}
-                initial={{ opacity: 0, y: 24 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
-              >
-                {visual}
-              </motion.div>
-            </div>
-          </section>
-        );
-      })}
+      {features.map((feature) => (
+        <FeatureBand key={feature.label} feature={feature} />
+      ))}
     </div>
+  );
+}
+
+function FeatureBand({
+  feature,
+}: {
+  feature: {
+    bg: string;
+    textColor: string;
+    bodyColor: string;
+    label: string;
+    title: string;
+    body: string;
+    visual: ReactNode;
+    reverse: boolean;
+  };
+}) {
+  const { ref, inView } = useReveal();
+
+  return (
+    <section style={{ background: feature.bg, padding: '100px 32px' }}>
+      <div
+        ref={ref}
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 80,
+          alignItems: 'center',
+          direction: feature.reverse ? 'rtl' : 'ltr',
+        }}
+        className="landing-feature-grid"
+      >
+        <div style={{ direction: 'ltr' }}>
+          <motion.div
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            custom={0}
+            variants={fadeUp}
+            style={{
+              fontFamily: sans,
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: C.accent,
+              marginBottom: 18,
+            }}
+          >
+            {feature.label}
+          </motion.div>
+          <motion.h3
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            custom={0.08}
+            variants={fadeUp}
+            style={{
+              fontFamily: serif,
+              fontSize: 'clamp(28px, 3vw, 40px)',
+              fontWeight: 700,
+              color: feature.textColor,
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em',
+              marginBottom: 20,
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {feature.title}
+          </motion.h3>
+          <motion.p
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            custom={0.16}
+            variants={fadeUp}
+            style={{
+              fontFamily: sans,
+              fontSize: 16,
+              fontWeight: 300,
+              color: feature.bodyColor,
+              lineHeight: 1.7,
+              maxWidth: 420,
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {feature.body}
+          </motion.p>
+        </div>
+
+        <motion.div
+          style={{ direction: 'ltr' }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
+        >
+          {feature.visual}
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
@@ -1966,6 +1999,7 @@ function PricingSection() {
       cta: 'Get Early Access',
     },
   ];
+  const pricingCardReveals = [useReveal(), useReveal(), useReveal()];
 
   return (
     <section id="pricing" style={{ background: C.bgPrimary, padding: '120px 32px' }}>
@@ -2134,7 +2168,7 @@ function PricingSection() {
           className="landing-pricing-grid"
         >
           {plans.map((plan, i) => {
-            const { ref: cardRef, inView: cardInView } = useReveal();
+            const { ref: cardRef, inView: cardInView } = pricingCardReveals[i];
             const price = plan.name === 'Free' ? plan.price.annual : annualBilling ? plan.price.annual : plan.price.monthly;
             const limits = plan.limits ?? [];
             return (

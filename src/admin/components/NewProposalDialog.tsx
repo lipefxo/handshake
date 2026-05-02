@@ -199,8 +199,9 @@ export function NewProposalDialog({
 
   useEffect(() => {
     if (!isOpen) return;
-    setValues(getInitialFormValues());
+    const resetTimer = window.setTimeout(() => setValues(getInitialFormValues()), 0);
     fetchCustomTemplates();
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen, fetchCustomTemplates]);
 
   useEffect(() => {

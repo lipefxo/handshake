@@ -25,17 +25,26 @@ export function ProposalMarkdownEditorModal({
 
   // Keep refs up-to-date to avoid stale closures in effects
   const proposalRef = useRef(proposal);
-  proposalRef.current = proposal;
   const onApplyRef = useRef(onApply);
-  onApplyRef.current = onApply;
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    proposalRef.current = proposal;
+  }, [proposal]);
+
+  useEffect(() => {
+    onApplyRef.current = onApply;
+  }, [onApply]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Initialize editor content when modal opens (never re-syncs after)
   useEffect(() => {
     if (!isOpen) {
-      setHasEdited(false);
-      return;
+      const resetTimer = window.setTimeout(() => setHasEdited(false), 0);
+      return () => window.clearTimeout(resetTimer);
     }
     const p = proposalRef.current;
     setEditorContent(slidesToMarkdown({ ...p, companyName: p.brandOverrides?.companyName }));
