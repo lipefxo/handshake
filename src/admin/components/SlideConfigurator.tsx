@@ -145,6 +145,7 @@ function Input({
   decorations = false,
   ...props
 }: React.ComponentProps<typeof BaseInput> & { decorations?: boolean }) {
+  const controlRef = React.useRef<HTMLInputElement>(null);
   const defaultMaxLength = type === 'email' || type === 'tel'
     ? FIELD_LIMITS.contactField
     : FIELD_LIMITS.slideHeading;
@@ -160,7 +161,6 @@ function Input({
     );
   }
 
-  const controlRef = React.useRef<HTMLInputElement>(null);
   return (
     <div className="relative">
       <DecorationToolbar controlRef={controlRef} />
@@ -181,11 +181,11 @@ function Textarea({
   decorations = false,
   ...props
 }: React.ComponentProps<typeof BaseTextarea> & { decorations?: boolean }) {
+  const controlRef = React.useRef<HTMLTextAreaElement>(null);
   if (!decorations) {
     return <BaseTextarea className={className} maxLength={maxLength} {...props} />;
   }
 
-  const controlRef = React.useRef<HTMLTextAreaElement>(null);
   return (
     <div className="relative">
       <DecorationToolbar controlRef={controlRef} />

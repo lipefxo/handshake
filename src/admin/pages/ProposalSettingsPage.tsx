@@ -27,24 +27,30 @@ export function ProposalSettingsPage() {
 
   // Hydrate local editable state once per proposal id to avoid clobbering edits on store refresh.
   useEffect(() => {
-    const p = proposals.find((p) => p.id === id);
-    if (p && hydratedProposalIdRef.current !== p.id) {
-      setProposal({ ...p });
-      hydratedProposalIdRef.current = p.id;
-      setHasUnsavedChanges(false);
-    }
-    if (!p && id !== hydratedProposalIdRef.current) {
-      hydratedProposalIdRef.current = id ?? null;
-      setProposal(null);
-      setHasUnsavedChanges(false);
-    }
+    const timer = window.setTimeout(() => {
+      const p = proposals.find((p) => p.id === id);
+      if (p && hydratedProposalIdRef.current !== p.id) {
+        setProposal({ ...p });
+        hydratedProposalIdRef.current = p.id;
+        setHasUnsavedChanges(false);
+      }
+      if (!p && id !== hydratedProposalIdRef.current) {
+        hydratedProposalIdRef.current = id ?? null;
+        setProposal(null);
+        setHasUnsavedChanges(false);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [id, proposals]);
 
   useEffect(() => {
     if (id && hydratedProposalIdRef.current !== id) {
       hydratedProposalIdRef.current = null;
-      setProposal(null);
-      setHasUnsavedChanges(false);
+      const timer = window.setTimeout(() => {
+        setProposal(null);
+        setHasUnsavedChanges(false);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [id]);
 

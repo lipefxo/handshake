@@ -20,7 +20,11 @@ async function main(): Promise<void> {
   );
 
   const result = markdownToSlides(markdown);
-  const expectedSlideTypes = ['title', 'benefits', 'intro', 'stats', 'features', 'closing'];
+  // The markdown normalizer introduced after the original fixture now preserves
+  // markdown tables as table slides and splits oversized benefit collections at
+  // FIELD_LIMITS.maxBenefits. Keep explicit assertions below so this fixture
+  // proves that behavior instead of merely matching a loose slide count.
+  const expectedSlideTypes = ['title', 'benefits', 'benefits', 'table', 'features', 'closing'];
 
   assert.equal(result.errors.length, 0, `Expected no parser errors, got: ${result.errors.join('; ')}`);
   assert.equal(result.slides.length, 6, `Expected 6 slides, got ${result.slides.length}`);
@@ -37,6 +41,26 @@ async function main(): Promise<void> {
 
   const hasValidationErrors = result.validation.some((entry) => entry.status === 'error');
   assert.equal(hasValidationErrors, false, 'Expected no validation errors after conversion.');
+
+  const benefitSlides = result.slides.filter((slide) => slide.type === 'benefits');
+  assert.equal(benefitSlides.length, 2, 'Expected oversized benefits to split into two benefits slides.');
+  assert.equal(
+    benefitSlides.flatMap((slide) => slide.content.benefits ?? []).length,
+    11,
+    'Expected all benefit bullets to survive the split.',
+  );
+
+  const tableSlide = result.slides.find((slide) => slide.type === 'table');
+  assert.ok(tableSlide, 'Expected pricing markdown tables to become a table slide.');
+  assert.deepEqual(
+    tableSlide.content.columns,
+    ['Service', 'Proposal Pricing'],
+    'Expected pricing table headers to be extracted.',
+  );
+  assert.ok(
+    tableSlide.content.rows.some((row) => row.includes('Total Program Cost') && row.includes('$22,297')),
+    'Expected total program cost row to be extracted.',
+  );
 
   const extractedLinks = result.slides.flatMap((slide) => slide.links ?? []);
   assert.ok(extractedLinks.length > 0, 'Expected at least one extracted link.');

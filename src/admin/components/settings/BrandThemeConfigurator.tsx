@@ -238,8 +238,11 @@ export function BrandThemeConfigurator({
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useEffect(() => {
-    setDraft(value ?? {});
-    setHasChanges(false);
+    const timer = window.setTimeout(() => {
+      setDraft(value ?? {});
+      setHasChanges(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [value]);
 
   useEffect(() => {

@@ -21,12 +21,14 @@ export function useMarkdownParser(
 
   useEffect(() => {
     if (!markdown.trim()) {
-      setResult(null);
-      setIsLoading(false);
-      return;
+      const emptyTimer = setTimeout(() => {
+        setResult(null);
+        setIsLoading(false);
+      }, 0);
+      return () => clearTimeout(emptyTimer);
     }
 
-    setIsLoading(true);
+    const loadingTimer = setTimeout(() => setIsLoading(true), 0);
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -36,6 +38,7 @@ export function useMarkdownParser(
     }, debounceMs);
 
     return () => {
+      clearTimeout(loadingTimer);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [markdown, debounceMs]);

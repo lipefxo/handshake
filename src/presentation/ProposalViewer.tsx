@@ -292,7 +292,7 @@ function ProposalViewerContent() {
     return () => window.removeEventListener('message', handleEditorPreviewUpdate);
   }, []);
 
-  const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
+  const enabledSlides = useMemo(() => proposal?.slides.filter((s) => s.enabled) ?? [], [proposal?.slides]);
   const { current, goTo, next, containerRef } = useSlideNavigation(enabledSlides.length);
 
   // Track analytics — skip in preview/editor modes

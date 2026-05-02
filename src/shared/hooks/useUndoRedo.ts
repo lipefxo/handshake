@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const MAX_HISTORY = 50;
 
@@ -14,9 +14,13 @@ export interface UndoRedoControls<T> {
 export function useUndoRedo<T>(): UndoRedoControls<T> {
   const undoStack = useRef<T[]>([]);
   const redoStack = useRef<T[]>([]);
-  // Force re-render when stacks change
-  const renderRef = useRef(0);
-  const forceRender = useCallback(() => { renderRef.current++; }, []);
+  const [stackState, setStackState] = useState({ canUndo: false, canRedo: false });
+  const syncStackState = useCallback(() => {
+    setStackState({
+      canUndo: undoStack.current.length > 0,
+      canRedo: redoStack.current.length > 0,
+    });
+  }, []);
 
   const push = useCallback((state: T) => {
     undoStack.current.push(state);
@@ -24,44 +28,44 @@ export function useUndoRedo<T>(): UndoRedoControls<T> {
       undoStack.current.shift();
     }
     redoStack.current = [];
-    forceRender();
-  }, [forceRender]);
+    syncStackState();
+  }, [syncStackState]);
 
   const undo = useCallback((): T | null => {
     const state = undoStack.current.pop();
     if (state === undefined) return null;
     // The caller is responsible for pushing the current state onto redo
-    forceRender();
+    syncStackState();
     return state;
-  }, [forceRender]);
+  }, [syncStackState]);
 
   const redo = useCallback((): T | null => {
     const state = redoStack.current.pop();
     if (state === undefined) return null;
-    forceRender();
+    syncStackState();
     return state;
-  }, [forceRender]);
+  }, [syncStackState]);
 
   const clear = useCallback(() => {
     undoStack.current = [];
     redoStack.current = [];
-    forceRender();
-  }, [forceRender]);
+    syncStackState();
+  }, [syncStackState]);
 
   const pushToRedo = useCallback((state: T) => {
     redoStack.current.push(state);
     if (redoStack.current.length > MAX_HISTORY) {
       redoStack.current.shift();
     }
-    forceRender();
-  }, [forceRender]);
+    syncStackState();
+  }, [syncStackState]);
 
   return {
     push,
     undo,
     redo,
-    canUndo: undoStack.current.length > 0,
-    canRedo: redoStack.current.length > 0,
+    canUndo: stackState.canUndo,
+    canRedo: stackState.canRedo,
     clear,
     // Expose pushToRedo for the editor to use
     ...(({ pushToRedo }) as unknown as Record<string, never>),

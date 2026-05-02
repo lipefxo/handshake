@@ -36,16 +36,6 @@ export function MarkdownIngestorModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [inlineFeedback, setInlineFeedback] = useState<string | null>(null);
 
-  // Close on Escape
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [isOpen, editorContent]);
-
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
@@ -71,6 +61,16 @@ export function MarkdownIngestorModal({
     }
     onClose();
   }, [editorContent, onClose]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, handleClose]);
 
   const handleGenerate = useCallback(async () => {
     setInlineFeedback(null);

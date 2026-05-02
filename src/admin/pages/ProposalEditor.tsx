@@ -17,7 +17,8 @@ import { MarkdownIngestorModal } from '../../ingestor/MarkdownIngestorModal';
 import { useIngestorState } from '../../ingestor/hooks/useIngestorState';
 import { ProposalMarkdownEditorModal } from '../components/ProposalMarkdownEditorModal';
 import { PublishSuccessModal } from '../components/PublishSuccessModal';
-import { checkProposalReadiness, ReadinessCheckDisplay } from '../components/ReadinessCheck';
+import { ReadinessCheckDisplay } from '../components/ReadinessCheck';
+import { checkProposalReadiness } from '../components/readiness';
 import { createUndoRedoManager } from '../../shared/hooks/useUndoRedo';
 import { exportProposalToPdf } from '../../shared/utils/pdfExport';
 import { useCustomTemplateStore } from '../../store/customTemplateStore';
@@ -108,7 +109,6 @@ export function ProposalEditor() {
   useEffect(() => {
     const p = proposals.find((p) => p.id === id);
     if (p && hydratedProposalIdRef.current !== p.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProposal({ ...p });
       hydratedProposalIdRef.current = p.id;
       setHasUnsavedChanges(false);
@@ -928,7 +928,7 @@ export function ProposalEditor() {
                           frameWindow.location.reload();
                           return;
                         }
-                        iframe.src = iframe.src;
+                        iframe.src = iframe.getAttribute('src') ?? '';
                       }}
                       className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                       title="Refresh preview"

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import type { Proposal } from '../../types/proposal';
 
 const VISITOR_ID_KEY = 'handshake:analytics-visitor-id';
@@ -69,14 +69,15 @@ export function useAnalyticsTracker(
 ) {
   const sessionId = useRef<string>(crypto.randomUUID());
   const visitorId = useRef<string>(getOrCreateVisitorId());
-  const slideEnterTime = useRef<number>(Date.now());
+  const [initialTimestamp] = useState(() => Date.now());
+  const slideEnterTime = useRef<number>(initialTimestamp);
   const pendingEvents = useRef<SlideEvent[]>([]);
   const maxSlideReached = useRef<number>(0);
-  const sessionStartTime = useRef<number>(Date.now());
+  const sessionStartTime = useRef<number>(initialTimestamp);
   const prevSlideIndex = useRef<number>(currentSlideIndex);
   const hasFlushed = useRef<boolean>(false);
 
-  const enabledSlides = proposal?.slides.filter((s) => s.enabled) ?? [];
+  const enabledSlides = useMemo(() => proposal?.slides.filter((s) => s.enabled) ?? [], [proposal?.slides]);
 
   const buildPayload = useCallback((extraEvents: SlideEvent[] = []) => {
     if (!proposal) return null;
@@ -95,7 +96,6 @@ export function useAnalyticsTracker(
       durationMs: Date.now() - sessionStartTime.current,
       events: [...pendingEvents.current, ...extraEvents],
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proposal, enabledSlides.length]);
 
   const flush = useCallback((extraEvents: SlideEvent[] = []) => {

@@ -8,7 +8,7 @@ interface IdleTimeoutOptions {
 
 export function useIdleTimeout({ timeoutMs, warningMs, onTimeout }: IdleTimeoutOptions) {
   const [showWarning, setShowWarning] = useState(false);
-  const lastActiveRef = useRef(Date.now());
+  const lastActiveRef = useRef(0);
   const timedOutRef = useRef(false);
 
   useEffect(() => {
@@ -18,6 +18,7 @@ export function useIdleTimeout({ timeoutMs, warningMs, onTimeout }: IdleTimeoutO
         setShowWarning(false);
       }
     };
+    markActive();
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
